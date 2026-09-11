@@ -1,0 +1,269 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2140" height="1760" viewBox="0 0 2140 1760" role="img" aria-labelledby="title desc">
+<title id="title">XG DB Test 总体架构 v1.1</title>
+<desc id="desc">五平面从测试设计、Git 资产与不可变 Bundle，经 Manifest 和资源准入到 Agent 执行，再经可靠事件和可比差异形成发布门禁。失租或恢复失败隔离资源，覆盖缺口反馈测试设计。全部为设计契约，非已实现声明。</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs>
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="70" y="65" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="40" font-weight="800" fill="#213448" text-anchor="start" >XG DB Test</text>
+<text x="340" y="65" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="35" font-weight="700" fill="#213448" text-anchor="start" >总体架构 v1.1</text>
+<text x="70" y="105" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="24" font-weight="400" fill="#496077" text-anchor="start" >显式覆盖声明 → 不可变执行输入 → 受控资源执行 → 可信结果与发布门禁</text>
+<text x="2060" y="60" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="400" fill="#496077" text-anchor="end" >设计基线 · 2026-09-11</text>
+<text x="2060" y="99" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="end" >五平面结构 / 非部署数量图</text>
+<g id="plane-design">
+<rect x="60" y="145" width="2020" height="238" rx="16" fill="#f0f6fc" stroke="#2466ad" stroke-width="1.5"/>
+<rect x="60" y="145" width="8" height="238" rx="3" fill="#2466ad" stroke="#2466ad" stroke-width="1.5"/>
+<text x="90" y="189" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="26" font-weight="800" fill="#2466ad" text-anchor="start" >01</text>
+<text x="90" y="230" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="27" font-weight="700" fill="#213448" text-anchor="start" >测试设计平面</text>
+<text x="90" y="263" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="19" font-weight="600" fill="#2466ad" text-anchor="start" >Test Design</text>
+<text x="90" y="303" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="start" >定义能力、合法组合与覆盖要求</text>
+<g id="node-feature">
+<rect x="400" y="175" width="355" height="182" rx="10" fill="#fff" stroke="#2466ad" stroke-width="1.5"/>
+<text x="418" y="208" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Feature / Capability Registry</text>
+<text x="418" y="238" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#2466ad" text-anchor="start" >功能与能力注册表</text>
+<line x1="418" y1="252" x2="737" y2="252" stroke="#2466ad" opacity="0.25"/>
+<text x="418" y="278" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Domain / Feature / Level</text>
+<text x="418" y="304" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >统一分类、版本与环境能力</text>
+<text x="418" y="330" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >拒绝自由命名和未知值</text>
+</g>
+<polyline points="755,266 801,266" fill="none" stroke="#2466ad" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-model">
+<rect x="810" y="175" width="355" height="182" rx="10" fill="#fff" stroke="#2466ad" stroke-width="1.5"/>
+<text x="828" y="208" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Test Model / Constraint</text>
+<text x="828" y="238" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#2466ad" text-anchor="start" >测试模型与合法空间</text>
+<line x1="828" y1="252" x2="1147" y2="252" stroke="#2466ad" opacity="0.25"/>
+<text x="828" y="278" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >model_id + version + hash</text>
+<text x="828" y="304" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >维度、合法值、组合约束</text>
+<text x="828" y="330" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >无效或不可满足模型直接拒绝</text>
+</g>
+<polyline points="1165,266 1211,266" fill="none" stroke="#2466ad" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-coverage">
+<rect x="1220" y="175" width="355" height="182" rx="10" fill="#fff" stroke="#2466ad" stroke-width="1.5"/>
+<text x="1238" y="208" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Coverage Model / Points</text>
+<text x="1238" y="238" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#2466ad" text-anchor="start" >覆盖点与显式声明</text>
+<line x1="1238" y1="252" x2="1557" y2="252" stroke="#2466ad" opacity="0.25"/>
+<text x="1238" y="278" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Claim → assertion_refs</text>
+<text x="1238" y="304" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >五阶段、点去重、固定分母</text>
+<text x="1238" y="330" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >UNMAPPED / UNSUPPORTED 单列</text>
+</g>
+<polyline points="1575,266 1621,266" fill="none" stroke="#2466ad" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-author">
+<rect x="1630" y="175" width="355" height="182" rx="10" fill="#fff" stroke="#2466ad" stroke-width="1.5"/>
+<text x="1648" y="208" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Case Design / Generator</text>
+<text x="1648" y="238" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#2466ad" text-anchor="start" >用例设计与审查</text>
+<line x1="1648" y1="252" x2="1967" y2="252" stroke="#2466ad" opacity="0.25"/>
+<text x="1648" y="278" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >候选 → Trial Run → Review</text>
+<text x="1648" y="304" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Oracle 来源与语义哈希绑定</text>
+<text x="1648" y="330" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >只有有效 active 进入发布</text>
+</g>
+</g>
+<g id="plane-asset">
+<rect x="60" y="427" width="2020" height="238" rx="16" fill="#f6f2fa" stroke="#75519b" stroke-width="1.5"/>
+<rect x="60" y="427" width="8" height="238" rx="3" fill="#75519b" stroke="#75519b" stroke-width="1.5"/>
+<text x="90" y="471" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="26" font-weight="800" fill="#75519b" text-anchor="start" >02</text>
+<text x="90" y="512" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="27" font-weight="700" fill="#213448" text-anchor="start" >测试资产平面</text>
+<text x="90" y="545" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="19" font-weight="600" fill="#75519b" text-anchor="start" >Test Asset</text>
+<text x="90" y="585" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="start" >固定来源、编译内容与依赖</text>
+<g id="node-git">
+<rect x="400" y="457" width="355" height="182" rx="10" fill="#fff" stroke="#75519b" stroke-width="1.5"/>
+<text x="418" y="490" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Git / Asset Snapshot</text>
+<text x="418" y="520" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#75519b" text-anchor="start" >测试资产事实源</text>
+<line x1="418" y1="534" x2="737" y2="534" stroke="#75519b" opacity="0.25"/>
+<text x="418" y="560" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Case / Fixture / Model / Plan</text>
+<text x="418" y="586" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Release 固定干净 Git tree</text>
+<text x="418" y="612" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >开发 dirty 必须保存实际内容</text>
+</g>
+<polyline points="755,548 801,548" fill="none" stroke="#75519b" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-dsl">
+<rect x="810" y="457" width="355" height="182" rx="10" fill="#fff" stroke="#75519b" stroke-width="1.5"/>
+<text x="828" y="490" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >XGT / Scenario 1.1</text>
+<text x="828" y="520" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#75519b" text-anchor="start" >类型化双 DSL</text>
+<line x1="828" y1="534" x2="1147" y2="534" stroke="#75519b" opacity="0.25"/>
+<text x="828" y="560" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >SQL 显式边界 / JSON Expected</text>
+<text x="828" y="586" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >并发 Step 树 / 稳定 Step ID</text>
+<text x="828" y="612" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >版本分派，不静默改变旧语义</text>
+</g>
+<polyline points="1165,548 1211,548" fill="none" stroke="#75519b" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-catalog">
+<rect x="1220" y="457" width="355" height="182" rx="10" fill="#fff" stroke="#75519b" stroke-width="1.5"/>
+<text x="1238" y="490" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Compiler / Catalog 2</text>
+<text x="1238" y="520" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#75519b" text-anchor="start" >统一模型与查询索引</text>
+<line x1="1238" y1="534" x2="1557" y2="534" stroke="#75519b" opacity="0.25"/>
+<text x="1238" y="560" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >有效 Metadata / status / issue</text>
+<text x="1238" y="586" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >覆盖声明、全依赖失效</text>
+<text x="1238" y="612" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >增量与全量结果必须一致</text>
+</g>
+<polyline points="1575,548 1621,548" fill="none" stroke="#75519b" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-bundle">
+<rect x="1630" y="457" width="355" height="182" rx="10" fill="#fff" stroke="#75519b" stroke-width="1.5"/>
+<text x="1648" y="490" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Immutable Bundle</text>
+<text x="1648" y="520" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#75519b" text-anchor="start" >不可变编译内容</text>
+<line x1="1648" y1="534" x2="1967" y2="534" stroke="#75519b" opacity="0.25"/>
+<text x="1648" y="560" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >compiled_hash / semantic_hash</text>
+<text x="1648" y="586" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Case、Fixture、脚本、依赖</text>
+<text x="1648" y="612" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >执行前校验，拒绝工作区漂移</text>
+</g>
+</g>
+<g id="plane-control">
+<rect x="60" y="709" width="2020" height="238" rx="16" fill="#eef8f8" stroke="#187f87" stroke-width="1.5"/>
+<rect x="60" y="709" width="8" height="238" rx="3" fill="#187f87" stroke="#187f87" stroke-width="1.5"/>
+<text x="90" y="753" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="26" font-weight="800" fill="#187f87" text-anchor="start" >03</text>
+<text x="90" y="794" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="27" font-weight="700" fill="#213448" text-anchor="start" >控制平面</text>
+<text x="90" y="827" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="19" font-weight="600" fill="#187f87" text-anchor="start" >Control</text>
+<text x="90" y="867" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="start" >规划逻辑目标并控制资源准入</text>
+<g id="node-selector">
+<rect x="400" y="739" width="355" height="182" rx="10" fill="#fff" stroke="#187f87" stroke-width="1.5"/>
+<text x="418" y="772" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Selector / Test Plan</text>
+<text x="418" y="802" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#187f87" text-anchor="start" >精确选例与发布范围</text>
+<line x1="418" y1="816" x2="737" y2="816" stroke="#187f87" opacity="0.25"/>
+<text x="418" y="842" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Feature / Level / Issue / Status</text>
+<text x="418" y="868" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >先冻结范围，再做能力过滤</text>
+<text x="418" y="894" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >排除和不支持都有原因记录</text>
+</g>
+<polyline points="755,830 801,830" fill="none" stroke="#187f87" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-manifest">
+<rect x="810" y="739" width="355" height="182" rx="10" fill="#fff" stroke="#187f87" stroke-width="1.5"/>
+<text x="828" y="772" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Run Manifest 1</text>
+<text x="828" y="802" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#187f87" text-anchor="start" >不可变运行清单</text>
+<line x1="828" y1="816" x2="1147" y2="816" stroke="#187f87" opacity="0.25"/>
+<text x="828" y="842" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Case × target / Bundle hash</text>
+<text x="828" y="868" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >配置、工具、模型与基线快照</text>
+<text x="828" y="894" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >锁定预期执行集合和分母</text>
+</g>
+<polyline points="1165,830 1211,830" fill="none" stroke="#187f87" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-scheduler">
+<rect x="1220" y="739" width="355" height="182" rx="10" fill="#fff" stroke="#187f87" stroke-width="1.5"/>
+<text x="1238" y="772" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Global Planner / Scheduler</text>
+<text x="1238" y="802" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#187f87" text-anchor="start" >目标调度与故障恢复</text>
+<line x1="1238" y1="816" x2="1557" y2="816" stroke="#187f87" opacity="0.25"/>
+<text x="1238" y="842" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Shard：同 target 等价环境</text>
+<text x="1238" y="868" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Matrix：多个逻辑 target</text>
+<text x="1238" y="894" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >新 Attempt，不改变逻辑身份</text>
+</g>
+<polyline points="1575,830 1621,830" fill="none" stroke="#187f87" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-lease">
+<rect x="1630" y="739" width="355" height="182" rx="10" fill="#fff" stroke="#187f87" stroke-width="1.5"/>
+<text x="1648" y="772" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Registry / Resource Lease</text>
+<text x="1648" y="802" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#187f87" text-anchor="start" >资源所有权与排空</text>
+<line x1="1648" y1="816" x2="1967" y2="816" stroke="#187f87" opacity="0.25"/>
+<text x="1648" y="842" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >层级冲突 / 跨 Run 原子准入</text>
+<text x="1648" y="868" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Lease + fencing_token</text>
+<text x="1648" y="894" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >旧执行停止证明后才能回收</text>
+</g>
+</g>
+<g id="plane-execution">
+<rect x="60" y="991" width="2020" height="238" rx="16" fill="#fff7ed" stroke="#ad641c" stroke-width="1.5"/>
+<rect x="60" y="991" width="8" height="238" rx="3" fill="#ad641c" stroke="#ad641c" stroke-width="1.5"/>
+<text x="90" y="1035" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="26" font-weight="800" fill="#ad641c" text-anchor="start" >04</text>
+<text x="90" y="1076" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="27" font-weight="700" fill="#213448" text-anchor="start" >执行与环境平面</text>
+<text x="90" y="1109" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="19" font-weight="600" fill="#ad641c" text-anchor="start" >Execution &amp; Environment</text>
+<text x="90" y="1149" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="start" >Agent 本地执行，</text>
+<text x="90" y="1175" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="start" >隔离失败资源</text>
+<g id="node-worker">
+<rect x="400" y="1021" width="355" height="182" rx="10" fill="#fff" stroke="#ad641c" stroke-width="1.5"/>
+<text x="418" y="1054" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Local Planner / Worker Pools</text>
+<text x="418" y="1084" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#ad641c" text-anchor="start" >两级并行与资源复用</text>
+<line x1="418" y1="1098" x2="737" y2="1098" stroke="#ad641c" opacity="0.25"/>
+<text x="418" y="1124" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Fast / Normal / Heavy / Exclusive</text>
+<text x="418" y="1150" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Session / Fixture / Schema</text>
+<text x="418" y="1176" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >普通任务也遵守 Lease 准入</text>
+</g>
+<polyline points="755,1112 801,1112" fill="none" stroke="#ad641c" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-executor">
+<rect x="810" y="1021" width="355" height="182" rx="10" fill="#fff" stroke="#ad641c" stroke-width="1.5"/>
+<text x="828" y="1054" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Executors / Adapters</text>
+<text x="828" y="1084" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#ad641c" text-anchor="start" >SQL、事务与系统动作</text>
+<line x1="828" y1="1098" x2="1147" y2="1098" stroke="#ad641c" opacity="0.25"/>
+<text x="828" y="1124" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Xugu / Admin / Cluster / Backup</text>
+<text x="828" y="1150" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >Canonical 1 / 类型与值断言</text>
+<text x="828" y="1176" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >同步、取消与有界超时</text>
+</g>
+<polyline points="1165,1112 1211,1112" fill="none" stroke="#ad641c" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-reset">
+<rect x="1220" y="1021" width="355" height="182" rx="10" fill="#fff" stroke="#ad641c" stroke-width="1.5"/>
+<text x="1238" y="1054" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Cleanup / Reset / Probe</text>
+<text x="1238" y="1084" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#ad641c" text-anchor="start" >恢复证明与污染隔离</text>
+<line x1="1238" y1="1098" x2="1557" y2="1098" stroke="#ad641c" opacity="0.25"/>
+<text x="1238" y="1124" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >保留 primary_status / 清理状态</text>
+<text x="1238" y="1150" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >恢复失败 → QUARANTINED</text>
+<text x="1238" y="1176" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >禁止未经确认的重试与复用</text>
+</g>
+<polyline points="1575,1112 1621,1112" fill="none" stroke="#ad641c" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-wal">
+<rect x="1630" y="1021" width="355" height="182" rx="10" fill="#fff" stroke="#ad641c" stroke-width="1.5"/>
+<text x="1648" y="1054" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Agent Result WAL</text>
+<text x="1648" y="1084" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#ad641c" text-anchor="start" >本地持久化与有界离线</text>
+<line x1="1648" y1="1098" x2="1967" y2="1098" stroke="#ad641c" opacity="0.25"/>
+<text x="1648" y="1124" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >event_id / sequence / token</text>
+<text x="1648" y="1150" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >有效租约 + WAL 空间才继续</text>
+<text x="1648" y="1176" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >高水位暂停，ACK 后压缩</text>
+</g>
+</g>
+<g id="plane-quality">
+<rect x="60" y="1273" width="2020" height="238" rx="16" fill="#f0f8f2" stroke="#267649" stroke-width="1.5"/>
+<rect x="60" y="1273" width="8" height="238" rx="3" fill="#267649" stroke="#267649" stroke-width="1.5"/>
+<text x="90" y="1317" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="26" font-weight="800" fill="#267649" text-anchor="start" >05</text>
+<text x="90" y="1358" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="27" font-weight="700" fill="#213448" text-anchor="start" >结果与质量平面</text>
+<text x="90" y="1391" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="19" font-weight="600" fill="#267649" text-anchor="start" >Result &amp; Quality</text>
+<text x="90" y="1431" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="start" >可信聚合、可比差异与发布判定</text>
+<g id="node-events">
+<rect x="400" y="1303" width="355" height="182" rx="10" fill="#fff" stroke="#267649" stroke-width="1.5"/>
+<text x="418" y="1336" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Durable Event Log</text>
+<text x="418" y="1366" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#267649" text-anchor="start" >执行历史事实源</text>
+<line x1="418" y1="1380" x2="737" y2="1380" stroke="#267649" opacity="0.25"/>
+<text x="418" y="1406" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >落盘、去重、有序接收</text>
+<text x="418" y="1432" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >持久化 ACK / 缺口重放</text>
+<text x="418" y="1458" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >旧终态事件只作迟到审计</text>
+</g>
+<polyline points="755,1394 801,1394" fill="none" stroke="#267649" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-result">
+<rect x="810" y="1303" width="355" height="182" rx="10" fill="#fff" stroke="#267649" stroke-width="1.5"/>
+<text x="828" y="1336" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Result Projection / Artifacts</text>
+<text x="828" y="1366" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#267649" text-anchor="start" >可重建结果与失败证据</text>
+<line x1="828" y1="1380" x2="1147" y2="1380" stroke="#267649" opacity="0.25"/>
+<text x="828" y="1406" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >CaseExecution → Attempt → Step</text>
+<text x="828" y="1432" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >终态不回退 / Flaky 不隐藏</text>
+<text x="828" y="1458" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >JSONL → Result DB / JUnit</text>
+</g>
+<polyline points="1165,1394 1211,1394" fill="none" stroke="#267649" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-delta">
+<rect x="1220" y="1303" width="355" height="182" rx="10" fill="#fff" stroke="#267649" stroke-width="1.5"/>
+<text x="1238" y="1336" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Baseline / Delta</text>
+<text x="1238" y="1366" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#267649" text-anchor="start" >锁定基线与可比集合</text>
+<line x1="1238" y1="1380" x2="1557" y2="1380" stroke="#267649" opacity="0.25"/>
+<text x="1238" y="1406" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >显式基线优先 / 目标映射</text>
+<text x="1238" y="1432" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >用例、环境、模型变化分列</text>
+<text x="1238" y="1458" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >失败签名只用于候选聚类</text>
+</g>
+<polyline points="1575,1394 1621,1394" fill="none" stroke="#267649" stroke-width="2" marker-end="url(#arrow)"/>
+<g id="node-gate">
+<rect x="1630" y="1303" width="355" height="182" rx="10" fill="#fff" stroke="#267649" stroke-width="1.5"/>
+<text x="1648" y="1336" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#213448" text-anchor="start" >Quality Gate / Coverage</text>
+<text x="1648" y="1366" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#267649" text-anchor="start" >门禁与缺口反馈</text>
+<line x1="1648" y1="1380" x2="1967" y2="1380" stroke="#267649" opacity="0.25"/>
+<text x="1648" y="1406" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >固定分母 / 缺测不可隐藏</text>
+<text x="1648" y="1432" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >PASS / FAIL / 不确定 / 不适用</text>
+<text x="1648" y="1458" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#213448" text-anchor="start" >必需门禁全部 PASS 才放行</text>
+</g>
+</g>
+<polyline points="1985,357 2025,357 2025,404 577,404 577,453" fill="none" stroke="#2466ad" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="900" y="390" width="570" height="27" rx="3" fill="#fff" stroke="none" stroke-width="1.5"/>
+<text x="1185" y="410" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="600" fill="#2466ad" text-anchor="middle" >审查后沉淀为版本化资产</text>
+<polyline points="1985,639 2025,639 2025,686 577,686 577,735" fill="none" stroke="#75519b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="900" y="672" width="570" height="27" rx="3" fill="#fff" stroke="none" stroke-width="1.5"/>
+<text x="1185" y="692" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="600" fill="#75519b" text-anchor="middle" >从同一资产快照规划执行</text>
+<polyline points="1985,921 2025,921 2025,968 577,968 577,1017" fill="none" stroke="#187f87" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="900" y="954" width="570" height="27" rx="3" fill="#fff" stroke="none" stroke-width="1.5"/>
+<text x="1185" y="974" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="600" fill="#187f87" text-anchor="middle" >下发 Shard / Bundle / 有效资源授权</text>
+<polyline points="1985,1203 2025,1203 2025,1250 577,1250 577,1299" fill="none" stroke="#ad641c" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="900" y="1236" width="570" height="27" rx="3" fill="#fff" stroke="none" stroke-width="1.5"/>
+<text x="1185" y="1256" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="600" fill="#ad641c" text-anchor="middle" >ResultEvent 上送 / 反向持久化 ACK</text>
+<polyline points="1985,1458 2110,1458 2110,130 1397,130 1397,171" fill="none" stroke="#267649" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="7 5"/>
+<text x="2125" y="940" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#267649" text-anchor="middle" transform="rotate(-90 2125 940)">Coverage Gap → 补充模型 / 用例</text>
+<rect x="60" y="1582" width="2020" height="112" rx="12" fill="#f4f6f8" stroke="#cbd5df" stroke-width="1.5"/>
+<text x="90" y="1619" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="23" font-weight="700" fill="#213448" text-anchor="start" >三条不可绕过的契约</text>
+<text x="430" y="1619" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="21" font-weight="600" fill="#213448" text-anchor="start" >内容不漂移：Manifest + Bundle</text>
+<text x="960" y="1619" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="21" font-weight="600" fill="#213448" text-anchor="start" >资源不双占：Fencing + 恢复证明</text>
+<text x="1530" y="1619" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="21" font-weight="600" fill="#213448" text-anchor="start" >结果不虚高：固定分母 + 终态裁决</text>
+<text x="90" y="1659" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="19" font-weight="400" fill="#496077" text-anchor="start" >实线：主处理路径    虚线：覆盖反馈    ·    详细状态 / Schema / 反例验收见 docs/01–11</text>
+<text x="70" y="1730" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="start" >图源：docs/render_architecture.py  ·  依据：总架构 v1.1、Metadata 1.1、Catalog/Result 2、执行一致性契约</text>
+<text x="2060" y="1730" font-family="Microsoft YaHei, PingFang SC, Arial, sans-serif" font-size="18" font-weight="400" fill="#496077" text-anchor="end" >SVG 可搜索、可缩放；PNG 同源导出</text>
+</svg>
