@@ -669,3 +669,17 @@ CI 最终以 Quality Gate/Run 状态决定退出码，不能只看 JUnit 的 ski
 去重索引、投影和 ACK 水位是可重建派生物；进程重启先重放已完整提交日志，再对外接受请求。尾部不完整记录不视为已提交，按恢复策略隔离或截断未提交尾部。
 若采用数据库，事件/去重键/投影/ACK 游标在单个事务提交；若采用 JSONL，不跨多个独立文件假装原子事务。相同事件序列必须生成相同聚合哈希。
 Baseline 锁定保存单独不可变快照及对应日志水位/hash；本地 JSONL 也遵守迟到审计、不回写终态规则。
+
+## 35. Event/WAL Contract 与故障注入
+
+framework_tests/contract/event 固定输入事件及可控时钟轨迹，验证重复事件、同 ID 冲突载荷、乱序、序列缺口、LOST 后迟到 PASS；预期同时覆盖原始日志、投影终态、审计记录与连续 ACK 水位。
+Phase 1 验证本地 JSONL 断尾、重启重放、无重复计数和终态裁决；Phase 4 在 framework_tests/chaos 增加 Controller Down、Agent/Controller Restart、ACK 丢失、WAL 高水位/硬上限和网络分区。
+注入点包括“事件已持久化但 ACK 未送达”和“投影待更新即崩溃”；恢复后去重和投影必须与按序完整输入相同，未持久化内容不得提前确认。
+验收比较稳定状态和证据引用，不比较真实墙钟时间戳；未能恢复的事件缺口必须 INCOMPLETE，不能以忽略事件来获得表面一致。
+event payload 的结构模型与 Registry 使用 [12](12_Machine_Contracts_and_Engineering_Validation.md)定义的共享契约，Schema 通过仍必须执行序列、token 和状态迁移校验。
+
+## 36. 基础设施健康摘要
+
+从 Phase 1 保存 INFRA_RECOVERED 的 CaseExecution 数、发生 INFRA_* 的 Attempt 数、重试次数与恢复耗时；按 target/环境展示。一个 Case 重试多次只增加 Attempt 数，不增加 CaseExecution 分母。
+最终 FLAKY/ERROR/INCOMPLETE 中可能也出现过基础设施故障，因此基础设施失败 Attempt 总数不能只从 INFRA_RECOVERED 反推。
+发布阶段可按 10 §23 对 INFRA_RECOVERED 单独设门禁；保留其现有产品通过语义，不把同一结果改名为 FAIL 或隐藏历史失败。

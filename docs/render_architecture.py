@@ -12,34 +12,34 @@ FONT = 'Microsoft YaHei, PingFang SC, Arial, sans-serif'
 LANES = [
     ('design', '01', '测试设计平面', 'Test Design', '#2466ad', '#f0f6fc',
      '定义能力、合法组合与覆盖要求', [
-        ('feature', 'Feature / Capability Registry', '功能与能力注册表', ['Domain / Feature / Level', '统一分类、版本与环境能力', '拒绝自由命名和未知值']),
+        ('feature', 'Registry / Typed Contracts', '功能、枚举与机器契约', ['Feature / Capability / Enum', 'Core Model → Schema 导出', '解码、结构与语义分层验证']),
         ('model', 'Test Model / Constraint', '测试模型与合法空间', ['model_id + version + hash', '维度、合法值、组合约束', '无效或不可满足模型直接拒绝']),
-        ('coverage', 'Coverage Model / Points', '覆盖点与显式声明', ['Claim → assertion_refs', '五阶段、点去重、固定分母', 'UNMAPPED / UNSUPPORTED 单列']),
-        ('author', 'Case Design / Generator', '用例设计与审查', ['候选 → Trial Run → Review', 'Oracle 来源与语义哈希绑定', '只有有效 active 进入发布'])]),
+        ('coverage', 'Coverage Model / Points', '覆盖点与显式声明', ['Claim → assertion_refs', '五阶段、点去重、固定分母', '未映射 / 未审查 / 不支持单列']),
+        ('author', 'Case Design / Generator', '用例设计与覆盖审查', ['候选 → Trial Run → Review', 'review_input_hash 绑定声明', '模型 / 断言 / 语义变更均复核'])]),
     ('asset', '02', '测试资产平面', 'Test Asset', '#75519b', '#f6f2fa',
      '固定来源、编译内容与依赖', [
         ('git', 'Git / Asset Snapshot', '测试资产事实源', ['Case / Fixture / Model / Plan', 'Release 固定干净 Git tree', '开发 dirty 必须保存实际内容']),
         ('dsl', 'XGT / Scenario 1.1', '类型化双 DSL', ['SQL 显式边界 / JSON Expected', '并发 Step 树 / 稳定 Step ID', '版本分派，不静默改变旧语义']),
-        ('catalog', 'Compiler / Catalog 2', '统一模型与查询索引', ['有效 Metadata / status / issue', '覆盖声明、全依赖失效', '增量与全量结果必须一致']),
+        ('catalog', 'Compiler / Catalog 2', '统一模型与索引校验', ['有效 Metadata / status / issue', '依赖 / Claim Review / Verify', '增量与全量结果必须一致']),
         ('bundle', 'Immutable Bundle', '不可变编译内容', ['compiled_hash / semantic_hash', 'Case、Fixture、脚本、依赖', '执行前校验，拒绝工作区漂移'])]),
     ('control', '03', '控制平面', 'Control', '#187f87', '#eef8f8',
      '规划逻辑目标并控制资源准入', [
         ('selector', 'Selector / Test Plan', '精确选例与发布范围', ['Feature / Level / Issue / Status', '先冻结范围，再做能力过滤', '排除和不支持都有原因记录']),
-        ('manifest', 'Run Manifest 1', '不可变运行清单', ['Case × target / Bundle hash', '配置、工具、模型与基线快照', '锁定预期执行集合和分母']),
+        ('manifest', 'Run Manifest 1 / XGMJ1', '不可变运行清单', ['Case × target / Bundle hash', '身份投影 / 确定性字节编码', '锁定预期执行集合和分母']),
         ('scheduler', 'Global Planner / Scheduler', '目标调度与故障恢复', ['Shard：同 target 等价环境', 'Matrix：多个逻辑 target', '新 Attempt，不改变逻辑身份']),
-        ('lease', 'Registry / Resource Lease', '资源所有权与排空', ['层级冲突 / 跨 Run 原子准入', 'Lease + fencing_token', '旧执行停止证明后才能回收'])]),
+        ('lease', 'Resource Admission / Lease', '统一准入与资源所有权', ['资源身份 + 影响范围 + 模式', '跨 Run 原子准入 / Fencing', '停止与恢复证明后才可回收'])]),
     ('execution', '04', '执行与环境平面', 'Execution & Environment', '#ad641c', '#fff7ed',
      'Agent 本地执行，隔离失败资源', [
         ('worker', 'Local Planner / Worker Pools', '两级并行与资源复用', ['Fast / Normal / Heavy / Exclusive', 'Session / Fixture / Schema', '普通任务也遵守 Lease 准入']),
         ('executor', 'Executors / Adapters', 'SQL、事务与系统动作', ['Xugu / Admin / Cluster / Backup', 'Canonical 1 / 类型与值断言', '同步、取消与有界超时']),
-        ('reset', 'Cleanup / Reset / Probe', '恢复证明与污染隔离', ['保留 primary_status / 清理状态', '恢复失败 → QUARANTINED', '禁止未经确认的重试与复用']),
+        ('reset', 'Cleanup / Reset / Probe', '隔离与受控恢复', ['恢复失败 → QUARANTINED', '证明绑定 epoch 后恢复准入', 'enable 不得绕过恢复检查']),
         ('wal', 'Agent Result WAL', '本地持久化与有界离线', ['event_id / sequence / token', '有效租约 + WAL 空间才继续', '高水位暂停，ACK 后压缩'])]),
     ('quality', '05', '结果与质量平面', 'Result & Quality', '#267649', '#f0f8f2',
      '可信聚合、可比差异与发布判定', [
         ('events', 'Durable Event Log', '执行历史事实源', ['落盘、去重、有序接收', '持久化 ACK / 缺口重放', '旧终态事件只作迟到审计']),
         ('result', 'Result Projection / Artifacts', '可重建结果与失败证据', ['CaseExecution → Attempt → Step', '终态不回退 / Flaky 不隐藏', 'JSONL → Result DB / JUnit']),
         ('delta', 'Baseline / Delta', '锁定基线与可比集合', ['显式基线优先 / 目标映射', '用例、环境、模型变化分列', '失败签名只用于候选聚类']),
-        ('gate', 'Quality Gate / Coverage', '门禁与缺口反馈', ['固定分母 / 缺测不可隐藏', 'PASS / FAIL / 不确定 / 不适用', '必需门禁全部 PASS 才放行'])]),
+        ('gate', 'Quality Gate / Coverage', '质量与基础设施健康', ['固定分母 / 缺测不可隐藏', 'INFRA_RECOVERED 独立门禁', '必需门禁全部 PASS 才放行'])]),
 ]
 
 svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-labelledby="title desc">',
@@ -61,7 +61,7 @@ text(70,65,'XG DB Test',40,weight=800)
 text(340,65,'总体架构 v1.1',35,weight=700)
 text(70,105,'显式覆盖声明 → 不可变执行输入 → 受控资源执行 → 可信结果与发布门禁',24,fill='#496077')
 text(2060,60,'设计基线 · 2026-09-11',20,anchor='end',fill='#496077')
-text(2060,99,'五平面结构 / 非部署数量图',18,anchor='end',fill='#496077')
+text(2060,99,'工程化补充 / 非部署数量图',18,anchor='end',fill='#496077')
 
 node_ids=[]
 transitions=[]
@@ -105,12 +105,12 @@ edge('1985,1458 2110,1458 2110,130 1397,130 1397,171','#267649',True)
 text(2125,940,'Coverage Gap → 补充模型 / 用例',18,fill='#267649',anchor='middle',extra='transform="rotate(-90 2125 940)"')
 
 rect(60,1582,2020,112,'#f4f6f8','#cbd5df',12)
-text(90,1619,'三条不可绕过的契约',23,weight=700)
-text(430,1619,'内容不漂移：Manifest + Bundle',21,weight=600)
-text(960,1619,'资源不双占：Fencing + 恢复证明',21,weight=600)
-text(1530,1619,'结果不虚高：固定分母 + 终态裁决',21,weight=600)
-text(90,1659,'实线：主处理路径    虚线：覆盖反馈    ·    详细状态 / Schema / 反例验收见 docs/01–11',19,fill='#496077')
-text(70,1730,'图源：docs/render_architecture.py  ·  依据：总架构 v1.1、Metadata 1.1、Catalog/Result 2、执行一致性契约',18,fill='#496077')
+text(90,1619,'共享契约与工程验收',23,weight=700)
+text(430,1619,'Registry → Core Model → Schema',21,weight=600)
+text(960,1619,'Contract Test / Golden Vector',21,weight=600)
+text(1530,1619,'Catalog Verify / Benchmark',21,weight=600)
+text(90,1659,'五平面共用的库与构建产物；按阶段验收    ·    实线：主路径    虚线：覆盖反馈    ·    规范见 docs/01–12',19,fill='#496077')
+text(70,1730,'图源：docs/render_architecture.py  ·  依据：总架构 v1.1 工程化补充、执行一致性与机器契约规范',18,fill='#496077')
 text(2060,1730,'SVG 可搜索、可缩放；PNG 同源导出',18,fill='#496077',anchor='end')
 svg.append('</svg>')
 assert len(node_ids)==len(set(node_ids))==20

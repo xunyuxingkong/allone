@@ -3,6 +3,7 @@
 > 版本：v1.1（设计修订，2026-09-11；非已实现声明）
 > 项目定位：面向数据库原厂的统一功能测试、测试资产管理与版本质量验证平台
 > 适用范围：Xugu/自研数据库功能测试、回归测试、事务并发、备份恢复、集群 HA、兼容性与版本发布验证
+> 工程化补充：已评审优化清单；共享机器契约、准入规则与阶段验收见第 135 节及专项 12。
 
 ---
 
@@ -1329,6 +1330,7 @@ Global Planner
 Global Scheduler
 Environment Registry
 Capability Resolver
+ResourceAdmissionEngine
 Lease Manager
 Result Aggregator
 ```
@@ -1511,6 +1513,9 @@ assigned_duration / capacity_weight
 
 资源必须成为一等公民。
 
+ResourceAdmissionEngine 为共享规则库；Controller 的权威事务负责授予，Local Planner 只能在已授权范围内分配。资源有包含关系和访问/影响依赖，Session 可跨 Schema/Database，不能固定挂在单一 Schema 下。
+READ/WRITE/EXCLUSIVE 以稳定 resource_id 和影响范围为前提判断；同冲突域默认仅 READ/READ 共享，祖先独占阻止后代/依赖使用，不相交的资源可并行。它是框架资源许可，不替代数据库内部事务锁。详细矩阵与原子申请规则见 [06 §38](06_Distributed_Scheduler_Design.md)。
+
 资源类型：
 
 ```text
@@ -1545,6 +1550,8 @@ Lease 包含 lease_id、resource_type/resource_id、owner_run/attempt、fencing_
 能验证 token 的 Adapter 在每次资源操作前校验；无法 fencing 的直连 SQL/系统动作必须确认旧执行终止及资源复位，才能回收。
 续租失败的 Agent 停止启动新动作，在保守本地截止时间前停止受租约保护的执行；无法确认停止时环境进入 QUARANTINED。
 网络分区时宁可暂停相关资源，也不能允许新旧持有者并发操作。详见 [06](06_Distributed_Scheduler_Design.md)。
+
+隔离恢复必须依次完成 Check、Stop/Fence Verify、Reset、Probe 和证据持久化，最后按 admission_epoch 原子恢复 ONLINE；env enable 不能绕过恢复流程。见 [06 §39](06_Distributed_Scheduler_Design.md)。
 
 ---
 
@@ -2403,6 +2410,7 @@ Environment
 ```text
 xgtest validate
 xgtest index
+xgtest catalog verify
 xgtest list
 xgtest coverage
 xgtest generate
@@ -2424,10 +2432,10 @@ allone/
 ├── docs/
 │   ├── architecture/
 │   ├── specifications/
-│   └── modules/
+│   ├── modules/
+│   └── README.md                 # 当前文档入口
 │
 ├── models/
-│   ├── features/
 │   ├── tests/
 │   └── coverage/
 │
@@ -2461,9 +2469,15 @@ allone/
 │
 ├── plans/
 ├── environments/
-├── configs/
-│   ├── features.yaml
-│   └── capabilities.yaml
+├── configs/                       # 运行配置
+├── registry/                      # Feature/Capability/Enum 唯一源
+├── schemas/                       # 由严格 Core Model 生成
+├── framework_tests/               # 平台测试，不进入 Case Catalog
+│   ├── contract/
+│   ├── integration/
+│   ├── scenario/
+│   └── chaos/
+├── benchmarks/
 │
 ├── xgtest/
 │   ├── design/
@@ -2473,6 +2487,9 @@ allone/
 │   │
 │   ├── core/
 │   │   ├── model/
+│   │   ├── registry/
+│   │   ├── contracts/
+│   │   ├── resource_admission/
 │   │   ├── metadata/
 │   │   ├── capability/
 │   │   └── result/
@@ -2515,9 +2532,10 @@ allone/
 │   └── cli/
 │
 ├── scripts/
-├── pyproject.toml
-└── README.md
+└── pyproject.toml
 ```
+
+tests/ 继续保存数据库功能用例；framework_tests/ 验证平台本身。Registry 与模型生成链详见 [12](12_Machine_Contracts_and_Engineering_Validation.md)，不要在多个目录维护重复 Feature 定义。
 
 ---
 
@@ -2756,6 +2774,8 @@ Environment Model
 
 # 121. Phase 0：规范冻结
 
+完整前置条件、Driver 探测、首条用例闭环及 Phase 0–6 工作包顺序见 [13 工程实施顺序与阶段验收](13_Engineering_Implementation_Order.md)。下列各节继续定义架构阶段范围，具体实施依赖由 13 展开。
+
 目标：
 
 ```text
@@ -2775,6 +2795,8 @@ Result Model
 Environment Model
 ```
 
+同时冻结当前 SQL MVP 所需 Registry/严格 Core Model 与 Schema 生成方向、XGMJ1/Canonical 基础向量、共享准入规则和反例。模型与标准测试向量可以共同迭代；不要求尚未实现的分布式混沌测试在编码前完成。
+
 ---
 
 # 122. Phase 1：单集群 SQL MVP
@@ -2786,6 +2808,8 @@ Environment Model
 同时实现最小手工覆盖声明与 all-values/mandatory-combination Snapshot，确保 MVP 可回答 Coverage Gap；自动组合生成不在本阶段。
 本地执行也保留 Attempt、资源所有权和最终状态；分布式续租、Agent RPC 在 Phase 4 实现。
 验收与量化性能场景见 [11](11_Execution_Consistency_and_Validation_Contract.md)。
+
+工程化交付还包括 Catalog Verify、非空 Claim 的有效覆盖审查、Schema/Registry 导出一致性、本地事件重放和 Reset/Probe 集成反例。INFRA_RECOVERED 统计从本阶段保存；完整发布门禁仍按 Phase 6 实施。
 
 ---
 
@@ -3003,9 +3027,27 @@ XG DB Test 的核心不是：
 
 # 134. v1.1 契约责任与兼容边界
 
-本修订保持五平面和阶段范围，补齐可实现契约。01 是修订与验收索引；04 管 Metadata；05 管 Catalog；06 管资源调度；07 管事件与状态；08 管覆盖；10 管发布口径；11 管不可变执行、隔离和结果比较。
+本修订保持五平面和阶段范围，补齐可实现契约。01 是修订与验收索引；04 管 Metadata；05 管 Catalog；06 管资源调度；07 管事件与状态；08 管覆盖；10 管发布口径；11 管不可变执行、隔离和结果比较；12 管机器契约源、生成与工程验收。
 
 架构文档版本 1.1；DSL/Metadata/Protocol 1.1；Catalog/Result Schema 2；Canonical 1。数据 Schema 不兼容升级独立编号，不因总体架构仍为 v1 而静默兼容。
 旧 Query 方案仅保留背景；DSL 1.0 必须走独立解析器/显式转换，历史 Result 1 不直接并入 Result 2。尚无实现时，以下验收均为待开发要求，不代表已经通过。
 
 当前图：[SVG](../架构图_v1.svg) · [PNG](../架构图.png)。关键路径为显式覆盖声明 → 编译/索引 → Manifest/Bundle → 受控执行 → WAL/投影 → 可比 Delta/门禁 → 覆盖缺口。
+
+# 135. v1.1 工程化补充
+
+[优化清单评审](XG_DB_Test_v1.1_可优化项_List.md)中的 16 项有价值目标已按阶段纳入，原建议的资源类型冲突表、Session 归属树、清理后才比较结果的顺序和 tests/ 目录布局已修正。
+
+| 共享能力 / 模块 | 职责与落地位置 |
+|---|---|
+| Registry / Core Model / Schema | Registry 统一枚举，严格 Core Model 生成结构 Schema，语义与运行时校验独立，见 12 |
+| Contract Test / Golden Vector | 固定字节、哈希、状态与反例，按阶段在 framework_tests/ 落地；不由被测实现自动生成期望值 |
+| ResourceAdmissionEngine | 共用冲突域算法与原子授予，跨库 Session/Node 影响/容量不可遗漏，见 06 |
+| Catalog Verify | 对绑定快照只读检查 Metadata/依赖/Claim/Hash；损坏、漂移、证据不足分别报告，见 05 |
+| Coverage Review | review_input_hash 绑定执行语义、Claim、Model、断言；仅改声明也失效，见 04/08/09 |
+| Manifest Serialization | XGMJ1 身份投影、数字、Unicode、数组和内容引用规则，见 11 |
+| Recovery Workflow | 隔离期间关闭准入，恢复证明绑定当前 epoch，enable 不能直接解封，见 06 |
+| 基础设施门禁 | 可选 max_infra_recovered / infra_recovered_rate，使用冻结分母，不改变产品通过语义，见 07/10 |
+| Benchmark | 对照执行与固定测量条件，区分框架开销、数据库时间、内存和事件成本，见 11/12 |
+
+这是一组横跨现有五平面的共用契约和验收，非新增运行平面。模型、Schema 与网络协议有显式生成/映射关系；Protobuf/gRPC 不作为 SQL MVP 必需项。

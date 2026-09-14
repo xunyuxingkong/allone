@@ -284,3 +284,20 @@ unsupported_rate = SKIP(reason=UNSUPPORTED) / N_all
 new_failure 仅在完整可比样本中计算。缺基线、事件未收齐、目标匹配歧义或要求范围内存在未裁决差异时，该门禁不能 PASS。
 Case/环境/模型变化不自动代表失败，但必须给出经审查的变更归类或豁免证据并冻结到 Plan；否则相关必需比较门禁 INDETERMINATE。
 INCOMPLETE>0、Run FAILED/CANCELLED 或必要资产缺失时发布阻断。豁免必须有范围、原因、责任人、有效期和引用，报告仍展示原始失败/缺测，不修改分母或原始结果。
+
+## 23. INFRA_RECOVERED 独立门禁
+
+采用可配置基础设施健康门禁，避免大量基础设施失败重试后通过被产品通过率掩盖。两个字段均可使用，同时配置时都必须通过；未配置则只报告指标，不隐式采用零容忍策略。
+
+```yaml
+quality_gate:
+  max_infra_recovered: {op: lte, value: 5}
+  infra_recovered_rate: {op: lt, value: 0.01}
+```
+
+上述阈值为配置示例，不是所有项目的默认值。零容忍发布可显式将 max_infra_recovered.value 设为 0。
+R = 最终 INFRA_RECOVERED 的 CaseExecution 数，N = 第 21 节过滤前冻结的 expected_executions 数。infra_recovered_rate = R/N；max_infra_recovered 的实际值为 R。重试次数不会重复增加 R。
+同时报告各 target 的 R/N、INFRA_* Attempt 总数及未恢复数量；单一总比例可能掩盖某个目标环境不稳定，若 Plan 要求目标级门禁，使用该目标自己的冻结分母。
+N=0 的比例为 NOT_APPLICABLE；结果缺失或 Run 未收敛时为 INDETERMINATE；均不能让必需门禁自动通过。
+INFRA_RECOVERED 继续计入既有 Passed 分子；基础设施门禁独立决定发布是否允许，两者不覆盖对方。例：1000 个目标执行最终全部通过、其中 20 个 INFRA_RECOVERED，产品通过率 100%，基础设施恢复率 2%，示例中的两个基础设施门禁均 FAIL。
+不能靠扩大未执行集合稀释恢复率：execution_rate、完整性与基础设施门禁需同时检查。基础统计从 Phase 1 保存，完整发布门禁按既定 Phase 6 实现。

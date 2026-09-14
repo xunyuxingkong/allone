@@ -27,7 +27,7 @@
 
 - Metadata 1.1 与 Unified Case；04 的枚举、默认值与跨字段约束。
 - XGT/Scenario 1.1 语法、Expected 编码、Step ID 与兼容策略。
-- Catalog 2、Result 2、Manifest 1、Canonical 1；07 是 Failure Type 唯一注册表。
+- Catalog 2、Result 2、Manifest 1（XGMJ1）、Canonical 1（XGC1）；07 定义 Failure Type 语义，机器枚举统一由 registry/failure_types.yaml 派生，不手工维护第二套常量。
 - 显式 Coverage Claim、Model ID/Version/Hash、覆盖点分母。
 - 资源层级互斥、恢复证明、Attempt/Run 合法迁移与事件 ACK 规则。
 
@@ -70,6 +70,20 @@ stateDiagram-v2
 
 ## 6. 文档和图的一致性
 
-总架构为阅读入口；02–11 为各契约权威规范。架构图保留五平面，强调 Manifest/Bundle、准入与 Fencing、Reset/Probe、WAL/有序投影、可比 Delta 与 Coverage Gap。
+总架构为阅读入口；02–12 为各契约权威规范。架构图保留五平面，强调 Manifest/Bundle、准入与 Fencing、Reset/Probe、WAL/有序投影、可比 Delta 与 Coverage Gap，并显示共享机器契约和工程验收。
 原 Query 设计保留背景并标为历史稿。旧 DSL/Result 不能混用新语义；版本升级规则见 README。
 每次修订校对：字段映射、失败枚举、状态机、覆盖分母、示例可解析性、Markdown 链接与图文关系。产品行为通过 11 的反例和性能场景另行验收。
+
+## 7. 优化清单评审后的工程化补充
+
+[原清单](XG_DB_Test_v1.1_可优化项_List.md)第 9 节保存 16 项评审结果；总体方向采纳，修改以下不准确或不宜直接实施的部分：
+
+- 资源冲突先判断 resource_id/影响范围，不能使用无资源身份的类型表；Session 不固定属于 Schema。
+- 结果比较随业务 Step 完成；最终 Manifest 在选例/目标展开后冻结。
+- Schema、枚举与 Core Model 有单向生成关系；解码器负责重复键，领域校验器负责跨字段与状态语义。
+- Coverage Review 绑定独立 review_input_hash，不能只记录 reviewer 或只绑定执行 semantic_hash。
+- QUARANTINED 恢复证明先于重新准入；env enable 不能变成解封捷径。
+- tests/ 保留数据库资产，framework_tests/ 存平台 Contract/Integration/Scenario/Chaos Test。
+- Golden Vector、真实故障验证和基础设施门禁按既定阶段落地，未全部前置到 SQL MVP。
+
+新增 [12](12_Machine_Contracts_and_Engineering_Validation.md)作为共享工程规范；05/06/08/10/11 分别补齐 Verify、Admission/Recovery、Claim Review、基础设施门禁、编码/测试/预算。总架构 §135 与图源同步。

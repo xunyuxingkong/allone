@@ -481,11 +481,13 @@ DRAINING
 等待当前任务完成
 ```
 
-维护完成后：
+普通维护完成且恢复证明有效后，才允许解除维护排空：
 
 ```bash
 xgtest env enable cluster-a
 ```
+
+enable 不能把 QUARANTINED 或缺恢复证明的环境直接置 ONLINE；必须先走第 39 节 recover。它只解除人工维护/排空标记，不替代 Reset/Probe。
 
 ---
 
@@ -661,7 +663,7 @@ Weighted LPT 只是初始负载启发式；资源准入还要验证连接数、S
 历史耗时按 target 配置与 execution_class 统计；无历史时采用可配置保守默认值。
 P0 优先后在同级按 LPT 分配；不能让不兼容环境因负载低被选中。
 必须覆盖：网络分区但 DB 可达、续租失败、旧队列恢复、Controller 重启、多 Run 抢占同一集群、Cleanup 失败和硬超时 SQL 无法取消。
-所有场景验证“不会同时存在两个可写入的资源持有者”，而非仅验证新任务最后 PASS。
+所有场景验证“不会同时授予互相冲突的资源请求，旧 token 无法继续影响新持有者”，并检查状态与恢复证据；不同资源上的独立写入可以并行。
 
 ## 37. Agent Protocol 1.1 信封
 
@@ -670,3 +672,80 @@ register/heartbeat 的能力与容量必须和 Registry/target 快照相容；as
 Controller 未收到分配 ACK 时先查询/reconcile，不把未知分配直接当未执行。Agent 在持久化分配和 Bundle 验证后 ACK，启动每个 Attempt 前核对当前 assignment_epoch 与租约。
 push_result_events 的事件含 producer_epoch、sequence、assignment_epoch 与 token，ACK 返回每个 Attempt 连续持久化 sequence；重放只补缺口，不取得新的执行权。
 Agent/Controller 重启恢复各自持久化 epoch/游标；旧实例不能通过重新注册复活失效分配。静态单集群 MVP 由 Local Run Manager 执行相同身份/状态规则，无需远程 API。
+
+## 38. ResourceAdmissionEngine 与冲突规则
+
+采用共享 ResourceAdmissionEngine 库作为唯一准入规则实现；Global Scheduler、Local Planner、Resource Manager 调用同一 contract_set_id 下的规则。纯函数负责冲突计算，权威资源状态存储中的事务负责最终授予，不能用两份本地检查结果代替原子准入。
+Phase 1 由 Local Run Manager 使用该库和本地状态；Phase 4 Controller 决定跨环境/跨 Run 所有权，Local Planner 只能在已授予的环境额度/作用域内分配子资源，不得扩大权限或自行续租。
+
+资源关系是“包含树 + 访问/影响边”，不是把 Session 固定放在 Schema 下面：
+
+```text
+Environment → Cluster → Node
+                     → Database → Schema
+                     → BackupDir / TempDir
+Session → 当前 Connection / Cluster / 所访问 Database 与 Schema
+动作 → affected_resources（可能跨多个分支或整个 Cluster）
+```
+
+Session 可切换 Schema 或执行跨 Schema SQL；关联资源必须在 Case 编译/规划时声明上界，运行时只允许在授权范围内变化。无法确定影响范围的系统动作提升到 Cluster EXCLUSIVE，不能漏锁。
+Node Restart 可能影响多个 Database；BackupDir/TempDir 也可能是共享挂载或路径别名。Environment Registry 必须为同一物理资源生成稳定 resource_id/冲突域，不能因路径或环境别名不同重复授权。
+
+ResourceRequest 字段：request_id、owner_run/attempt、target_id、contract_set_id、resource_refs、access_mode、units/capacity、affected_scope、lease_deadline。动作推导的最低作用域与 Metadata 合并后不可降级。
+READ/WRITE/EXCLUSIVE 是框架对共享 Fixture/Schema/环境的访问许可，不是 SQL 读写锁模式。一个并发事务 Case 中多个 Session 同属一个 Attempt，可在内部竞争数据库锁；Admission 不把它们互相阻塞。
+
+在相同规范资源/冲突域、不同所有者之间应用对称矩阵：
+
+| 已持有 / 新请求 | READ | WRITE | EXCLUSIVE |
+|---|---|---|---|
+| READ | 允许共享 | 冲突 | 冲突 |
+| WRITE | 冲突 | 冲突 | 冲突 |
+| EXCLUSIVE | 冲突 | 冲突 | 冲突 |
+
+补充判定顺序：
+
+1. 检查环境状态、epoch/token、request_id 幂等性、影响范围和容量；不满足则拒绝。
+2. 将别名、共享挂载、跨库 Session 和系统动作展开到稳定资源及依赖边；祖先 EXCLUSIVE 与所有后代/依赖使用冲突，后代已被使用时也不能授予祖先 EXCLUSIVE。
+3. 对每个重叠冲突域应用矩阵。READ/WRITE 本身不隐式锁定整棵树；要保护完整共享数据集，必须把它所覆盖的资源展开，或声明包含该范围的 EXCLUSIVE。
+4. 不同、无影响重叠的资源允许并行，但仍消耗共同的 Session/连接/Worker 容量。不同 Database 的 EXCLUSIVE 不默认冲突；若操作还触及共同 Node/Cluster，按展开后的范围冲突。
+5. 同一 Attempt 的多请求先合并为最高访问模式，容量不得重复扣减；权限升级重新原子校验，不能把共享读原地无检查改成写。
+6. 多资源请求一次事务全有或全无；若使用预留协议，预留不授予执行权，失败/超时回滚所有预留。同 request_id 不同内容拒绝。
+
+所以不能直接使用“Session vs DB Exclusive 一律冲突”的资源类型表：只有目标身份及影响范围重叠时才成立。冲突响应返回相冲突的资源/owner 和原因，便于解释排队。
+
+## 39. QUARANTINED Recovery Workflow
+
+环境进入 QUARANTINED 时递增 admission_epoch、拒绝新准入，并撤销或冻结旧分配。运行中的操作按可取消性停止；状态改变本身不能证明 SQL/进程已停止。
+恢复期间环境对普通任务始终封闭。Recovery 是带 recovery_id 的工作流，不新增可被普通 Scheduler 误用的 ONLINE 中间状态。
+
+```text
+QUARANTINED / MAINTENANCE
+→ Recovery Check（确定原因、旧 owner、影响资源）
+→ Stop/Fence Verify（确认旧执行无法再影响资源）
+→ Reset（匹配 Adapter/资源的 reset_contract）
+→ Probe（状态、数据与环境配置）
+→ Evidence Persist
+→ compare-and-swap 当前 admission_epoch → ONLINE
+```
+
+recovery_evidence 包含 recovery_id、resource_ids、admission_epoch、失效 lease/token、终止/隔离证明、reset/probe 契约及 Adapter 版本、各步骤结果和内容哈希。
+新故障或环境变更使 epoch 变化时，旧证据失效，最后 ONLINE 转换必须失败。恢复执行者有单独、受审计的受限维护授权；该授权不允许启动普通 Case。
+可重试的恢复失败继续 QUARANTINED；需要人工修复或外部依赖恢复时进入 MAINTENANCE，并保留原因。不能因恢复超时就默认开放资源。
+
+```bash
+xgtest env quarantine cluster-a
+xgtest env probe cluster-a
+xgtest env recover cluster-a
+xgtest env enable cluster-a
+```
+
+quarantine 关闭准入并记录原因；probe 只检查，不自动解封；recover 执行受控恢复并写证明；enable 只解除维护标记，必须核验当前 epoch 的有效恢复证明。四个动作都不能跳过实际停止和资源隔离。
+该流程在 Phase 4 落地；备份/HA 专用 Reset/Probe 随 Phase 5 Adapter 验证。
+
+## 40. 资源与 Matrix 故障验收
+
+framework_tests/contract/admission 使用可控时钟和状态轨迹验证同/异 Schema、不同 Database 独占、祖先独占、跨库 Session、Node 影响展开、多资源最后一项冲突与 request 重发。
+framework_tests/chaos 验证 token=10 的 Agent 与 Controller 断网但 DB 可达：过期后不得直接给新 Agent 执行权；只有实际 fencing 阻止旧动作且清理完成，或旧 Session/进程停止 + Reset/Probe 成功后，才能以新 token 运行。
+恢复网络后的旧 Agent 不能复活旧队列/续租；资源状态始终不能出现冲突授予。测试同时观察数据库动作是否实际被拒绝，不能只断言控制端 token 已加一。
+Matrix 验收固定 target，Attempt 1 在 A LOST、Attempt 2 在同 target 的等价 B PASS：仅一个 CaseExecution、两个 Attempt、final_status=INFRA_RECOVERED；不等价版本/架构环境不得参与迁移。
+恢复测试还需覆盖并发 recover、Probe 通过后再次故障、证据落盘失败、env enable 试图绕过隔离；均不得错误 ONLINE。

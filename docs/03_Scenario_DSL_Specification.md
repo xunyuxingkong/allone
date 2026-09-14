@@ -485,3 +485,11 @@ Setup/Steps 的 Case 总预算与清理独立预算见 11；Failure Type 和 Ret
 1.0 与 1.1 按版本分派；新增严格并发/类型规则通过显式升级验证，不能静默改变历史文件结果。
 
 YAML 解析使用 04 的 YAML 1.2 Core 规则；Session/Step 的字符串参数禁止隐式日期或布尔转换。transaction rollback 的清理语义由 Adapter 规范为“存在事务则回滚”，无事务时成功返回，避免完整示例 COMMIT 后清理误报。
+
+## 29. Cancel / Barrier 极端场景验收（Phase 3）
+
+framework_tests/scenario 构造三个显式同步的分支：A 开启事务并取得锁，B 经 condition 确认正在等待该锁，C 在独立 Barrier 等待中触发超时。B 的数据库阻塞由 condition 观察，不能靠 sleep 假定已经发生。
+Barrier 的参与者配置必须在静态上合法，测试通过让另一个参与分支在抵达前受控延迟来触发超时；不能拿缺少合法参与者、理应被 Compiler 拒绝的脚本充当运行时取消测试。
+父 parallel 收到第一个失败后传播取消，A 回滚、B 尝试 Driver cancel、所有 Session 执行 Reset/Probe，Case 在业务与清理预算内得到确定的终态；保留各分支错误，最终状态按 07 裁决。
+若 B 的 SQL 无法确认停止，预期为资源隔离而非“全部释放成功”；Cleanup 失败将 Attempt 归为 ERROR/FIXTURE_CLEANUP，不能为了有界结束而提前复用污染资源。
+另测 signal 先发后等、分支取消时 Barrier 解除、同 Session 并发使用被拒、清理本身超时，以及同一 Attempt 内并发请求不会被框架 Admission 当成两个独立 Case 互锁。

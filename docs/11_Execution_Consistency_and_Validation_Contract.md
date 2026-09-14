@@ -32,17 +32,17 @@ Agent 缺 Bundle、哈希不符、插件版本不兼容时报告框架错误，�
 | target_entries | target_id、数据库精确 build、OS/arch/topology/mode、配置及数据集指纹 |
 | expected_executions | case_id × target_id、选择原因、适用性结果、reason_code |
 | bundles | 内容 URI、SHA-256、大小、依赖清单；不包含凭据 |
-| runtime_versions | Compiler、DSL、Metadata、Canonical、Adapter/Driver/Runner/Protocol 版本 |
+| runtime_versions | Compiler、DSL、Metadata、Canonical、Adapter/Driver/Runner/Protocol 版本，以及 contract_set_id |
 | coverage_scope | model_id/version/hash、strategy、要求级别、点集合引用及分母 |
 | baseline / quality_gate | 解析后的基线 ID、比较策略、数值阈值 |
-| manifest_hash | 除自身与存储位置外的规范化 Manifest 内容哈希 |
+| manifest_hash | 第 12 节定义的身份投影与 XGMJ1 规范字节的 SHA-256 |
 
 解析后的 Plan 包括参数值、选择/排除原因和目标快照。秘密值只保留受控引用与版本，不写入 Bundle/日志；秘密变化是否影响可比性由目标配置策略明确。
 case_entries 还需关联当前 Catalog 全量 ID/status/semantic_hash 的轻量资产清单，供 Delta 区分未选中、禁用和真正删除。
 
 ## 3. 内容哈希
 
-所有哈希使用 SHA-256；对象键排序、数组顺序按语义保留，文本使用 UTF-8/LF。原始 source_hash 仍对原始字节计算。
+所有哈希使用 SHA-256；对象键排序、数组按各自语义处理。源文本的换行只在指定输入步骤规范化，不能对序列化后的字符串内容全局替换；原始 source_hash 对原始字节计算。Manifest 使用第 12 节独立的 XGMJ1 编码，不能直接套用数据库结果的 XGC1 行编码。
 
 - dependency_hash：按稳定输入键排序的完整内容哈希清单，含 Suite、默认值、Fixture、脚本、Registry、Model、策略与工具版本。
 - compiled_hash：最终 Unified Case 的规范序列化，包含 effective_metadata、dependency_hash 和编译器版本；排除编译时间与绝对工作区路径。
@@ -55,7 +55,7 @@ Bundle 内相对路径不得越出快照根。DSL 1.0 与 1.1、Canonical 版本
 ## 4. Attempt 执行与隔离
 
 ```text
-Resource Admission → Prepare → Setup → Steps
+Resource Admission → Prepare → Setup → Steps（含 Normalizer / Validator）
 → Cleanup → Reset → Probe → Result Finalize → Release
 ```
 
@@ -161,3 +161,45 @@ Catalog 场景：100000 Case，module/feature/level/tag/issue/status 混合筛�
 Runner 场景：分别使用空/快速查询与真实复杂查询，测每 Case 框架开销 p50/p95、吞吐、连接峰值及失败诊断成本。Fast Path 初始目标为框架附加开销 p95 <=5ms/Case，目标是否可达以基准实测决定。
 百万行结果：memory_budget_bytes=256MiB，记录 Runner RSS、排序临时磁盘与总耗时；超预算拒绝或显式资源错误，不能无界 fetchall。
 性能结果不能只给 Case/秒；必须同时确认比较正确性、隔离和事件持久化开启。吞吐未达目标先定位瓶颈，再调整资源与实现。
+
+## 12. Manifest Canonical Serialization：XGMJ1
+
+Manifest 1 使用 XGMJ1；该标识与 Golden Vector 一起冻结，不能将 Python/Go/Java 默认 JSON 输出直接视为规范编码。
+
+1. 严格解析并校验 Schema/静态语义，重复键在构造对象前拒绝；数字按精确十进制读取，禁止先转 binary64 再序列化。
+2. 构造身份投影：仅去掉根 manifest_hash，以及 Schema 明确标记的 ContentRef.uri。ContentRef 必须同时保留 sha256 与 size；没有内容哈希的引用不能仅保留 URI 后当作不可变输入。
+3. run_id、target_id、catalog_snapshot_id、Plan 参数、版本、模型、选择原因、Bundle hash 均保留。本哈希标识本次冻结运行输入，包含运行身份，不用于断言不同 Run 的执行语义相等；后者使用 semantic_hash 与目标可比规则。
+4. 集合型数组先规范排序：case_entries 按 case_id，target_entries 按 target_id，expected_executions 按 (case_id,target_id)，bundles 按 sha256，依赖清单按 input_kind/input_path；重复标识拒绝。其他集合数组必须在 Schema 标明排序键，未标明的一律保留顺序。
+5. Step、SQL 参数、Expected 行和显式排序指令等顺序敏感数组原样保留。不能为“稳定 Hash”全局排序所有数组。
+6. 对象键按 Unicode 标量值序列升序排列；UTF-8、无 BOM、无结构空白、文件尾不加 LF。源码格式中的 CRLF/LF 不影响解析后 JSON，但字符串内的 CR/LF 不擅自互换。
+7. 字符串仅转义双引号、反斜线和 U+0000..U+001F 控制字符；控制字符统一小写六字符形式 `\u00xx`，不使用 `\n`/`\t` 缩写。其他有效 Unicode 标量直接 UTF-8 编码，不转义斜线、不做 NFC/NFD 归一化；孤立 surrogate 拒绝。
+8. number 使用有限精确十进制、无指数、无前导加号、整数部分无多余前导零，小数尾零删除、空小数部分连同小数点删除，-0 归为 0。true/false/null 使用 JSON 小写字面量；NaN/Infinity 禁止作为 Manifest number。
+9. Schema 给每个数值字段设范围；XGMJ1 统一限制规范数字 token <=128 个 ASCII 字符，超过则拒绝而非截断。SQL 大整数、Decimal、特殊浮点等测试值位于 Bundle typed value 中，不因 Manifest 数值上限改变测试语义。
+10. manifest_hash 为 SHA-256(canonical_bytes) 的小写十六进制。不得移除任意名字包含 uri/path/time 的字段；脚本参数中的路径与业务时间仍可能是执行语义。
+
+最小编码向量（只验证编码器，不是完整 Manifest）：输入 `{"z":1.00,"a":"中","b":-0}` 的期望 UTF-8 文本为 `{"a":"中","b":0,"z":1}`，末尾无换行。
+该向量长 23 字节，十六进制为 `7b2261223a22e4b8ad222c2262223a302c227a223a317d`，SHA-256 为 `d7096f9172852751f9434e5208521cfb0d4ccda2ee58c7e1206a0ae5a6a18cef`。
+完整 Manifest 向量还必须验证：Bundle ContentRef URI 变化哈希不变；Bundle hash、run_id 或参数变化哈希变化；集合重排不变；Step 顺序变化则变化。向量同时固定精确字节及 SHA-256，按 [12](12_Machine_Contracts_and_Engineering_Validation.md)审定。
+
+## 13. semantic_hash 边界与审查失效
+
+semantic_hash 是执行语义输入指纹，不是 SQL 逻辑等价证明。SQL 原文仅规范换行，不做交换律、常量折叠、去注释或空白重写来合并 Case。
+执行参数、timeout/cleanup_timeout、Setup/Step/Cleanup 树、Fixture、Oracle、Expected、comparison_profile 和所用语义版本必须列入规范化输入清单；不通过“重要参数”这种自由判断决定是否入 Hash。
+标题、Owner、Tag、Coverage Claim 与审查人/日期不入执行 semantic_hash。Claim/模型/断言映射有独立 review_input_hash（08 §19），变化会使覆盖审查失效，即使 SQL 完全未变。
+编译产物保留完整有效 Metadata，因此审查证据变化会影响 compiled_hash。审查输入不能包含其自身 evidence_hash、reviewer 或 reviewed_at，避免循环引用。
+验收必须包含 SELECT a+b 与 SELECT b+a 得到不同 semantic_hash；同一 SQL 的 LF/CRLF 得到相同语义指纹；不同 Expected、Timeout 或 Fixture 得到不同指纹。
+
+## 14. Reset / Probe 合约测试
+
+framework_tests/integration/reset_probe 按 Adapter/Driver/DB build 执行并记录以下维度：未提交事务、autocommit、事务隔离、current schema/search_path、timezone/locale、会话参数、role、temporary table、cursor、prepared statement 和锁。
+先取得干净基线，再让 Case A 修改受支持维度并在 Setup、执行或清理阶段注入异常，随后 Case B 用独立 Probe 验证状态与数据隔离。根据数据库能力拆成多个合法 SQL 场景，不能假设所有数据库都支持同一段 SET/PREPARE/DDL 或事务性 DDL。
+除了异常退出，还验证成功、断言失败、取消、Driver 断连和进程丢失；每项预期为“验证恢复成功”或“隔离/销毁且不复用”，不是一律要求原连接继续可用。
+Adapter 不支持的 Probe 显式记录 unsupported，且不得将其当作该资源恢复证明；Session 重建不能代替共享数据库或集群状态恢复。
+
+## 15. Benchmark 记录与阶段预算
+
+benchmarks/ 的五类脚本与阶段安排见 [12](12_Machine_Contracts_and_Engineering_Validation.md)。Phase 1 至少记录 Selector p50/p95、全量/增量编译时间、Runner 开销、Canonical 吞吐/内存、PASS 事件字节数、事件持久化吞吐及背压。
+Runner 使用同一 Driver、SQL、数据和连接复用策略做直接执行对照；报告独立样本分布、样本数、预热次数和固定随机种子，不能直接把两个独立 p95 相减当“p95 框架开销”。
+PASS 大小分别报告业务摘要、Step Event 和 Artifact 总量，按 Case/Step 数给出总量估算；事件吞吐必须在持久化开启时测量，CPU 时间和 fsync 等待分开记录。
+2s 查询/5ms 框架附加开销/256MiB 工作内存是固定测量条件下的初始目标，不是未经测试的承诺；进程基础 RSS 与可控排序工作内存分别统计。未有绝对目标的指标先建立基线，目标或回归阈值写入基准配置再启用门禁。
+Hash/大结果扩展模式未实现时不记为性能验收通过；只测试当前阶段真正执行的模式。故障恢复和数据正确性不得因关闭日志、重置或验证来换取达标。

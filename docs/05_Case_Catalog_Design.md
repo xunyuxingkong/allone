@@ -515,3 +515,30 @@ catalog_meta 保存 catalog_version=2、snapshot_id、dependency_root_hash、rep
 增量构建和全量构建必须生成相同有效 Case 与语义哈希集合。大小/时间戳不能作为 Release 内容身份。
 全局注册表、默认值或编译器改变时，从依赖反向索引失效；删除 Fixture 或脚本不得复用旧编译结果。
 Catalog 1 不兼容，必须 rebuild 为 2；Result 历史不随 rebuild 改写。完整契约见 [11](11_Execution_Consistency_and_Validation_Contract.md)。
+
+## 27. Catalog Verify（Phase 1）
+
+```bash
+xgtest catalog verify
+```
+
+该命令只读，使用与 Compiler 相同的 contract_set_id、模型、继承和哈希函数，对 Catalog 所引用的资产快照做一致性验证，不连接被测数据库，也不自动 rebuild 或修复。
+
+| 检查 | 必须发现的问题 |
+|---|---|
+| identity / references | 重复 Case ID、主键/外键损坏、悬空 Fixture/依赖/断言引用 |
+| effective_metadata | 索引列及 tags/resources/requirements 与有效 Metadata 不一致 |
+| dependency | case_inputs 内容、dependency_hash、Suite/全局继承结果不一致 |
+| compiled / semantic | Bundle 内容与 compiled_hash、重新计算的 semantic_hash 不一致 |
+| coverage | 模型版本/hash、约束、assertion_refs 或 coverage_review 不一致 |
+| snapshot | Registry/Schema/Compiler 版本、catalog snapshot 与资产来源不一致 |
+
+默认核对 Catalog 绑定的不可变快照；显式 `--workspace` 可额外检查当前工作区漂移，不能用工作区的新文件代替旧输入后宣称旧 Catalog 损坏。
+结果为 VALID / CORRUPT / STALE / UNVERIFIABLE，附 Case ID、字段、期望/实际哈希和来源。CORRUPT 是内部矛盾，STALE 是指定工作区已变化，UNVERIFIABLE 是缺旧快照或所需工具版本；不得把无法验证当通过。
+存在多类问题时逐项报告，整体以 CORRUPT > UNVERIFIABLE > STALE > VALID 排序；仅 VALID 返回成功。规划针对本次冻结快照验证，无需网络连接或全局服务。
+
+## 28. 增量与重建等价验收
+
+framework_tests/contract 和集成验证构造同一资产快照，分别增量 index 与全量 rebuild，比较按 Case ID 规范化的有效 Metadata、依赖、Coverage Claim/Review 与内容哈希；不比较 SQLite 文件字节、物理行序、created_at 等生成时间。
+至少覆盖源文件修改、保持 mtime/size 的内容修改、Suite 扇出、Fixture/模型/Registry 变化、文件删除、改 ID、重复 ID 和索引中途失败。失败不得提交半新半旧索引。
+Catalog Verify 与编译共用函数可减少漂移，但不能独立证明该函数正确；必须加入人工审定输入和预期值，不能只让两个相同错误实现相互印证。

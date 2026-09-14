@@ -377,3 +377,28 @@ Compiler 将 Claim 投影到相应策略的点集合 C；不同 Claim/Case 覆�
 Snapshot 保存 manifest_hash、每个 model_id/version/hash、策略、D 的哈希与数量、五阶段点集或可恢复引用、UNMAPPED/UNSUPPORTED 明细。
 验收例：D=100、Available=92、Selected=80、Executed=78、Passed=77，则分别报告 92%、80%、78%、77%；选中 80 不会把 Passed 改成 77/80 的“总体覆盖率”。
 MVP 只实现 all-values 和 mandatory-combination；pairwise 及更复杂策略在 Phase 2 实现，未实现策略明确拒绝。
+
+## 19. Coverage Review 与独立失效条件
+
+显式 Claim 仍可能错误，例如 INNER JOIN 的 SQL 被声明为 LEFT JOIN。Schema/约束通过只说明声明格式合法，不能证明该功能已被实际验证。
+Review 必须同时展示 SQL/Scenario、Setup/Fixture、Expected/Oracle、Coverage Assignment、assertion_refs 对应断言和精确 Model 定义；由审查人确认断言能支撑声称的覆盖。
+
+```yaml
+coverage_review:
+  reviewer: query-team-reviewer
+  reviewed_at: "2026-09-11T10:00:00Z"
+  review_revision: "git-review-revision"
+  evidence_hash: "<review-artifact-sha256>"
+  review_input_hash: "<review-input-sha256>"
+```
+
+一个 coverage_review 绑定当前 Case 的完整 Claim 集合。review_input_hash = SHA-256(XGMJ1(review_input))，review_input 显式包含执行 semantic_hash、按 claim_id 排序的完整 claims（含 assignment 和 assertion_refs）、各模型的 model_id/version/hash 与 review_contract_version。
+assertion_refs 在此为无序引用集合，按 Step ID 排序去重；Step 本身的执行顺序由 semantic_hash 固定。reviewer/时间/证据自身及 compiled_hash 不进入 review_input，避免循环哈希。
+SQL/Fixture/Expected、Claim 值、断言引用、模型或审查规则变化均使旧证据失效；只改标题/Owner 不使其失效。不能仅绑定 Git revision 或执行 semantic_hash，否则“只改 Claim”会沿用旧审查。
+同一个 PR 可以承载用例审查和覆盖审查，只要证据同时绑定两类输入，不强制再设一套审批系统。
+
+## 20. 审查与覆盖计数的处理
+
+active 且 coverage 非空时，缺失/过期/无法读取的证据在 validate/index/Release plan 阶段报错。统计旧快照时，不能验证的 Claim 标为 UNREVIEWED，不进入 Available/Selected/Executed/Passed 分子，不自动改写 Case 状态或缩小 Designed 分母。
+无 Claim 仍为 UNMAPPED；draft/review 可以携带待审 Claim 做试跑，但不得贡献正式 Available Coverage。UNREVIEWED 与 UNMAPPED/UNSUPPORTED 分开展示。
+Contract Test 要求：重复 Claim 不提高覆盖；断言引用错误静态失败；仅将 inner 改成 left 而保持 SQL 不变会使 review_input_hash 改变；未审或证据过期无法贡献正式覆盖。未来 Golden Vector 位于 framework_tests/contract/coverage/。

@@ -465,7 +465,7 @@ destructive
 建议文件：
 
 ```text
-configs/capabilities.yaml
+registry/capabilities.yaml
 ```
 
 示例：
@@ -499,7 +499,7 @@ Case 与 Environment 必须使用同一套 Capability Key。
 建议：
 
 ```text
-configs/features.yaml
+registry/features.yaml
 ```
 
 示例：
@@ -586,6 +586,7 @@ Metadata 在编译阶段解析完继承关系后进入 Case Catalog。
 | comparison_profile | 11 定义的 Canonical 比较策略 | canonical-v1-strict |
 | oracle_provenance | kind、reference、reviewer、evidence_hash | null；active 必须有可信来源 |
 | validation_evidence | semantic_hash、trial_run_id、trial_evidence_hash、review_revision、reviewer | null；active 时必填并与当前语义匹配 |
+| coverage_review | reviewer、reviewed_at、review_revision、evidence_hash、review_input_hash | null；active 且 coverage 非空时必填，绑定规则见 08 §19 |
 
 字段名 `oracle` 只声明 Case 的主要验证类别；具体比较参数由 Step.expect 和 comparison_profile 决定，两者必须相容。
 `model_id` 为不带版本的稳定标识（如 query.join），`model_version` 为字符串（如 "1"）。禁止同时把版本嵌入 ID 并另填矛盾版本。
@@ -598,7 +599,7 @@ Metadata 在编译阶段解析完继承关系后进入 Case Catalog。
 - conditional 必须有 reset_contract；safe 也必须完成 11 的停止与清洁验证，不能继承 safe 后跳过验证。
 - restricted 必须声明受限资源，不能只有标签而没有准入对象。
 - sessions 不小于并发 Session 峰值；同一 Session 不允许被不同并发分支同时使用。
-- status=active 要求至少一个有效断言、Oracle 来源和 Review 证据；coverage 声明必须引用存在的断言 step_id。
+- status=active 要求至少一个有效断言、Oracle 来源和 Review 证据；coverage 声明必须引用存在的断言 step_id。coverage 非空时还需有效 coverage_review，不能用一次 SQL 试跑通过替代覆盖审查。
 - since/until 在 Resolver 中与 target 数据库版本比较；环境缺失、资源暂时不足与版本不支持分别记录，不混成 SKIP。
 
 ## 30. 跨模块字段映射
@@ -609,9 +610,16 @@ Metadata 在编译阶段解析完继承关系后进入 Case Catalog。
 | tags | Classification.tags | case_tags | frozen metadata |
 | requirements、resources、parallel | Requirements/Resources | 专表 + cases.parallel | target 匹配证据 / Attempt.environment_id |
 | retry、reset_contract、fixtures | RetryPolicy/Fixtures | cases / case_fixtures | Bundle / cleanup_status |
-| coverage、model refs | CoverageClaim[] | case_coverage_claims | coverage snapshot / model hash |
+| coverage、model refs、coverage_review | CoverageClaim[] / CoverageReview | case_coverage_claims + effective_metadata_json | coverage snapshot / model hash / review_input_hash |
 | generated_by、oracle_provenance | Provenance | cases JSON | frozen metadata |
 | comparison_profile | ComparisonProfile | cases + effective_metadata_json | canonical_version / semantic_hash |
 | source / dependencies / compiled | SourceInfo | hashes + case_inputs | manifest_hash + compiled_hash + semantic_hash |
 
 所有已验证 Metadata 同时序列化到 effective_metadata_json；索引列必须与该 JSON 在同一事务内一致。Selector 禁止通过重新读源文件补缺失字段。
+
+## 31. 机器模型与 Registry 权威源
+
+枚举来自 registry/，严格 Core Model 是结构 Schema 的唯一可编辑源，JSON Schema 由其导出；结构、静态语义与运行时检查分工以 [12](12_Machine_Contracts_and_Engineering_Validation.md)为准。
+YAML/JSON 重复键必须在构造对象前拒绝，不能指望已经拿到字典的 Pydantic/JSON Schema 发现被覆盖的字段。
+Catalog、Compiler、Runner 消费同一个带 contract_set_id 的模型包。未知 key、状态命名空间、版本和禁止隐式转换的字段不能被不同模块各自放宽。
+coverage_review 放入已有 effective_metadata_json，不新增第二份 Review 数据事实源；Review 证据引用不可变内容，校验器根据 Claim/模型/语义计算 review_input_hash。

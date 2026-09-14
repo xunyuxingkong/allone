@@ -351,3 +351,9 @@ Case ID 冲突必须失败；Normalized SQL/Coverage Signature 相同仅作为�
 active 默认选例由 Catalog.status 实现；generated/draft/review 不得靠遗漏 status 绕过发布门禁。
 
 validation_evidence 的字段与必填规则由 04 §28 定义，随 effective_metadata 写入 Catalog/Bundle；Review 证据绑定语义哈希而非易变的工作区路径。
+
+## 22. 用例审查与覆盖审查协同
+
+review → active 在现有 Trial Run/Oracle 证据之外，对非空 coverage 校验 coverage_review。同一 Review 可同时完成两项检查，但须分别绑定 execution semantic_hash 与 08 §19 的 review_input_hash。
+只修改 Claim、模型版本或 assertion_refs 时，即使 Trial Run 的执行语义未变，也必须重新审查覆盖声明；不要求为纯标题修改重新运行数据库用例。
+Review 证据存入 Git 资产或可按 SHA-256 读取的不可变 Artifact，Catalog 只索引其引用。证据缺失时发布校验失败，不能自动补一个 reviewer 字段冒充已审查。
