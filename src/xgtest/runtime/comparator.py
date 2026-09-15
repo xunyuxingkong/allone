@@ -7,6 +7,8 @@ import json
 import re
 from typing import Any
 
+from xgtest.adapter.xugu import extract_error
+
 
 def _json_bytes(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
@@ -35,9 +37,8 @@ def compare_affected_rows(actual: int, expected: Any) -> bool:
 def compare_error(error: Exception, expected: Any) -> bool:
     if not isinstance(expected, dict):
         return False
-    message = str(error)
-    code = next((str(getattr(error, name)) for name in ("code", "errno") if getattr(error, name, None) is not None), None)
-    sqlstate = getattr(error, "sqlstate", None)
+    details = extract_error(error)
+    message, code, sqlstate = details["message"], details["code"], details["sqlstate"]
     if expected.get("code") is not None and str(expected["code"]) != code:
         return False
     if expected.get("sqlstate") is not None and str(expected["sqlstate"]) != str(sqlstate):

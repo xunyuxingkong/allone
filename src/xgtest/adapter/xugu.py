@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -38,6 +39,24 @@ class XuguConnectionConfig:
         if missing:
             raise ValueError(f"missing database configuration: {', '.join(missing)}")
         return cls(**values)
+
+
+@dataclass(frozen=True)
+class XuguQueryResult:
+    columns: tuple[str, ...]
+    column_types: tuple[str | None, ...]
+    rows: tuple[tuple[Any, ...], ...]
+
+
+def extract_error(error: Exception) -> dict[str, str | None]:
+    """Return stable error attributes without exposing connection details."""
+    message = str(error)
+    code = next((str(getattr(error, name)) for name in ("code", "errno") if getattr(error, name, None) is not None), None)
+    if code is None:
+        matched = re.search(r"\[([A-Z]\d+)\b", message)
+        code = matched.group(1) if matched else None
+    sqlstate = getattr(error, "sqlstate", None)
+    return {"code": code, "sqlstate": str(sqlstate) if sqlstate is not None else None, "message": message}
 
 
 def connect(config: XuguConnectionConfig) -> Any:
@@ -91,13 +110,16 @@ class XuguSession:
         finally:
             cursor.close()
 
-    def query(self, sql: str, parameters: tuple[Any, ...] = ()) -> tuple[list[str], list[tuple[Any, ...]]]:
+    def query(self, sql: str, parameters: tuple[Any, ...] = ()) -> XuguQueryResult:
         cursor = self._connection().cursor()
         try:
             cursor.execute(sql, parameters)
             description = cursor.description or ()
-            columns = [str(item[0]) for item in description]
-            return columns, [tuple(row) for row in cursor.fetchall()]
+            return XuguQueryResult(
+                columns=tuple(str(item[0]) for item in description),
+                column_types=tuple(str(item[1]) if len(item) > 1 and item[1] is not None else None for item in description),
+                rows=tuple(tuple(row) for row in cursor.fetchall()),
+            )
         finally:
             cursor.close()
 

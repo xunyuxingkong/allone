@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from xgtest.adapter.xugu import XuguConnectionConfig, smoke_probe
+from xgtest.adapter.xugu import XuguConnectionConfig, extract_error, smoke_probe
 
 
 def test_config_requires_every_secret_reference() -> None:
@@ -42,3 +42,7 @@ def test_smoke_probe_closes_cursor_and_connection(monkeypatch: pytest.MonkeyPatc
     config = XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password")
     assert smoke_probe(config) == (1,)
     assert calls == ["SELECT 1", "cursor.close", "connection.close"]
+
+
+def test_extract_error_reads_code_from_xugu_message() -> None:
+    assert extract_error(RuntimeError("[E5021 L1 C1] missing table"))["code"] == "E5021"

@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession
+from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession, extract_error
 from xgtest.core.yaml_loader import load_yaml
 from xgtest.core.models import MvpCaseReport, MvpRunReport, MvpStepReport
 from .comparator import compare_affected_rows, compare_error, compare_rows
@@ -46,10 +46,10 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
             item: dict[str, Any] = {"id": step_id, "kind": kind, "status": "PASS"}
             try:
                 if kind == "query":
-                    columns, rows = session.query(sql)
-                    item["columns"], item["rows"] = tuple(columns), tuple(rows)
+                    query_result = session.query(sql)
+                    item["columns"], item["column_types"], item["rows"] = query_result.columns, query_result.column_types, query_result.rows
                     comparison = step.get("comparison") or {}
-                    item["status"] = "PASS" if compare_rows(rows, step.get("expected"), comparison.get("mode", "exact")) else "FAIL"
+                    item["status"] = "PASS" if compare_rows(list(query_result.rows), step.get("expected"), comparison.get("mode", "exact")) else "FAIL"
                 else:
                     item["affected_rows"] = session.execute(sql)
                     expected = step.get("expected")
@@ -58,7 +58,14 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
                 if item["status"] != "PASS":
                     case_status = "FAIL"
             except Exception as error:
-                item.update({"status": "PASS" if compare_error(error, step.get("expected")) else "ERROR", "error_type": type(error).__name__, "error": str(error)})
+                details = extract_error(error)
+                item.update({
+                    "status": "PASS" if compare_error(error, step.get("expected")) else "ERROR",
+                    "error_type": type(error).__name__,
+                    "error": details["message"],
+                    "error_code": details["code"],
+                    "sqlstate": details["sqlstate"],
+                })
                 if item["status"] != "PASS":
                     case_status = "ERROR"
             item["duration_ms"] = round((time.perf_counter() - step_started) * 1000, 3)

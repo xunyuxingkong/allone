@@ -74,6 +74,21 @@
           "default": null,
           "title": "Affected Rows"
         },
+        "column_types": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Column Types",
+          "type": "array"
+        },
         "columns": {
           "default": [],
           "items": {
@@ -98,6 +113,18 @@
           ],
           "default": null,
           "title": "Error"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Code"
         },
         "error_type": {
           "anyOf": [
@@ -127,6 +154,18 @@
           },
           "title": "Rows",
           "type": "array"
+        },
+        "sqlstate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sqlstate"
         },
         "status": {
           "enum": [

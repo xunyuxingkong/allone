@@ -273,9 +273,12 @@ class MvpStepReport(StrictModel):
     status: Literal["PASS", "FAIL", "ERROR"]
     duration_ms: float = Field(ge=0)
     columns: tuple[str, ...] = ()
+    column_types: tuple[str | None, ...] = ()
     rows: tuple[tuple[Any, ...], ...] = ()
     affected_rows: int | None = None
     error_type: str | None = None
+    error_code: str | None = None
+    sqlstate: str | None = None
     error: str | None = None
 
 
