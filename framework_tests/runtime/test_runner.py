@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from xgtest.core.yaml_loader import load_yaml
-from xgtest.runtime.runner import _compare_rows
+from xgtest.runtime.comparator import compare_rows
 
 
 def test_compare_rows_supports_exact_and_rowsort() -> None:
     expected = {"rows": [[1], [2]]}
-    assert _compare_rows([(1,), (2,)], expected)
-    assert _compare_rows([(2,), (1,)], expected, "rowsort")
-    assert not _compare_rows([(2,), (1,)], expected)
+    assert compare_rows([(1,), (2,)], expected)
+    assert compare_rows([(2,), (1,)], expected, "rowsort")
+    assert not compare_rows([(2,), (1,)], expected)
 
 
 def test_mvp_case_yaml_is_readable() -> None:

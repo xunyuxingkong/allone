@@ -12,6 +12,7 @@ from typing import Any
 from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession
 from xgtest.core.yaml_loader import load_yaml
 from xgtest.core.models import MvpCaseReport, MvpRunReport, MvpStepReport
+from .comparator import compare_affected_rows, compare_error, compare_rows
 
 
 def _case_id(case: dict[str, Any], path: Path) -> str:
@@ -20,14 +21,6 @@ def _case_id(case: dict[str, Any], path: Path) -> str:
     if not isinstance(value, str) or not value:
         raise ValueError(f"{path}: metadata.id is required")
     return value
-
-
-def _compare_rows(actual: list[tuple[Any, ...]], expected: Any, mode: str = "exact") -> bool:
-    expected_rows = expected.get("rows") if isinstance(expected, dict) else expected
-    if not isinstance(expected_rows, list):
-        raise ValueError("query expected must contain rows")
-    normalized = [tuple(row) for row in expected_rows]
-    return sorted(actual) == sorted(normalized) if mode == "rowsort" else actual == normalized
 
 
 def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
@@ -56,14 +49,18 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
                     columns, rows = session.query(sql)
                     item["columns"], item["rows"] = tuple(columns), tuple(rows)
                     comparison = step.get("comparison") or {}
-                    item["status"] = "PASS" if _compare_rows(rows, step.get("expected"), comparison.get("mode", "exact")) else "FAIL"
+                    item["status"] = "PASS" if compare_rows(rows, step.get("expected"), comparison.get("mode", "exact")) else "FAIL"
                 else:
                     item["affected_rows"] = session.execute(sql)
+                    expected = step.get("expected")
+                    if expected is not None:
+                        item["status"] = "PASS" if compare_affected_rows(item["affected_rows"], expected) else "FAIL"
                 if item["status"] != "PASS":
                     case_status = "FAIL"
             except Exception as error:
-                item.update({"status": "ERROR", "error_type": type(error).__name__, "error": str(error)})
-                case_status = "ERROR"
+                item.update({"status": "PASS" if compare_error(error, step.get("expected")) else "ERROR", "error_type": type(error).__name__, "error": str(error)})
+                if item["status"] != "PASS":
+                    case_status = "ERROR"
             item["duration_ms"] = round((time.perf_counter() - step_started) * 1000, 3)
             results.append(item)
     finally:
