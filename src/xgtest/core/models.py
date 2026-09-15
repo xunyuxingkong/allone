@@ -267,6 +267,37 @@ class ResultEvent(StrictModel):
     payload: dict[str, Any]
 
 
+class MvpStepReport(StrictModel):
+    id: str
+    kind: str
+    status: Literal["PASS", "FAIL", "ERROR"]
+    duration_ms: float = Field(ge=0)
+    columns: tuple[str, ...] = ()
+    rows: tuple[tuple[Any, ...], ...] = ()
+    affected_rows: int | None = None
+    error_type: str | None = None
+    error: str | None = None
+
+
+class MvpCaseReport(StrictModel):
+    case_id: str
+    status: Literal["PASS", "FAIL", "ERROR"]
+    cleanup_status: Literal["PASS", "FAILED"]
+    duration_ms: float = Field(ge=0)
+    steps: tuple[MvpStepReport, ...]
+    error: str | None = None
+
+
+class MvpRunReport(StrictModel):
+    schema_version: Literal["1"] = "1"
+    run_id: str
+    started_at: datetime
+    finished_at: datetime
+    target: dict[str, str]
+    cases: tuple[MvpCaseReport, ...]
+    status: Literal["PASS", "FAIL"]
+
+
 MODEL_EXPORTS: dict[str, type[BaseModel]] = {
     model.__name__: model
     for model in (
@@ -279,5 +310,8 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         ResourceRequest,
         Manifest,
         ResultEvent,
+        MvpStepReport,
+        MvpCaseReport,
+        MvpRunReport,
     )
 }

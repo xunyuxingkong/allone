@@ -1,0 +1,208 @@
+{
+  "$defs": {
+    "MvpCaseReport": {
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "cleanup_status": {
+          "enum": [
+            "PASS",
+            "FAILED"
+          ],
+          "title": "Cleanup Status",
+          "type": "string"
+        },
+        "duration_ms": {
+          "minimum": 0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "ERROR"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/MvpStepReport"
+          },
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "case_id",
+        "status",
+        "cleanup_status",
+        "duration_ms",
+        "steps"
+      ],
+      "title": "MvpCaseReport",
+      "type": "object"
+    },
+    "MvpStepReport": {
+      "additionalProperties": false,
+      "properties": {
+        "affected_rows": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Affected Rows"
+        },
+        "columns": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "duration_ms": {
+          "minimum": 0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "error_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Type"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "rows": {
+          "default": [],
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "title": "Rows",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "ERROR"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "duration_ms"
+      ],
+      "title": "MvpStepReport",
+      "type": "object"
+    }
+  },
+  "$id": "xgtest://schema/1.1/MvpRunReport",
+  "additionalProperties": false,
+  "properties": {
+    "cases": {
+      "items": {
+        "$ref": "#/$defs/MvpCaseReport"
+      },
+      "title": "Cases",
+      "type": "array"
+    },
+    "finished_at": {
+      "format": "date-time",
+      "title": "Finished At",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "started_at": {
+      "format": "date-time",
+      "title": "Started At",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "target": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Target",
+      "type": "object"
+    }
+  },
+  "required": [
+    "run_id",
+    "started_at",
+    "finished_at",
+    "target",
+    "cases",
+    "status"
+  ],
+  "title": "MvpRunReport",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

@@ -11,6 +11,7 @@ from typing import Any
 
 from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession
 from xgtest.core.yaml_loader import load_yaml
+from xgtest.core.models import MvpCaseReport, MvpRunReport, MvpStepReport
 
 
 def _case_id(case: dict[str, Any], path: Path) -> str:
@@ -29,7 +30,7 @@ def _compare_rows(actual: list[tuple[Any, ...]], expected: Any, mode: str = "exa
     return sorted(actual) == sorted(normalized) if mode == "rowsort" else actual == normalized
 
 
-def _run_case(config: XuguConnectionConfig, path: Path) -> dict[str, Any]:
+def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
     raw = load_yaml(path)
     if not isinstance(raw, dict):
         raise ValueError(f"{path}: case must be a mapping")
@@ -53,7 +54,7 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> dict[str, Any]:
             try:
                 if kind == "query":
                     columns, rows = session.query(sql)
-                    item["columns"], item["rows"] = columns, rows
+                    item["columns"], item["rows"] = tuple(columns), tuple(rows)
                     comparison = step.get("comparison") or {}
                     item["status"] = "PASS" if _compare_rows(rows, step.get("expected"), comparison.get("mode", "exact")) else "FAIL"
                 else:
@@ -70,7 +71,18 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> dict[str, Any]:
             session.rollback()
         finally:
             session.close()
-    return {"case_id": case_id, "status": case_status, "steps": results, "duration_ms": round((time.perf_counter() - started) * 1000, 3)}
+    cleanup_steps = [item for item in results if item["kind"] == "cleanup"]
+    cleanup_status = "PASS" if all(item["status"] == "PASS" for item in cleanup_steps) else "FAILED"
+    if cleanup_status == "FAILED":
+        case_status = "ERROR"
+    report = MvpCaseReport(
+        case_id=case_id,
+        status=case_status,
+        cleanup_status=cleanup_status,
+        duration_ms=round((time.perf_counter() - started) * 1000, 3),
+        steps=tuple(MvpStepReport.model_validate(item) for item in results),
+    )
+    return report
 
 
 def run_cases(config: XuguConnectionConfig, case_dir: Path, output: Path) -> dict[str, Any]:
@@ -78,21 +90,28 @@ def run_cases(config: XuguConnectionConfig, case_dir: Path, output: Path) -> dic
     if not paths:
         raise ValueError(f"no YAML cases found under {case_dir}")
     started = datetime.now(UTC)
-    results: list[dict[str, Any]] = []
+    results: list[MvpCaseReport] = []
     for path in paths:
         try:
             results.append(_run_case(config, path))
         except Exception as error:
-            results.append({"case_id": path.stem, "status": "ERROR", "error_type": type(error).__name__, "error": str(error)})
-    report = {
-        "schema_version": "1",
-        "run_id": hashlib.sha256(started.isoformat().encode()).hexdigest()[:16],
-        "started_at": started.isoformat(),
-        "finished_at": datetime.now(UTC).isoformat(),
-        "target": {"database_alias": config.database, "host_hash": hashlib.sha256(config.host.encode()).hexdigest()},
-        "cases": results,
-        "status": "PASS" if all(item["status"] == "PASS" for item in results) else "FAIL",
-    }
+            results.append(MvpCaseReport(
+                case_id=path.stem,
+                status="ERROR",
+                cleanup_status="FAILED",
+                duration_ms=0.0,
+                steps=(),
+                error=f"{type(error).__name__}: {error}",
+            ))
+    report = MvpRunReport(
+        run_id=hashlib.sha256(started.isoformat().encode()).hexdigest()[:16],
+        started_at=started,
+        finished_at=datetime.now(UTC),
+        target={"database_alias": config.database, "host_hash": hashlib.sha256(config.host.encode()).hexdigest()},
+        cases=tuple(results),
+        status="PASS" if all(item.status == "PASS" for item in results) else "FAIL",
+    )
+    serialized = report.model_dump(mode="json")
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return report
+    output.write_text(json.dumps(serialized, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return serialized
