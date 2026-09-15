@@ -89,7 +89,7 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
     return report
 
 
-def run_cases(config: XuguConnectionConfig, case_dir: Path, output: Path) -> dict[str, Any]:
+def run_cases(config: XuguConnectionConfig, case_dir: Path, output: Path, sql_runtime_profile_id: str | None = None) -> dict[str, Any]:
     paths = sorted(case_dir.glob("*.yaml"))
     if not paths:
         raise ValueError(f"no YAML cases found under {case_dir}")
@@ -111,7 +111,11 @@ def run_cases(config: XuguConnectionConfig, case_dir: Path, output: Path) -> dic
         run_id=hashlib.sha256(started.isoformat().encode()).hexdigest()[:16],
         started_at=started,
         finished_at=datetime.now(UTC),
-        target={"database_alias": config.database, "host_hash": hashlib.sha256(config.host.encode()).hexdigest()},
+        target={
+            "database_alias": config.database,
+            "host_hash": hashlib.sha256(config.host.encode()).hexdigest(),
+            **({"sql_runtime_profile_id": sql_runtime_profile_id} if sql_runtime_profile_id else {}),
+        },
         cases=tuple(results),
         status="PASS" if all(item.status == "PASS" for item in results) else "FAIL",
     )
