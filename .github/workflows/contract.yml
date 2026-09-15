@@ -1,0 +1,22 @@
+name: Contract verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest
+      - run: xgtest registry validate
+      - run: xgtest registry generate-enums
+      - run: xgtest schema export
+      - run: git diff --exit-code -- src/xgtest/generated schemas

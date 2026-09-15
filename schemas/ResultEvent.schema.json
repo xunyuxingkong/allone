@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attempt_id": {
+      "title": "Attempt Id",
+      "type": "string"
+    },
+    "event_type": {
+      "title": "Event Type",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "producer_epoch": {
+      "minimum": 0,
+      "title": "Producer Epoch",
+      "type": "integer"
+    },
+    "sequence": {
+      "minimum": 1,
+      "title": "Sequence",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "attempt_id",
+    "producer_epoch",
+    "sequence",
+    "event_type",
+    "payload"
+  ],
+  "title": "ResultEvent",
+  "type": "object"
+}

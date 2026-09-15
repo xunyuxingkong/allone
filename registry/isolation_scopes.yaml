@@ -1,0 +1,8 @@
+items:
+  - key: session
+  - key: worker_schema
+  - key: case_schema
+  - key: database
+  - key: cluster
+
+\n

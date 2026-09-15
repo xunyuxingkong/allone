@@ -1,0 +1,11 @@
+items:
+  - key: join
+    phase: sql_mvp
+  - key: union
+    phase: sql_mvp
+  - key: ddl_table
+    phase: sql_mvp
+  - key: string_function
+    phase: sql_mvp
+
+\n

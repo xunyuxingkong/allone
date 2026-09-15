@@ -33,6 +33,23 @@ Phase 0 冻结 SQL MVP 所需模型、序列化和关键反例；标准向量与
 Manifest.runtime_versions 冻结 contract_set_id；Agent 必须能加载同一已发布契约集合，不能凭“字段看起来差不多”接受新版本。
 版本 1.1 的工程化补充尚无运行数据需要迁移；一旦模型/向量用于正式执行，修改字段解释、枚举含义或编码规则必须发布新契约版本，不回写历史快照。
 
+### 2.1 核心契约与运行时 Profile 的发布身份
+
+G0A 冻结数据库无关的核心规则；G0B 冻结具体 Driver/数据库组合的实测映射。实施文档中的 core_contract_set_id 是 contract_set_id 的同义称呼，协议与模型只保留 contract_set_id 一个核心身份字段。
+
+| 发布对象 | 内容与身份 |
+|---|---|
+| Core Contract Descriptor | descriptor_version、契约语义版本、Registry/Core Model/语义校验器/Golden Vector 的源内容清单与哈希、生成器版本、Schema/枚举等派生产物清单与哈希；contract_set_id 为该身份投影经 XGMJ1 编码后的 SHA-256 |
+| SQL Runtime Profile | profile_schema_version、Profile 语义版本、contract_set_id、适用 DB build/Driver/OS/arch/兼容模式及影响行为的配置、Type/Error Mapping、cancel/stop/reset/probe 策略、能力判定/限制，以及探测脚本/输入/脱敏证据的内容哈希；sql_runtime_profile_id 为该身份投影经 XGMJ1 编码后的 SHA-256 |
+
+身份投影排除自身 ID、导出时间、机器绝对路径和下载 URI；产物/证据以内容哈希固定。清单以稳定相对键排序，能力按 capability key 排序，映射规则等有语义的顺序保持不变。Core 生成产物不嵌入自身 contract_set_id，发布描述符在生成完成后计算；Profile 的证据不引用其最终 Profile ID，避免自引用。具体身份投影和正反 Golden Vector 必须在各自冻结 Gate 验收。
+
+两类描述符作为按内容寻址的不可变发布产物，与所引用证据一起提供可校验引用；Bundle 的依赖清单必须包含执行所需描述符和映射内容。证据可用受控 Artifact 引用，不能只留下可变的本机路径。不得保存凭据明文。
+
+Manifest.runtime_versions.contract_set_id 固定核心集合；每个 SQL target_entry 的 sql_runtime_profile_id 固定其运行时 Profile。一个 Run 可含不同 SQL Profile，但这些 Profile 必须引用该 Run 的同一核心集合。Runner/Agent 在执行前校验内容哈希、核心关联、Profile Schema、运行器支持范围以及实际 DB/Driver/模式是否匹配；缺失、不匹配或无法校验时拒绝执行并报告明确原因，不自动切换到最新 Profile。
+
+未探测能力记录 UNKNOWN，不因 Profile 已发布就认定 supported；执行仍按所需能力判定适用性，缺口保留在原目标分母中。核心规则或 Profile 行为调整均发布新语义版本及新身份，证据/内容变化也产生新身份。允许发布新版核心契约并重新验证 Profile，禁止原地改写旧版本或历史 Manifest。Profile 变化作为运行上下文差异交由 Baseline/Delta 判定可比性，不冒充 Case 语义变化。
+
 ## 3. Registry 命名与治理
 
 ```text
@@ -142,4 +159,4 @@ Golden 输出由规则推导并人工审定，或由独立实现交叉核对。�
 基础设施恢复计数从 Phase 1 的 Result 保存；完整发布门禁引擎仍在 Phase 6，不因新增一项指标把整个发布系统提前。
 CI 按当前阶段选择 required contract 集，不用“尚未支持模式被拒绝”的测试代替未来模式成功实现的验收，也不宣称待开发目录已经通过测试。
 
-各阶段的前置环境、具体工作包、首条真实 JOIN 闭环及交付顺序见 [13 工程实施顺序与阶段验收](13_Engineering_Implementation_Order.md)。本文定义共用契约与工程验收规则，13 负责安排其实现依赖。
+各阶段的前置环境、具体工作包、首条真实 JOIN 闭环及交付顺序见 [13 工程实施顺序与阶段验收](13_Engineering_Implementation_Order_Revised.md)。本文定义共用契约与工程验收规则，13 负责安排其实现依赖。

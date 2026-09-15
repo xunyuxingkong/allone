@@ -1,0 +1,9 @@
+items:
+  - key: sql.execute
+    phase: sql_mvp
+  - key: sql.cancel
+    phase: sql_runtime
+  - key: session.reset_probe
+    phase: sql_runtime
+
+\n

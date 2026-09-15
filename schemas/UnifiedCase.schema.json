@@ -1,0 +1,323 @@
+{
+  "$defs": {
+    "ComparisonProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Canonical Version",
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "exact",
+            "rowsort",
+            "expected_error"
+          ],
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "ComparisonProfile",
+      "type": "object"
+    },
+    "CoverageClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "assertion_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assertion Refs",
+          "type": "array"
+        },
+        "assignment": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Assignment",
+          "type": "object"
+        },
+        "claim_id": {
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "model_id": {
+          "title": "Model Id",
+          "type": "string"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "model_id",
+        "model_version",
+        "assignment",
+        "assertion_refs"
+      ],
+      "title": "CoverageClaim",
+      "type": "object"
+    },
+    "CoverageReview": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ref": {
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "review_input_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Review Input Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "review_input_hash",
+        "evidence_ref"
+      ],
+      "title": "CoverageReview",
+      "type": "object"
+    },
+    "EffectiveMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "destructive": {
+          "default": false,
+          "title": "Destructive",
+          "type": "boolean"
+        },
+        "feature": {
+          "title": "Feature",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Z][A-Z0-9_.-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "isolation": {
+          "title": "Isolation",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "module": {
+          "title": "Module",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "review",
+            "active",
+            "disabled",
+            "deprecated"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "timeout": {
+          "pattern": "^\\d+(ms|s|m|h)$",
+          "title": "Timeout",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "module",
+        "feature",
+        "level",
+        "status",
+        "timeout",
+        "isolation"
+      ],
+      "title": "EffectiveMetadata",
+      "type": "object"
+    },
+    "FixtureRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "fixture_id": {
+          "title": "Fixture Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fixture_id",
+        "content_hash"
+      ],
+      "title": "FixtureRef",
+      "type": "object"
+    },
+    "SourceInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "relative_path": {
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "source_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "relative_path",
+        "source_hash"
+      ],
+      "title": "SourceInfo",
+      "type": "object"
+    },
+    "SqlStep": {
+      "additionalProperties": false,
+      "properties": {
+        "comparison": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComparisonProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "expected": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "setup",
+            "statement",
+            "query",
+            "cleanup"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "sql": {
+          "minLength": 1,
+          "title": "Sql",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "sql"
+      ],
+      "title": "SqlStep",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "compiled_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Compiled Hash",
+      "type": "string"
+    },
+    "coverage": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CoverageClaim"
+      },
+      "title": "Coverage",
+      "type": "array"
+    },
+    "coverage_review": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CoverageReview"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "dependency_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Dependency Hash",
+      "type": "string"
+    },
+    "fixtures": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FixtureRef"
+      },
+      "title": "Fixtures",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EffectiveMetadata"
+    },
+    "semantic_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Semantic Hash",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/SourceInfo"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/SqlStep"
+      },
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "metadata",
+    "source",
+    "steps",
+    "dependency_hash",
+    "compiled_hash",
+    "semantic_hash"
+  ],
+  "title": "UnifiedCase",
+  "type": "object"
+}

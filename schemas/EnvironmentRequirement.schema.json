@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "capability": {
+      "title": "Capability",
+      "type": "string"
+    },
+    "required": {
+      "default": true,
+      "title": "Required",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "capability"
+  ],
+  "title": "EnvironmentRequirement",
+  "type": "object"
+}

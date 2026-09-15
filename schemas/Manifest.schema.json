@@ -1,0 +1,146 @@
+{
+  "$defs": {
+    "BundleRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "size": {
+          "minimum": 0,
+          "title": "Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "content_hash",
+        "size"
+      ],
+      "title": "BundleRef",
+      "type": "object"
+    },
+    "ExpectedExecution": {
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "reason_code": {
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "target_id": {
+          "title": "Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "target_id",
+        "reason_code"
+      ],
+      "title": "ExpectedExecution",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "properties": {
+        "db_build": {
+          "title": "Db Build",
+          "type": "string"
+        },
+        "driver_version": {
+          "title": "Driver Version",
+          "type": "string"
+        },
+        "sql_runtime_profile_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sql Runtime Profile Id"
+        },
+        "target_id": {
+          "title": "Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_id",
+        "db_build",
+        "driver_version"
+      ],
+      "title": "Target",
+      "type": "object"
+    },
+    "TestPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_executions": {
+          "items": {
+            "$ref": "#/$defs/ExpectedExecution"
+          },
+          "title": "Expected Executions",
+          "type": "array"
+        },
+        "selector": {
+          "title": "Selector",
+          "type": "string"
+        },
+        "targets": {
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "title": "Targets",
+          "type": "array"
+        }
+      },
+      "required": [
+        "selector",
+        "targets",
+        "expected_executions"
+      ],
+      "title": "TestPlan",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "bundles": {
+      "items": {
+        "$ref": "#/$defs/BundleRef"
+      },
+      "title": "Bundles",
+      "type": "array"
+    },
+    "contract_set_id": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Contract Set Id",
+      "type": "string"
+    },
+    "plan": {
+      "$ref": "#/$defs/TestPlan"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "contract_set_id",
+    "plan",
+    "bundles"
+  ],
+  "title": "Manifest",
+  "type": "object"
+}

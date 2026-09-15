@@ -1,0 +1,3 @@
+"""Generated contract artifacts."""
+
+\n

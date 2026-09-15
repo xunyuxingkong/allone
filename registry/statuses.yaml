@@ -1,0 +1,29 @@
+case_asset:
+  - draft
+  - review
+  - active
+  - disabled
+  - deprecated
+case_execution:
+  - PENDING
+  - RUNNING
+  - PASS
+  - FAIL
+  - ERROR
+  - INFRA_RECOVERED
+attempt:
+  - PENDING
+  - RUNNING
+  - PASS
+  - FAIL
+  - ERROR
+  - TIMEOUT
+  - CANCELLED
+step:
+  - PENDING
+  - RUNNING
+  - PASS
+  - FAIL
+  - ERROR
+
+\n

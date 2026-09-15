@@ -1,0 +1,71 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "destructive": {
+      "default": false,
+      "title": "Destructive",
+      "type": "boolean"
+    },
+    "feature": {
+      "title": "Feature",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[A-Z][A-Z0-9_.-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "isolation": {
+      "title": "Isolation",
+      "type": "string"
+    },
+    "level": {
+      "title": "Level",
+      "type": "string"
+    },
+    "module": {
+      "title": "Module",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "review",
+        "active",
+        "disabled",
+        "deprecated"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "tags": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "timeout": {
+      "pattern": "^\\d+(ms|s|m|h)$",
+      "title": "Timeout",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "module",
+    "feature",
+    "level",
+    "status",
+    "timeout",
+    "isolation"
+  ],
+  "title": "EffectiveMetadata",
+  "type": "object"
+}

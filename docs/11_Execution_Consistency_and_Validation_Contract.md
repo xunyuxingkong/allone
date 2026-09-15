@@ -29,7 +29,7 @@ Agent 缺 Bundle、哈希不符、插件版本不兼容时报告框架错误，�
 | git_commit / dirty / source_snapshot_hash | 资产来源 |
 | catalog_snapshot_id / plan_hash | 索引与解析后的完整 Plan |
 | case_entries | case_id、level、status、compiled_hash、semantic_hash、coverage refs |
-| target_entries | target_id、数据库精确 build、OS/arch/topology/mode、配置及数据集指纹 |
+| target_entries | target_id、数据库精确 build、OS/arch/topology/mode、配置及数据集指纹；SQL Target 的 sql_runtime_profile_id |
 | expected_executions | case_id × target_id、选择原因、适用性结果、reason_code |
 | bundles | 内容 URI、SHA-256、大小、依赖清单；不包含凭据 |
 | runtime_versions | Compiler、DSL、Metadata、Canonical、Adapter/Driver/Runner/Protocol 版本，以及 contract_set_id |
@@ -39,6 +39,7 @@ Agent 缺 Bundle、哈希不符、插件版本不兼容时报告框架错误，�
 
 解析后的 Plan 包括参数值、选择/排除原因和目标快照。秘密值只保留受控引用与版本，不写入 Bundle/日志；秘密变化是否影响可比性由目标配置策略明确。
 case_entries 还需关联当前 Catalog 全量 ID/status/semantic_hash 的轻量资产清单，供 Delta 区分未选中、禁用和真正删除。
+contract_set_id 固定数据库无关核心契约，core_contract_set_id 仅为实施阶段同义称呼，不重复序列化。每个 SQL Target 的 sql_runtime_profile_id 必须关联同一核心契约，并进入 Manifest 身份投影；不同 Target 可引用不同 Profile。Bundle 依赖固定所需 Profile 内容，执行前核验实际环境和 Driver 匹配；字段、身份编码与发布规则见 [12 §2.1](12_Machine_Contracts_and_Engineering_Validation.md#21-核心契约与运行时-profile-的发布身份)。Profile 漂移属于运行上下文变化，不能静默替换。
 
 ## 3. 内容哈希
 

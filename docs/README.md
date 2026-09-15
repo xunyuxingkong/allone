@@ -8,7 +8,7 @@
 
 - [总架构](XG_DB_Test_Architecture_Design_v1.md)：完整需求、五平面、模块边界与阶段路线；文件名保留 v1，内容版本为 1.1。
 - [修订与验收索引](01_Architecture_Review_and_Refinement.md)：问题、修改位置、实现前必须完成的验证。
-- [工程实施顺序与阶段验收](13_Engineering_Implementation_Order.md)：前置环境、契约代码、Driver 探测、首批样板，以及 Phase 0–6 的工作包与依赖顺序。
+- [工程实施顺序与阶段验收](13_Engineering_Implementation_Order_Revised.md)：G0A/G0B 冻结、Driver/Adapter 验证、首批样板，以及 Phase 1–6 的工作包与依赖顺序。
 - [优化清单与逐项评审](XG_DB_Test_v1.1_可优化项_List.md)：第 9–10 节解释采纳、调整和原建议中的不准确之处。
 - [架构图 SVG](../架构图_v1.svg) / [PNG](../架构图.png)：五平面与可靠执行、质量反馈路径。
 
@@ -29,7 +29,7 @@
 | [10 Baseline/Delta](10_Release_Baseline_and_Delta_Design.md) | 可比集合、基线选择、差异分类和质量门禁 |
 | [11 执行一致性与比较](11_Execution_Consistency_and_Validation_Contract.md) | Manifest/Bundle、哈希、Reset/Probe、Canonical 和验收 |
 | [12 机器契约与工程验收](12_Machine_Contracts_and_Engineering_Validation.md) | Registry/Core Model/Schema 单一源、Golden Vector、目录与阶段门禁 |
-| [13 工程实施顺序](13_Engineering_Implementation_Order.md) | 前置条件、首条 JOIN 闭环、各阶段工作包/依赖/交付与验收；不重新定义协议 |
+| [13 工程实施顺序](13_Engineering_Implementation_Order_Revised.md) | 前置条件、首条 JOIN 闭环、各阶段工作包/依赖/交付与验收；不重新定义协议 |
 
 建议顺序：总架构 → 01/12 → 04/08 → 02/03 → 05/11 → 06/07 → 09/10。
 准备开工时先读 13，按工作包回查对应专项规范。

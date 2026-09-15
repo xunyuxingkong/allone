@@ -1,0 +1,9 @@
+items:
+  - key: ASSERTION_FAILED
+  - key: FIXTURE_SETUP
+  - key: FIXTURE_CLEANUP
+  - key: INFRA_NETWORK
+  - key: INFRA_TIMEOUT
+  - key: INFRA_RESOURCE
+
+\n

@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "db_build": {
+      "title": "Db Build",
+      "type": "string"
+    },
+    "driver_version": {
+      "title": "Driver Version",
+      "type": "string"
+    },
+    "sql_runtime_profile_id": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sql Runtime Profile Id"
+    },
+    "target_id": {
+      "title": "Target Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "target_id",
+    "db_build",
+    "driver_version"
+  ],
+  "title": "Target",
+  "type": "object"
+}

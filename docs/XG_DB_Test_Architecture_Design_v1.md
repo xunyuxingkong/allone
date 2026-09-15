@@ -2774,7 +2774,7 @@ Environment Model
 
 # 121. Phase 0：规范冻结
 
-完整前置条件、Driver 探测、首条用例闭环及 Phase 0–6 工作包顺序见 [13 工程实施顺序与阶段验收](13_Engineering_Implementation_Order.md)。下列各节继续定义架构阶段范围，具体实施依赖由 13 展开。
+完整前置条件、Driver 探测、首条用例闭环及 Phase 0–6 工作包顺序见 [13 工程实施顺序与阶段验收](13_Engineering_Implementation_Order_Revised.md)。下列各节继续定义架构阶段范围，具体实施依赖由 13 展开。Phase 0 分为 G0A 核心契约和 G0B 实测 Runtime Profile 两次冻结（身份规则见 12 §2.1）；G1 后 Coverage、Scenario 与 SQL 多集群可按依赖分别推进。系统场景还需 Scenario 执行及恢复基础；发布质量核心可在 G1 后建设，并对实际使用的后续能力追加验收依赖。
 
 目标：
 
