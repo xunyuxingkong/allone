@@ -1,5 +1,4 @@
 items:
   - key: shared_read
+  - key: shared_write
   - key: exclusive
-
-\n

@@ -51,7 +51,10 @@ def _candidate(name: str, sql_type: str, value: Any, parameter_type: int) -> dic
         fetched = cursor.fetchone()[0]
         result.update(
             {
-                "status": "VERIFIED",
+                "operation_status": "VERIFIED",
+                "mapping_status": "EXACT" if type(fetched) is type(value) else "STRINGIFIED" if isinstance(fetched, str) else "LOSSY",
+                "canonical_compatibility": "VERIFIED" if type(fetched) is type(value) else "UNKNOWN",
+                "status": "VERIFIED" if type(fetched) is type(value) else "PARTIAL",
                 "parameter_type": parameter_type,
                 "column_metadata": repr(cursor.description),
                 "input": _value(value),
@@ -110,5 +113,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-\n

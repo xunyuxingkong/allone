@@ -1,5 +1,6 @@
 case_asset:
   - draft
+  - generated
   - review
   - active
   - disabled
@@ -25,5 +26,3 @@ step:
   - PASS
   - FAIL
   - ERROR
-
-\n

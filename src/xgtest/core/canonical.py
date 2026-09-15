@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import struct
 from dataclasses import dataclass
 from decimal import Decimal
@@ -91,6 +92,11 @@ _TYPE_TAGS = {
     "bytes": 10,
 }
 
+_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_TIME = re.compile(r"^\d{2}:\d{2}:\d{2}(?:\.\d+)?$")
+_TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$")
+_TIMESTAMP_TZ = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$")
+
 
 def _cell_payload(cell: CanonicalCell) -> bytes:
     logical_type, value = cell.logical_type, cell.value
@@ -116,10 +122,17 @@ def _cell_payload(cell: CanonicalCell) -> bytes:
         if math.isnan(value):
             return bytes.fromhex("7ff8000000000000")
         return struct.pack(">d", 0.0 if value == 0.0 else value)
-    if logical_type in {"string", "date", "time", "timestamp", "timestamp_tz"}:
+    if logical_type == "string":
+        if not isinstance(value, str):
+            raise TypeError("string cell requires str")
+        return value.encode("utf-8")
+    if logical_type in {"date", "time", "timestamp", "timestamp_tz"}:
         if not isinstance(value, str):
             raise TypeError(f"{logical_type} cell requires str")
-        return value.encode("utf-8" if logical_type == "string" else "ascii")
+        expression = {"date": _DATE, "time": _TIME, "timestamp": _TIMESTAMP, "timestamp_tz": _TIMESTAMP_TZ}[logical_type]
+        if not expression.fullmatch(value):
+            raise ValueError(f"{logical_type} cell is not in canonical format")
+        return value.encode("ascii")
     if logical_type == "bytes":
         if not isinstance(value, bytes):
             raise TypeError("bytes cell requires bytes")
@@ -154,5 +167,3 @@ def xgc1_encode(header: Mapping[str, Any], rows: Iterable[Iterable[CanonicalCell
         stream.extend(struct.pack(">Q", len(frame)))
         stream.extend(frame)
     return bytes(stream)
-
-\n

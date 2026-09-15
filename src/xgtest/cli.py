@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
+import tempfile
 from pathlib import Path
 
 from .core.models import MODEL_EXPORTS
 from .core.registry import generate_enums_module, load_registry
+from .adapter.xugu import XuguConnectionConfig
+from .runtime.runner import run_cases
+
+
+CONTRACT_VERSION = "1.1"
 
 
 def _project_root() -> Path:
@@ -29,13 +36,28 @@ def _registry_generate(args: argparse.Namespace) -> int:
 
 def _schema_export(args: argparse.Namespace) -> int:
     output = Path(args.output)
-    output.mkdir(parents=True, exist_ok=True)
-    for name, model in MODEL_EXPORTS.items():
-        (output / f"{name}.schema.json").write_text(
-            json.dumps(model.model_json_schema(), ensure_ascii=False, sort_keys=True, indent=2) + "\n",
-            encoding="utf-8",
-        )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=output.parent) as temporary:
+        generated = Path(temporary) / "schemas"
+        generated.mkdir()
+        for name, model in MODEL_EXPORTS.items():
+            schema = model.model_json_schema()
+            schema["$id"] = f"xgtest://schema/{CONTRACT_VERSION}/{name}"
+            schema["x-xg-contract-version"] = CONTRACT_VERSION
+            (generated / f"{name}.schema.json").write_text(
+                json.dumps(schema, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        if output.exists():
+            shutil.rmtree(output)
+        shutil.move(str(generated), str(output))
     return 0
+
+
+def _run_mvp(args: argparse.Namespace) -> int:
+    report = run_cases(XuguConnectionConfig.from_environment(), Path(args.cases), Path(args.output))
+    print(json.dumps({"output": args.output, "status": report["status"], "cases": len(report["cases"])}, ensure_ascii=False, sort_keys=True))
+    return 0 if report["status"] == "PASS" else 1
 
 
 def main() -> None:
@@ -56,5 +78,9 @@ def main() -> None:
     export = schema_commands.add_parser("export")
     export.add_argument("--output", default=root / "schemas")
     export.set_defaults(handler=_schema_export)
+    run = commands.add_parser("run")
+    run.add_argument("--cases", default=root / "cases" / "mvp")
+    run.add_argument("--output", default=Path("artifacts") / "runs" / "latest.json")
+    run.set_defaults(handler=_run_mvp)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

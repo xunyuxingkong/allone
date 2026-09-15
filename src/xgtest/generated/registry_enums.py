@@ -1,12 +1,12 @@
 # Generated from registry/*.yaml; do not edit.
 from enum import StrEnum
 
-class Capabilities(StrEnum):
+class CapabilityKey(StrEnum):
     SQL_EXECUTE = "sql.execute"
     SQL_CANCEL = "sql.cancel"
     SESSION_RESET_PROBE = "session.reset_probe"
 
-class FailureTypes(StrEnum):
+class FailureType(StrEnum):
     ASSERTION_FAILED = "ASSERTION_FAILED"
     FIXTURE_SETUP = "FIXTURE_SETUP"
     FIXTURE_CLEANUP = "FIXTURE_CLEANUP"
@@ -14,30 +14,31 @@ class FailureTypes(StrEnum):
     INFRA_TIMEOUT = "INFRA_TIMEOUT"
     INFRA_RESOURCE = "INFRA_RESOURCE"
 
-class Features(StrEnum):
+class FeatureKey(StrEnum):
     JOIN = "join"
     UNION = "union"
     DDL_TABLE = "ddl_table"
     STRING_FUNCTION = "string_function"
 
-class IsolationScopes(StrEnum):
+class IsolationScope(StrEnum):
     SESSION = "session"
     WORKER_SCHEMA = "worker_schema"
     CASE_SCHEMA = "case_schema"
     DATABASE = "database"
     CLUSTER = "cluster"
 
-class Levels(StrEnum):
+class Level(StrEnum):
     P0 = "P0"
     P1 = "P1"
     P2 = "P2"
     P3 = "P3"
 
-class ResourceAccessModes(StrEnum):
+class ResourceAccessMode(StrEnum):
     SHARED_READ = "shared_read"
+    SHARED_WRITE = "shared_write"
     EXCLUSIVE = "exclusive"
 
-class StatusesAttempt(StrEnum):
+class AttemptStatus(StrEnum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     PASS = "PASS"
@@ -46,14 +47,15 @@ class StatusesAttempt(StrEnum):
     TIMEOUT = "TIMEOUT"
     CANCELLED = "CANCELLED"
 
-class StatusesCaseAsset(StrEnum):
+class CaseAssetStatus(StrEnum):
     DRAFT = "draft"
+    GENERATED = "generated"
     REVIEW = "review"
     ACTIVE = "active"
     DISABLED = "disabled"
     DEPRECATED = "deprecated"
 
-class StatusesCaseExecution(StrEnum):
+class CaseExecutionStatus(StrEnum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     PASS = "PASS"
@@ -61,7 +63,7 @@ class StatusesCaseExecution(StrEnum):
     ERROR = "ERROR"
     INFRA_RECOVERED = "INFRA_RECOVERED"
 
-class StatusesStep(StrEnum):
+class StepStatus(StrEnum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     PASS = "PASS"

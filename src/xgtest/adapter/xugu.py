@@ -71,4 +71,63 @@ def smoke_probe(config: XuguConnectionConfig) -> tuple[Any, ...]:
             cursor.close()
         connection.close()
 
-\n
+
+class XuguSession:
+    """Small DB-API facade used by the single-process SQL MVP runner."""
+
+    def __init__(self, config: XuguConnectionConfig) -> None:
+        self.config = config
+        self.connection: Any | None = None
+
+    def open(self) -> "XuguSession":
+        self.connection = connect(self.config)
+        return self
+
+    def execute(self, sql: str, parameters: tuple[Any, ...] = ()) -> int:
+        cursor = self._connection().cursor()
+        try:
+            cursor.execute(sql, parameters)
+            return int(getattr(cursor, "rowcount", -1))
+        finally:
+            cursor.close()
+
+    def query(self, sql: str, parameters: tuple[Any, ...] = ()) -> tuple[list[str], list[tuple[Any, ...]]]:
+        cursor = self._connection().cursor()
+        try:
+            cursor.execute(sql, parameters)
+            description = cursor.description or ()
+            columns = [str(item[0]) for item in description]
+            return columns, [tuple(row) for row in cursor.fetchall()]
+        finally:
+            cursor.close()
+
+    def begin(self) -> None:
+        connection = self._connection()
+        connection.autocommit(False)
+        connection.begin()
+
+    def commit(self) -> None:
+        self._connection().commit()
+
+    def rollback(self) -> None:
+        self._connection().rollback()
+
+    def cancel(self) -> None:
+        cancel = getattr(self._connection(), "cancel", None)
+        if cancel is None:
+            raise NotImplementedError("xgcondb connection does not expose cancel()")
+        cancel()
+
+    def reset(self) -> None:
+        """Reset the transaction boundary; session parameters require a new session."""
+        self.rollback()
+
+    def close(self) -> None:
+        if self.connection is not None:
+            self.connection.close()
+            self.connection = None
+
+    def _connection(self) -> Any:
+        if self.connection is None:
+            raise RuntimeError("XuguSession is not open")
+        return self.connection

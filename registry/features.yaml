@@ -7,5 +7,3 @@ items:
     phase: sql_mvp
   - key: string_function
     phase: sql_mvp
-
-\n

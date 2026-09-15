@@ -1,0 +1,22 @@
+metadata:
+  id: MVP.STRING_FUNCTION.000001
+  title: upper and length functions
+  feature: string_function
+steps:
+  - id: setup
+    kind: setup
+    sql: CREATE TABLE XGT_MVP_STRING (value VARCHAR(32))
+  - id: insert
+    kind: statement
+    sql: INSERT INTO XGT_MVP_STRING (value) VALUES ('xugu')
+  - id: query
+    kind: query
+    sql: SELECT UPPER(value), LENGTH(value) FROM XGT_MVP_STRING
+    comparison:
+      mode: exact
+    expected:
+      rows:
+        - [XUGU, 4]
+  - id: cleanup
+    kind: cleanup
+    sql: DROP TABLE XGT_MVP_STRING

@@ -1,0 +1,23 @@
+metadata:
+  id: MVP.UNION.000001
+  title: union distinct rows
+  feature: union
+steps:
+  - id: setup
+    kind: setup
+    sql: CREATE TABLE XGT_MVP_UNION (value INT)
+  - id: insert
+    kind: statement
+    sql: INSERT INTO XGT_MVP_UNION (value) VALUES (1), (2), (2)
+  - id: query
+    kind: query
+    sql: SELECT value FROM XGT_MVP_UNION WHERE value = 1 UNION SELECT value FROM XGT_MVP_UNION WHERE value = 2
+    comparison:
+      mode: rowsort
+    expected:
+      rows:
+        - [1]
+        - [2]
+  - id: cleanup
+    kind: cleanup
+    sql: DROP TABLE XGT_MVP_UNION

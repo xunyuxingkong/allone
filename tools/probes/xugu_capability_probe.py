@@ -8,6 +8,7 @@ to drop it before returning. Reports contain no password or connection string.
 from __future__ import annotations
 
 import json
+import hashlib
 import secrets
 from datetime import UTC, datetime
 from pathlib import Path
@@ -38,13 +39,15 @@ def _value_details(value: Any) -> dict[str, str]:
     return {"python_type": f"{type(value).__module__}.{type(value).__qualname__}", "repr": repr(value)}
 
 
-def _count(connection: Any, table: str, row_id: int) -> int:
+def _fresh_count(config: XuguConnectionConfig, table: str, row_id: int) -> int:
+    connection = connect(config)
     cursor = connection.cursor()
     try:
         cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE id = {row_id}")
         return int(cursor.fetchone()[0])
     finally:
         cursor.close()
+        connection.close()
 
 
 def run_probe(config: XuguConnectionConfig, artifact_dir: Path) -> dict[str, Any]:
@@ -53,13 +56,12 @@ def run_probe(config: XuguConnectionConfig, artifact_dir: Path) -> dict[str, Any
     report: dict[str, Any] = {
         "probe_version": "1",
         "started_at": datetime.now(UTC).isoformat(),
-        "target": {"host": config.host, "port": config.port, "database": config.database},
+        "target": {"host_hash": hashlib.sha256(config.host.encode()).hexdigest(), "database_alias": config.database},
         "driver": {"module": "xgcondb", "version": list(xgcondb.version_info)},
         "table": table,
         "capabilities": {},
     }
     connection: Any | None = None
-    second_connection: Any | None = None
     cursor: Any | None = None
     table_created = False
 
@@ -86,10 +88,13 @@ def run_probe(config: XuguConnectionConfig, artifact_dir: Path) -> dict[str, Any
         report["capabilities"]["type_mapping"] = {
             "int": {"status": "VERIFIED", "observed": values[0]},
             "decimal": {
-                "status": "FAILED",
+                "operation_status": "VERIFIED",
+                "mapping_status": "EXACT" if values[1]["python_type"] == "decimal.Decimal" else "LOSSY",
+                "canonical_compatibility": "VERIFIED" if values[1]["python_type"] == "decimal.Decimal" else "FAILED",
+                "status": "VERIFIED" if values[1]["python_type"] == "decimal.Decimal" else "FAILED",
                 "scope": "default Driver mapping",
                 "observed": values[1],
-                "reason": "DECIMAL was returned as float; it cannot satisfy exact Decimal comparison",
+                "reason": "exact Decimal comparison requires decimal.Decimal",
             },
             "float": {"status": "VERIFIED", "observed": values[2]},
             "string": {"status": "VERIFIED", "observed": values[3]},
@@ -97,16 +102,15 @@ def run_probe(config: XuguConnectionConfig, artifact_dir: Path) -> dict[str, Any
             "bytes": {"status": "UNKNOWN", "reason": "not included in the basic probe"},
         }
 
-        second_connection = connect(config)
         connection.autocommit(False)
         connection.begin()
         cursor.execute(f"INSERT INTO {table} (id, amount, ratio, label) VALUES (2, 2.20, 4.5, 'rollback')")
         connection.rollback()
-        rollback_visible_count = _count(second_connection, table, 2)
+        rollback_visible_count = _fresh_count(config, table, 2)
         connection.begin()
         cursor.execute(f"INSERT INTO {table} (id, amount, ratio, label) VALUES (3, 3.20, 5.5, 'commit')")
         connection.commit()
-        commit_visible_count = _count(second_connection, table, 3)
+        commit_visible_count = _fresh_count(config, table, 3)
         transaction_status = "VERIFIED" if rollback_visible_count == 0 and commit_visible_count == 1 else "FAILED"
         report["capabilities"]["transaction_commit_rollback"] = {
             "status": transaction_status,
@@ -140,12 +144,6 @@ def run_probe(config: XuguConnectionConfig, artifact_dir: Path) -> dict[str, Any
         if cursor is not None:
             try:
                 cursor.close()
-            except Exception as error:
-                report.setdefault("cleanup_errors", []).append(_error_details(error))
-        if second_connection is not None:
-            try:
-                second_connection.rollback()
-                second_connection.close()
             except Exception as error:
                 report.setdefault("cleanup_errors", []).append(_error_details(error))
         if connection is not None:

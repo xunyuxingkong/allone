@@ -1,4 +1,5 @@
 from decimal import Decimal
+import math
 
 import pytest
 
@@ -31,4 +32,16 @@ def test_xgc1_frames_cells_and_preserves_logical_types() -> None:
     with pytest.raises(ValueError):
         xgc1_encode(header, [[CanonicalCell("string", "7"), CanonicalCell("string", "x")]])
 
-\n
+
+def test_xgc1_normalizes_decimal_nan_and_signed_zero() -> None:
+    header = {"mode": "exact", "column_count": 3, "logical_types": ["decimal", "float", "float"], "comparison_profile": "strict"}
+    first = xgc1_encode(header, [[CanonicalCell("decimal", Decimal("1.00")), CanonicalCell("float", -0.0), CanonicalCell("float", float("nan"))]])
+    second = xgc1_encode(header, [[CanonicalCell("decimal", Decimal("1")), CanonicalCell("float", 0.0), CanonicalCell("float", math.nan)]])
+    assert first == second
+
+
+def test_xgc1_validates_temporal_format_and_bytes() -> None:
+    header = {"mode": "exact", "column_count": 2, "logical_types": ["date", "bytes"], "comparison_profile": "strict"}
+    assert xgc1_encode(header, [[CanonicalCell("date", "2026-09-15"), CanonicalCell("bytes", b"\x00\xff")]])
+    with pytest.raises(ValueError, match="canonical format"):
+        xgc1_encode(header, [[CanonicalCell("date", "yesterday"), CanonicalCell("bytes", b"")]])

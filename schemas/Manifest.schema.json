@@ -48,12 +48,54 @@
     "Target": {
       "additionalProperties": false,
       "properties": {
+        "arch": {
+          "title": "Arch",
+          "type": "string"
+        },
+        "configuration_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Configuration Fingerprint",
+          "type": "string"
+        },
+        "database_product": {
+          "title": "Database Product",
+          "type": "string"
+        },
+        "database_version": {
+          "title": "Database Version",
+          "type": "string"
+        },
+        "dataset_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dataset Fingerprint"
+        },
         "db_build": {
           "title": "Db Build",
           "type": "string"
         },
+        "driver_name": {
+          "title": "Driver Name",
+          "type": "string"
+        },
         "driver_version": {
           "title": "Driver Version",
+          "type": "string"
+        },
+        "mode": {
+          "title": "Mode",
+          "type": "string"
+        },
+        "os": {
+          "title": "Os",
           "type": "string"
         },
         "sql_runtime_profile_id": {
@@ -70,14 +112,27 @@
           "title": "Sql Runtime Profile Id"
         },
         "target_id": {
+          "pattern": "^[0-9a-f]{64}$",
           "title": "Target Id",
+          "type": "string"
+        },
+        "topology": {
+          "title": "Topology",
           "type": "string"
         }
       },
       "required": [
         "target_id",
+        "database_product",
+        "database_version",
         "db_build",
-        "driver_version"
+        "driver_name",
+        "driver_version",
+        "os",
+        "arch",
+        "topology",
+        "mode",
+        "configuration_fingerprint"
       ],
       "title": "Target",
       "type": "object"
@@ -113,6 +168,7 @@
       "type": "object"
     }
   },
+  "$id": "xgtest://schema/1.1/Manifest",
   "additionalProperties": false,
   "properties": {
     "bundles": {
@@ -122,25 +178,77 @@
       "title": "Bundles",
       "type": "array"
     },
+    "case_entries": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Case Entries",
+      "type": "array"
+    },
+    "catalog_snapshot_id": {
+      "title": "Catalog Snapshot Id",
+      "type": "string"
+    },
     "contract_set_id": {
       "pattern": "^[0-9a-f]{64}$",
       "title": "Contract Set Id",
       "type": "string"
     },
+    "dirty": {
+      "title": "Dirty",
+      "type": "boolean"
+    },
+    "git_commit": {
+      "title": "Git Commit",
+      "type": "string"
+    },
     "plan": {
       "$ref": "#/$defs/TestPlan"
+    },
+    "plan_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Plan Hash",
+      "type": "string"
     },
     "run_id": {
       "title": "Run Id",
       "type": "string"
+    },
+    "runtime_versions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Runtime Versions",
+      "type": "object"
+    },
+    "source_snapshot_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Snapshot Hash",
+      "type": "string"
+    },
+    "target_entries": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Target"
+      },
+      "title": "Target Entries",
+      "type": "array"
     }
   },
   "required": [
     "run_id",
     "contract_set_id",
     "plan",
-    "bundles"
+    "bundles",
+    "git_commit",
+    "dirty",
+    "source_snapshot_hash",
+    "catalog_snapshot_id",
+    "plan_hash",
+    "runtime_versions"
   ],
   "title": "Manifest",
-  "type": "object"
+  "type": "object",
+  "x-xg-contract-version": "1.1"
 }

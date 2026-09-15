@@ -1,34 +1,74 @@
 {
+  "$defs": {
+    "IsolationScope": {
+      "enum": [
+        "session",
+        "worker_schema",
+        "case_schema",
+        "database",
+        "cluster"
+      ],
+      "title": "IsolationScope",
+      "type": "string"
+    },
+    "ResourceAccessMode": {
+      "enum": [
+        "shared_read",
+        "shared_write",
+        "exclusive"
+      ],
+      "title": "ResourceAccessMode",
+      "type": "string"
+    }
+  },
+  "$id": "xgtest://schema/1.1/ResourceRequest",
   "additionalProperties": false,
   "properties": {
     "access_mode": {
-      "enum": [
-        "shared_read",
-        "exclusive"
-      ],
-      "title": "Access Mode",
+      "$ref": "#/$defs/ResourceAccessMode"
+    },
+    "impact_scope": {
+      "title": "Impact Scope",
       "type": "string"
     },
-    "capacity": {
+    "parent_identity": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Identity"
+    },
+    "quantity": {
       "default": 1,
       "minimum": 1,
-      "title": "Capacity",
+      "title": "Quantity",
       "type": "integer"
     },
     "resource_id": {
       "title": "Resource Id",
       "type": "string"
     },
-    "scope": {
-      "title": "Scope",
+    "resource_type": {
+      "title": "Resource Type",
       "type": "string"
+    },
+    "scope": {
+      "$ref": "#/$defs/IsolationScope"
     }
   },
   "required": [
+    "resource_type",
     "resource_id",
     "scope",
-    "access_mode"
+    "access_mode",
+    "impact_scope"
   ],
   "title": "ResourceRequest",
-  "type": "object"
+  "type": "object",
+  "x-xg-contract-version": "1.1"
 }

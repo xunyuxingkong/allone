@@ -5,5 +5,3 @@ items:
     phase: sql_runtime
   - key: session.reset_probe
     phase: sql_runtime
-
-\n

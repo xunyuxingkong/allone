@@ -1,0 +1,31 @@
+metadata:
+  id: MVP.JOIN.000001
+  title: basic inner join
+  feature: join
+steps:
+  - id: setup_left
+    kind: setup
+    sql: CREATE TABLE XGT_MVP_JOIN_L (id INT PRIMARY KEY, label VARCHAR(32))
+  - id: setup_right
+    kind: setup
+    sql: CREATE TABLE XGT_MVP_JOIN_R (id INT PRIMARY KEY, amount INT)
+  - id: insert_left
+    kind: statement
+    sql: INSERT INTO XGT_MVP_JOIN_L (id, label) VALUES (1, 'one'), (2, 'two')
+  - id: insert_right
+    kind: statement
+    sql: INSERT INTO XGT_MVP_JOIN_R (id, amount) VALUES (2, 20), (3, 30)
+  - id: query
+    kind: query
+    sql: SELECT l.id, l.label, r.amount FROM XGT_MVP_JOIN_L l INNER JOIN XGT_MVP_JOIN_R r ON l.id = r.id
+    comparison:
+      mode: exact
+    expected:
+      rows:
+        - [2, two, 20]
+  - id: cleanup_right
+    kind: cleanup
+    sql: DROP TABLE XGT_MVP_JOIN_R
+  - id: cleanup_left
+    kind: cleanup
+    sql: DROP TABLE XGT_MVP_JOIN_L

@@ -1,4 +1,5 @@
 {
+  "$id": "xgtest://schema/1.1/EnvironmentRequirement",
   "additionalProperties": false,
   "properties": {
     "capability": {
@@ -15,5 +16,6 @@
     "capability"
   ],
   "title": "EnvironmentRequirement",
-  "type": "object"
+  "type": "object",
+  "x-xg-contract-version": "1.1"
 }

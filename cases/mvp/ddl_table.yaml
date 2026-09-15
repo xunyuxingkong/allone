@@ -1,0 +1,19 @@
+metadata:
+  id: MVP.DDL_TABLE.000001
+  title: create and inspect table
+  feature: ddl_table
+steps:
+  - id: setup
+    kind: setup
+    sql: CREATE TABLE XGT_MVP_DDL (id INT PRIMARY KEY, name VARCHAR(32))
+  - id: query
+    kind: query
+    sql: SELECT COUNT(*) FROM XGT_MVP_DDL
+    comparison:
+      mode: exact
+    expected:
+      rows:
+        - [0]
+  - id: cleanup
+    kind: cleanup
+    sql: DROP TABLE XGT_MVP_DDL

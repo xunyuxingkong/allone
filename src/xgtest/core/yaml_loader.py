@@ -21,11 +21,14 @@ for _initial, _resolvers in CoreYamlLoader.yaml_implicit_resolvers.items():
     CoreYamlLoader.yaml_implicit_resolvers[_initial] = [
         pair
         for pair in _resolvers
-        if pair[0] not in {"tag:yaml.org,2002:bool", "tag:yaml.org,2002:timestamp"}
+        if pair[0] not in {"tag:yaml.org,2002:bool", "tag:yaml.org,2002:int", "tag:yaml.org,2002:float", "tag:yaml.org,2002:null", "tag:yaml.org,2002:timestamp"}
     ]
 CoreYamlLoader.add_implicit_resolver(
-    "tag:yaml.org,2002:bool", re.compile(r"^(?:true|false)$"), list("tf")
+    "tag:yaml.org,2002:bool", re.compile(r"^(?:true|false)$", re.IGNORECASE), list("tTfF")
 )
+CoreYamlLoader.add_implicit_resolver("tag:yaml.org,2002:null", re.compile(r"^(?:null|~)$", re.IGNORECASE), list("nN~"))
+CoreYamlLoader.add_implicit_resolver("tag:yaml.org,2002:int", re.compile(r"^[-+]?(?:0|[1-9][0-9_]*|0o[0-7_]+|0x[0-9a-fA-F_]+)$"), list("-+0123456789"))
+CoreYamlLoader.add_implicit_resolver("tag:yaml.org,2002:float", re.compile(r"^[-+]?(?:(?:[0-9][0-9_]*\.[0-9_]*)|(?:\.[0-9_]+)|(?:[0-9][0-9_]*[eE][-+]?[0-9]+)|(?:[0-9][0-9_]*\.[0-9_]*[eE][-+]?[0-9]+)|(?:\.inf)|(?:\.nan))$", re.IGNORECASE), list("-+.0123456789"))
 
 
 def _construct_mapping(loader: CoreYamlLoader, node: yaml.MappingNode, deep: bool = False) -> dict[Any, Any]:
@@ -46,5 +49,3 @@ CoreYamlLoader.add_constructor(
 def load_yaml(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as stream:
         return yaml.load(stream, Loader=CoreYamlLoader)
-
-\n

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "xgtest"
 version = "0.1.0"
 description = "XG DB Test framework"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.11,<3.15"
 dependencies = [
   "pydantic>=2.12,<3",
   "PyYAML>=6.0.3,<7",
@@ -23,8 +23,9 @@ xgtest = "xgtest.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["framework_tests"]
 addopts = ["-q"]
+markers = [
+  "xugu_integration: requires a reachable real Xugu target and project driver",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-\n
