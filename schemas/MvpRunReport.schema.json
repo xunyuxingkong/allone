@@ -152,6 +152,21 @@
           "title": "Kind",
           "type": "string"
         },
+        "logical_types": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Logical Types",
+          "type": "array"
+        },
         "rows": {
           "default": [],
           "items": {

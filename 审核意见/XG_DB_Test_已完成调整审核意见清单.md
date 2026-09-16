@@ -51,3 +51,5 @@
 | Target Identity Projection | Target ID 由语义字段经 XGMJ1 + SHA-256 自动计算并在模型构造时校验；Host 等物理上下文不参与 Target 语义 ID。 | `src/xgtest/core/identity.py`、`src/xgtest/core/models.py` | Target 正反向校验与语义投影测试。 |
 | Manifest / Plan Identity 基础规则 | Plan/Manifest 身份投影提供稳定集合排序、XGMJ1 编码和 SHA-256 计算；Manifest 校验 Plan Hash 与 Target ID。 | `src/xgtest/core/identity.py`、`src/xgtest/core/models.py` | 目标重排、Bundle/Case 重排和 Run 变化测试。 |
 | YAML / Temporal Golden Vector 增补 | 增加科学计数、下划线数字、NaN、null、Unicode 以及非法日期/时间值的契约向量。 | `framework_tests/contract/test_registry.py`、`src/xgtest/core/canonical.py` | 237 契约测试通过。 |
+| Runtime Profile Pydantic 契约 | 新增 `RuntimeProfile` 模型和 Schema，Profile 加载时执行字段及 identity 校验。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/profile.py`、`schemas/RuntimeProfile.schema.json` | 237 全量测试与 Profile 执行通过。 |
+| Adapter Logical Type / fetchmany 基础能力 | 增加 Driver 类型到 Logical Type 的明确映射；查询优先使用 bounded `fetchmany`，并提供 `iter_query_rows()` 流式接口。 | `src/xgtest/adapter/xugu.py`、`src/xgtest/runtime/runner.py` | Adapter 测试、真实 MVP 回归通过。 |

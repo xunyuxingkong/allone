@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from xgtest.core.canonical import xgmj1_bytes
+from xgtest.core.models import RuntimeProfile
 
 
 def _canonical_bytes(value: Any) -> bytes:
@@ -74,20 +75,20 @@ def build_profile(evidence: dict[str, Any]) -> dict[str, Any]:
         "evidence_sha256": evidence_hash,
     }
     profile_id = hashlib.sha256(xgmj1_bytes(identity)).hexdigest()
-    return {**profile_body, "sql_runtime_profile_id": profile_id}
+    return RuntimeProfile(
+        **profile_body,
+        sql_runtime_profile_id=profile_id,
+    ).model_dump(mode="python")
 
 
 def load_profile(path: Path) -> dict[str, Any]:
     profile = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(profile, dict) or not isinstance(profile.get("sql_runtime_profile_id"), str):
         raise ValueError("runtime profile must contain sql_runtime_profile_id")
-    identity = profile.get("identity")
-    if not isinstance(identity, dict):
-        raise ValueError("runtime profile must contain semantic identity")
-    expected_id = hashlib.sha256(xgmj1_bytes(identity)).hexdigest()
-    if profile["sql_runtime_profile_id"] != expected_id:
-        raise ValueError("runtime profile identity does not match its content")
-    return profile
+    try:
+        return RuntimeProfile.model_validate(profile).model_dump(mode="python")
+    except ValueError as error:
+        raise ValueError(str(error)) from error
 
 
 def validate_profile(profile: dict[str, Any], *, host: str, database: str, driver_version: tuple[Any, ...]) -> None:

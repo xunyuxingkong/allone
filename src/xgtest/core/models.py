@@ -248,6 +248,28 @@ class Manifest(StrictModel):
         return self
 
 
+class RuntimeProfile(StrictModel):
+    """Published, validated SQL runtime profile envelope."""
+
+    profile_schema_version: Literal["0.2"]
+    identity: dict[str, Any]
+    target: dict[str, str]
+    driver: dict[str, Any]
+    evidence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    sql_runtime_profile_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def profile_id_must_match_identity(self) -> "RuntimeProfile":
+        import hashlib
+
+        from xgtest.core.canonical import xgmj1_bytes
+
+        expected = hashlib.sha256(xgmj1_bytes(self.identity)).hexdigest()
+        if self.sql_runtime_profile_id != expected:
+            raise ValueError("RUNTIME_PROFILE_ID_MISMATCH: profile identity does not match")
+        return self
+
+
 class Run(StrictModel):
     run_id: str
     manifest_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -300,6 +322,7 @@ class MvpStepReport(StrictModel):
     duration_ms: float = Field(ge=0)
     columns: tuple[str, ...] = ()
     column_types: tuple[str | None, ...] = ()
+    logical_types: tuple[str | None, ...] = ()
     rows: tuple[tuple[Any, ...], ...] = ()
     affected_rows: int | None = None
     error_type: str | None = None
@@ -339,6 +362,7 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         EnvironmentRequirement,
         ResourceRequest,
         Manifest,
+        RuntimeProfile,
         ResultEvent,
         MvpStepReport,
         MvpCaseReport,

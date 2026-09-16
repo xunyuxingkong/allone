@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterator
 
 
 _ENVIRONMENT_KEYS = {
@@ -46,6 +46,30 @@ class XuguQueryResult:
     columns: tuple[str, ...]
     column_types: tuple[str | None, ...]
     rows: tuple[tuple[Any, ...], ...]
+    logical_types: tuple[str | None, ...] = ()
+
+
+def map_driver_type(declared_type: Any) -> str | None:
+    """Map a DB-API type name to the framework logical type vocabulary."""
+    if declared_type is None:
+        return None
+    value = str(declared_type).lower().replace("<class '", "").replace("'>", "")
+    mappings = (
+        (("timestamp_tz", "timestamptz", "timestamp with time zone"), "timestamp_tz"),
+        (("timestamp", "datetime"), "timestamp"),
+        (("date",), "date"),
+        (("time",), "time"),
+        (("decimal", "numeric", "number"), "decimal"),
+        (("double", "float", "real"), "float"),
+        (("bigint", "integer", "smallint", "int"), "int"),
+        (("bool",), "bool"),
+        (("binary", "blob", "raw", "byte"), "bytes"),
+        (("char", "varchar", "text", "clob", "string"), "string"),
+    )
+    for tokens, logical_type in mappings:
+        if any(token in value for token in tokens):
+            return logical_type
+    return None
 
 
 def extract_error(error: Exception) -> dict[str, str | None]:
@@ -120,11 +144,42 @@ class XuguSession:
         try:
             cursor.execute(sql, parameters)
             description = cursor.description or ()
+            column_types = tuple(str(item[1]) if len(item) > 1 and item[1] is not None else None for item in description)
+            fetchmany = getattr(cursor, "fetchmany", None)
+            rows: list[tuple[Any, ...]] = []
+            if callable(fetchmany):
+                while True:
+                    batch = fetchmany(1000)
+                    if not batch:
+                        break
+                    rows.extend(tuple(row) for row in batch)
+            else:
+                rows.extend(tuple(row) for row in cursor.fetchall())
             return XuguQueryResult(
                 columns=tuple(str(item[0]) for item in description),
-                column_types=tuple(str(item[1]) if len(item) > 1 and item[1] is not None else None for item in description),
-                rows=tuple(tuple(row) for row in cursor.fetchall()),
+                column_types=column_types,
+                rows=tuple(rows),
+                logical_types=tuple(map_driver_type(item) for item in column_types),
             )
+        finally:
+            cursor.close()
+
+    def iter_query_rows(self, sql: str, parameters: tuple[Any, ...] = (), batch_size: int = 1000) -> Iterator[tuple[Any, ...]]:
+        """Yield query rows in bounded batches for large-result callers."""
+        if batch_size < 1:
+            raise ValueError("batch_size must be positive")
+        cursor = self._connection().cursor()
+        try:
+            cursor.execute(sql, parameters)
+            fetchmany = getattr(cursor, "fetchmany", None)
+            if callable(fetchmany):
+                while True:
+                    batch = fetchmany(batch_size)
+                    if not batch:
+                        return
+                    yield from (tuple(row) for row in batch)
+            else:
+                yield from (tuple(row) for row in cursor.fetchall())
         finally:
             cursor.close()
 

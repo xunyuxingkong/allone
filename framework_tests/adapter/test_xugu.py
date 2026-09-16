@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from xgtest.adapter.xugu import XuguConnectionConfig, extract_error, smoke_probe
+from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession, extract_error, map_driver_type, smoke_probe
 
 
 def test_config_requires_every_secret_reference() -> None:
@@ -52,3 +52,42 @@ def test_extract_error_redacts_connection_secrets() -> None:
     details = extract_error(RuntimeError("password=top-secret url=xugu://user:top-secret@db:1907"))
     assert "top-secret" not in details["message"]
     assert "<redacted>" in details["message"]
+
+
+def test_driver_type_mapping_is_explicit() -> None:
+    assert map_driver_type("NUMERIC") == "decimal"
+    assert map_driver_type("TIMESTAMP WITH TIME ZONE") == "timestamp_tz"
+    assert map_driver_type("VARCHAR") == "string"
+    assert map_driver_type("driver.unknown") is None
+
+
+def test_query_uses_bounded_fetchmany_and_exposes_logical_types(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Cursor:
+        description = (("ID", "INTEGER"), ("NAME", "VARCHAR"))
+
+        def __init__(self) -> None:
+            self.batches = [[(1, "one")], [(2, "two")], []]
+
+        def execute(self, sql, parameters=()):
+            pass
+
+        def fetchmany(self, size):
+            assert size == 1000
+            return self.batches.pop(0)
+
+        def close(self):
+            pass
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+
+        def close(self):
+            pass
+
+    monkeypatch.setitem(sys.modules, "xgcondb", SimpleNamespace(Connect=lambda **_: Connection()))
+    session = XuguSession(XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password")).open()
+    result = session.query("SELECT 1")
+    assert result.rows == ((1, "one"), (2, "two"))
+    assert result.logical_types == ("int", "string")
+    session.close()

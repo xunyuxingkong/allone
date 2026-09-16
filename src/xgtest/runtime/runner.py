@@ -106,13 +106,13 @@ def _execute_step(session: XuguSession, step: SqlStep) -> dict[str, Any]:
     try:
         if kind == "query":
             query_result = session.query(step.sql)
-            item["columns"], item["column_types"], item["rows"] = query_result.columns, query_result.column_types, query_result.rows
+            item["columns"], item["column_types"], item["logical_types"], item["rows"] = query_result.columns, query_result.column_types, query_result.logical_types, query_result.rows
             comparison = step.comparison
             mode = comparison.mode if comparison is not None else "exact"
             item["status"] = "FAIL" if is_expected_error(expected) else (
                 "PASS" if compare_rows(
                     list(query_result.rows), expected, mode,
-                    query_result.column_types, len(query_result.columns),
+                    query_result.logical_types or query_result.column_types, len(query_result.columns),
                 ) else "FAIL"
             )
         else:
