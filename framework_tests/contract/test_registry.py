@@ -32,6 +32,13 @@ def test_yaml_rejects_duplicate_keys(tmp_path: Path) -> None:
     duplicate.write_text("a: 1\na: 2\n", encoding="utf-8")
     with pytest.raises(DuplicateKeyError, match="DUPLICATE_KEY"):
         load_yaml(duplicate)
+    try:
+        load_yaml(duplicate)
+    except DuplicateKeyError as error:
+        assert error.source is not None
+        assert error.source.file == str(duplicate)
+        assert error.source.line == 2
+        assert error.source.column == 1
 
 
 def test_yaml_uses_core_boolean_handling(tmp_path: Path) -> None:

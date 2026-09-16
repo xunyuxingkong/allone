@@ -28,6 +28,8 @@
 
 本轮继续完成第二优先级中的状态与身份收口：`MvpStepReport.status` 接入 `StepStatus`，Case Report 显式保留业务、清理和恢复状态，Runtime Profile Identity 拆为严格 Pydantic 子模型，并扩展错误凭据脱敏范围。
 
+本轮继续补充可在当前工程闭环验证的基础能力：Adapter 与 Comparator 共用 Logical Type 映射，YAML 重复键错误保留 SourceSpan，并加入纯函数 Resource Conflict Matrix；正式 Parser/Compiler、持久化 Lease 与外部环境准入仍未宣称完成。
+
 ## 3. 问题与修复对应关系
 
 ### 3.1 已修复的新发现问题
@@ -76,18 +78,27 @@
 | O3 RuntimeProfile Identity 内部自由字典 | Identity 拆为 Target、Driver、Capabilities 及类型/事务/错误子模型，未注册嵌套字段会被拒绝。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/profile.py` | 嵌套字段拒绝测试、真实 Profile 构建与执行 PASS。 |
 | N17 Error Redaction 覆盖不足 | 增加 token、secret、authorization、api-key、access-token 和 Bearer 形式脱敏，同时保留 URL 凭据脱敏。 | `src/xgtest/adapter/xugu.py` | Adapter 脱敏反向测试。 |
 
+### 3.5 当前工程可闭环的基础能力补充
+
+| 问题 | 修复结果 | 主要落点 | 验证证据 |
+|---|---|---|---|
+| O5 Logical Type Mapping 重复实现 | Adapter 与 Comparator 使用同一 Core 映射函数，精确处理 timestamp/time 和带参数类型。 | `src/xgtest/core/logical_types.py`、`src/xgtest/adapter/xugu.py`、`src/xgtest/runtime/comparator.py` | 类型边界测试。 |
+| SourceSpan 未贯穿 YAML 重复键错误 | DuplicateKeyError 增加源文件、行、列，保持稳定错误代码。 | `src/xgtest/core/errors.py`、`src/xgtest/core/yaml_loader.py` | YAML SourceSpan 测试。 |
+| Resource Conflict Matrix 缺少共享实现 | 新增纯函数冲突判定，READ/READ 共享，其他重叠模式冲突，父资源与子资源正确展开，同 Attempt 可豁免。 | `src/xgtest/core/admission.py` | Admission 矩阵测试。 |
+
 ## 4. 验证记录
 
 验证环境为 237 项目目录中的隔离 `.venv`，Python 3.14.7，xgcondb Driver 2.3.9；未修改系统 Python。
 
 已完成验证：
 
-- 框架测试：**42 passed**。
+- 框架测试：**47 passed**。
 - 真实虚谷四个 MVP Case（JOIN、UNION、DDL TABLE、STRING FUNCTION）：**PASS**。
 - 带 v0.2 Runtime Profile 的真实执行：**PASS**。
 - `xgtest registry validate`：可输出包含 Entry 元数据的 JSON。
 - `xgtest schema export`：重新生成 RuntimeProfile、MvpTargetReport 及相关 Schema。
 - Source Snapshot / Bundle 漂移、Target ID、Plan/Manifest 排序和 Temporal 反向用例：通过。
+- Logical Type 映射、YAML SourceSpan、Resource Conflict Matrix 反向用例：通过。
 - 数据库测试对象均执行清理，未在目标库留下本轮 MVP 表。
 
 ## 5. 当前仍待完成

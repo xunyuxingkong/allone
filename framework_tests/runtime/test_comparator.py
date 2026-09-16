@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from decimal import Decimal
 
-from xgtest.runtime.comparator import compare_affected_rows, compare_error, compare_rows, rows_sha256
+from xgtest.runtime.comparator import compare_affected_rows, compare_error, compare_rows, is_expected_error, rows_sha256
 
 
 def test_compare_rows_exact_rowsort_and_hash() -> None:
@@ -19,6 +19,7 @@ def test_compare_statement_count_and_error() -> None:
     assert compare_error(error, {"code": "E5021"})
     assert not compare_error(error, {"rows": [[1]]})
     assert not compare_error(error, {})
+    assert not is_expected_error({"code": None})
 
 
 def test_rows_hash_uses_typed_xgc1_values() -> None:

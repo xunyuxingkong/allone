@@ -317,6 +317,7 @@
         "code": {
           "anyOf": [
             {
+              "minLength": 1,
               "type": "string"
             },
             {
@@ -329,6 +330,7 @@
         "message_pattern": {
           "anyOf": [
             {
+              "minLength": 1,
               "type": "string"
             },
             {
@@ -341,6 +343,7 @@
         "sqlstate": {
           "anyOf": [
             {
+              "minLength": 1,
               "type": "string"
             },
             {

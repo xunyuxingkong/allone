@@ -15,39 +15,10 @@ from typing import Any
 
 from xgtest.adapter.xugu import extract_error
 from xgtest.core.canonical import CanonicalCell, xgc1_encode
+from xgtest.core.logical_types import map_declared_logical_type
 
 
 _ERROR_FIELDS = ("code", "sqlstate", "message_pattern")
-_TYPE_HINTS = {
-    "timestamp with time zone": "timestamp_tz",
-    "timestamp_tz": "timestamp_tz",
-    "timestamptz": "timestamp_tz",
-    "datetime": "timestamp",
-    "timestamp": "timestamp",
-    "date": "date",
-    "time": "time",
-    "decimal": "decimal",
-    "numeric": "decimal",
-    "number": "decimal",
-    "double": "float",
-    "float": "float",
-    "real": "float",
-    "bigint": "int",
-    "integer": "int",
-    "smallint": "int",
-    "int": "int",
-    "bool": "bool",
-    "binary": "bytes",
-    "blob": "bytes",
-    "raw": "bytes",
-    "bytes": "bytes",
-    "varchar": "string",
-    "char": "string",
-    "text": "string",
-    "clob": "string",
-    "string": "string",
-}
-
 
 def is_expected_error(expected: Any) -> bool:
     """Return whether *expected* explicitly declares an error expectation.
@@ -58,18 +29,14 @@ def is_expected_error(expected: Any) -> bool:
     ``None``; an empty mapping does not qualify.
     """
 
-    return isinstance(expected, dict) and any(key in expected for key in _ERROR_FIELDS)
+    return isinstance(expected, dict) and any(
+        isinstance(expected.get(key), str) and bool(expected[key])
+        for key in _ERROR_FIELDS
+    )
 
 
 def _declared_logical_type(declared_type: str | None) -> str | None:
-    if not declared_type:
-        return None
-    value = " ".join(declared_type.lower().replace("<class '", "").replace("'>", "").split())
-    for token in sorted(_TYPE_HINTS, key=len, reverse=True):
-        if value == token or value.startswith(f"{token}(") or value.startswith(f"{token} "):
-            logical_type = _TYPE_HINTS[token]
-            return logical_type
-    return None
+    return map_declared_logical_type(declared_type)
 
 
 def _inferred_logical_type(value: Any, declared_type: str | None = None) -> str:

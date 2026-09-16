@@ -30,7 +30,7 @@
 
 ## 验证汇总
 
-- 237 项目隔离 Python 3.14：`42 passed`。
+- 237 项目隔离 Python 3.14：`47 passed`。
 - Registry Enum、JSON Schema 已重新生成。
 - 真实虚谷连接、基础读取、事务提交/回滚、错误映射与清理均已复测。
 - 本次没有修改系统 Python 或持久化数据库凭据。
@@ -62,3 +62,6 @@
 | N21 Cleanup Failure 未保留主状态 | 报告增加 `primary_status`、`cleanup_status`、`recovery_status`、`failure_type`；业务失败与清理失败同时发生时最终为 ERROR 且保留 `primary_status=FAIL`。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py`、`schemas/MvpCaseReport.schema.json` | Setup/Cleanup 失败反向测试与真实 MVP 回归。 |
 | O3 RuntimeProfile Identity 内部自由字典 | 新增 RuntimeTargetIdentity、RuntimeDriverIdentity、RuntimeCapabilitiesIdentity 及类型/事务/错误子模型，严格拒绝未注册身份字段。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/profile.py`、`schemas/RuntimeProfileIdentity.schema.json` | 嵌套未知字段拒绝测试、Profile 真实构建与执行 PASS。 |
 | N17 Error Redaction 覆盖不足 | 统一脱敏 password/passwd/pwd、token、secret、authorization、api-key 和 access-token 的赋值、Bearer 与 URL 凭据。 | `src/xgtest/adapter/xugu.py` | Adapter 脱敏反向测试。 |
+| O5 Logical Type Mapping 重复实现 | Adapter 与 Comparator 共用 Core Logical Type 映射，采用精确别名和参数前缀，避免两套规则漂移。 | `src/xgtest/core/logical_types.py`、`src/xgtest/adapter/xugu.py`、`src/xgtest/runtime/comparator.py` | Adapter/Comparator 类型边界测试。 |
+| SourceSpan 未贯穿 YAML 重复键错误 | DuplicateKeyError 保留 YAML 文件、行、列信息，便于后续 Parser/Compiler 统一扩展。 | `src/xgtest/core/errors.py`、`src/xgtest/core/yaml_loader.py` | 重复键 SourceSpan 反向测试。 |
+| Resource Conflict Matrix 缺少共享实现 | 新增纯函数 Admission 冲突矩阵，支持 READ/WRITE/EXCLUSIVE、父资源重叠和同 Attempt 豁免；正式持久化 Lease 仍保留待办。 | `src/xgtest/core/admission.py` | 资源矩阵对称性、父资源和无关资源测试。 |

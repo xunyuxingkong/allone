@@ -54,3 +54,28 @@ def test_xgc1_rejects_invalid_temporal_values() -> None:
         xgc1_encode(date_header, [[CanonicalCell("date", "2026-99-99")]])
     with pytest.raises(ValueError, match="invalid temporal"):
         xgc1_encode(time_header, [[CanonicalCell("time", "25:00:00")]])
+
+
+def test_xgc1_covers_empty_duplicate_and_extreme_rows() -> None:
+    empty_header = {"mode": "exact", "column_count": 0, "logical_types": [], "comparison_profile": "strict"}
+    no_rows = xgc1_encode(empty_header, [])
+    one_empty_row = xgc1_encode(empty_header, [()])
+    assert no_rows != one_empty_row
+    assert one_empty_row.startswith(b"XGC1")
+
+    row_header = {"mode": "exact", "column_count": 2, "logical_types": ["int", "decimal"], "comparison_profile": "strict"}
+    rows = [
+        [CanonicalCell("int", 2**127), CanonicalCell("decimal", Decimal("1E+100"))],
+        [CanonicalCell("int", 2**127), CanonicalCell("decimal", Decimal("1E+100"))],
+    ]
+    encoded = xgc1_encode(row_header, rows)
+    assert encoded.count(b"XGC1") == 1
+    assert encoded == xgc1_encode(row_header, rows)
+
+
+def test_xgc1_distinguishes_timestamp_timezone_semantics() -> None:
+    naive = {"mode": "exact", "column_count": 1, "logical_types": ["timestamp"], "comparison_profile": "strict"}
+    aware = {"mode": "exact", "column_count": 1, "logical_types": ["timestamp_tz"], "comparison_profile": "strict"}
+    naive_bytes = xgc1_encode(naive, [[CanonicalCell("timestamp", "2026-09-16T10:00:00")]])
+    aware_bytes = xgc1_encode(aware, [[CanonicalCell("timestamp_tz", "2026-09-16T10:00:00+08:00")]])
+    assert naive_bytes != aware_bytes

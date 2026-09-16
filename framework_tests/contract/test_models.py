@@ -115,4 +115,6 @@ def test_expected_error_and_statement_cannot_be_empty() -> None:
     with pytest.raises(ValidationError, match="EXPECTED_ERROR_EMPTY"):
         ExpectedError()
     with pytest.raises(ValidationError):
+        ExpectedError(code="")
+    with pytest.raises(ValidationError):
         ExpectedStatement()

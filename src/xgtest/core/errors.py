@@ -18,5 +18,5 @@ class ContractError(ValueError):
 
 
 class DuplicateKeyError(ContractError):
-    def __init__(self, key: object) -> None:
-        super().__init__("DUPLICATE_KEY", "$", f"duplicate mapping key {key!r}")
+    def __init__(self, key: object, *, source: SourceSpan | None = None) -> None:
+        super().__init__("DUPLICATE_KEY", "$", f"duplicate mapping key {key!r}", source=source)

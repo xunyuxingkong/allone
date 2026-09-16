@@ -114,9 +114,9 @@ class ExpectedHash(StrictModel):
 
 
 class ExpectedError(StrictModel):
-    code: str | None = None
-    sqlstate: str | None = None
-    message_pattern: str | None = None
+    code: str | None = Field(default=None, min_length=1)
+    sqlstate: str | None = Field(default=None, min_length=1)
+    message_pattern: str | None = Field(default=None, min_length=1)
 
     @model_validator(mode="after")
     def at_least_one_matcher_required(self) -> "ExpectedError":

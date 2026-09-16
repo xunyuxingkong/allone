@@ -7,6 +7,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, Iterator
 
+from xgtest.core.logical_types import map_declared_logical_type
+
 
 _ENVIRONMENT_KEYS = {
     "host": "XGTEST_DB_HOST",
@@ -51,25 +53,7 @@ class XuguQueryResult:
 
 def map_driver_type(declared_type: Any) -> str | None:
     """Map a DB-API type name to the framework logical type vocabulary."""
-    if declared_type is None:
-        return None
-    value = str(declared_type).lower().replace("<class '", "").replace("'>", "")
-    mappings = (
-        (("timestamp_tz", "timestamptz", "timestamp with time zone"), "timestamp_tz"),
-        (("timestamp", "datetime"), "timestamp"),
-        (("date",), "date"),
-        (("time",), "time"),
-        (("decimal", "numeric", "number"), "decimal"),
-        (("double", "float", "real"), "float"),
-        (("bigint", "integer", "smallint", "int"), "int"),
-        (("bool",), "bool"),
-        (("binary", "blob", "raw", "byte"), "bytes"),
-        (("char", "varchar", "text", "clob", "string"), "string"),
-    )
-    for tokens, logical_type in mappings:
-        if any(token in value for token in tokens):
-            return logical_type
-    return None
+    return map_declared_logical_type(declared_type)
 
 
 def extract_error(error: Exception) -> dict[str, str | None]:

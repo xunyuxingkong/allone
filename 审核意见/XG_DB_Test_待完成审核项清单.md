@@ -36,8 +36,8 @@
 | ComparisonProfile | Runner 已消费 mode，仍未实现 error/normalization/float/timestamp/resource profile 的统一解析与执行策略。 | Profile 被 Compiler、Runner、Comparator 共同消费。 |
 | Typed Expected | Bootstrap Runner 已完成 ExpectedRows/Hash/Error/Statement typed dispatch；正式 DSL/Compiler/Catalog 仍需接入同一模型。 | 不再允许业务 Expected 以任意结构绕过验证。 |
 | MVP Report Target | MVP Target 已改为 `MvpTargetReport`；正式 Runner 仍需使用完整 Target/Environment 模型并关联 Manifest。 | 报告 Target 与正式 Target/Environment 身份统一。 |
-| Resource Conflict Matrix | ResourceRequest 已补字段，尚未实现父子资源冲突、容量与 Admission 判定。 | 建立矩阵与并发测试。 |
-| SourceSpan | ContractError 已可携带 SourceSpan，但 YAML/Parser/Compiler 尚未提供真实行列信息。 | DSL 错误能定位文件、行、列、字段路径。 |
+| Resource Conflict Matrix | 已实现纯函数 READ/WRITE/EXCLUSIVE 矩阵、直接父资源重叠和同 Attempt 豁免；仍需容量、资源树多级展开、原子持久化 Lease/Fencing 与并发测试。 | 建立完整资源树、容量和原子准入测试。 |
+| SourceSpan | YAML 重复键错误已提供真实文件、行、列；Parser/Compiler 尚未提供字段路径和完整 SourceSpan 贯穿。 | DSL 错误能定位文件、行、列、字段路径。 |
 | Canonical 向量覆盖 | 已补部分 Temporal 语义边界；仍缺重复行、空结果、零列、极大整数、Decimal exponent、timezone、错误 Canonical 等。 | 形成版本化完整 Golden Vector 集。 |
 
 ## 建议执行顺序

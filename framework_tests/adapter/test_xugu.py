@@ -61,6 +61,9 @@ def test_driver_type_mapping_is_explicit() -> None:
     assert map_driver_type("NUMERIC") == "decimal"
     assert map_driver_type("TIMESTAMP WITH TIME ZONE") == "timestamp_tz"
     assert map_driver_type("VARCHAR") == "string"
+    assert map_driver_type("BOOLEAN") == "bool"
+    assert map_driver_type("VARBINARY(32)") == "bytes"
+    assert map_driver_type("notimestamp") is None
     assert map_driver_type("driver.unknown") is None
 
 
