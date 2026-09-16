@@ -28,6 +28,28 @@ def build_profile(evidence: dict[str, Any]) -> dict[str, Any]:
     return {**profile_body, "sql_runtime_profile_id": profile_id}
 
 
+def load_profile(path: Path) -> dict[str, Any]:
+    profile = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(profile, dict) or not isinstance(profile.get("sql_runtime_profile_id"), str):
+        raise ValueError("runtime profile must contain sql_runtime_profile_id")
+    body = {key: value for key, value in profile.items() if key != "sql_runtime_profile_id"}
+    expected_id = hashlib.sha256(_canonical_bytes(body)).hexdigest()
+    if profile["sql_runtime_profile_id"] != expected_id:
+        raise ValueError("runtime profile identity does not match its content")
+    return profile
+
+
+def validate_profile(profile: dict[str, Any], *, host: str, database: str, driver_version: tuple[Any, ...]) -> None:
+    target = profile.get("target", {})
+    driver = profile.get("driver", {})
+    host_hash = hashlib.sha256(host.encode()).hexdigest()
+    if target.get("host_hash") != host_hash or target.get("database_alias") != database:
+        raise ValueError("RUNTIME_PROFILE_MISMATCH: target identity differs")
+    recorded_version = tuple(driver.get("version", ()))
+    if recorded_version and recorded_version != tuple(driver_version):
+        raise ValueError("RUNTIME_PROFILE_MISMATCH: driver version differs")
+
+
 def build_profile_file(evidence_path: Path, output: Path) -> dict[str, Any]:
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
     if not isinstance(evidence, dict):

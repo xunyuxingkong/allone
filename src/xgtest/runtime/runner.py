@@ -13,6 +13,7 @@ from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession, extract_error
 from xgtest.core.yaml_loader import load_yaml
 from xgtest.core.models import MvpCaseReport, MvpRunReport, MvpStepReport
 from .comparator import compare_affected_rows, compare_error, compare_rows
+from .profile import validate_profile
 
 
 def _case_id(case: dict[str, Any], path: Path) -> str:
@@ -89,10 +90,14 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
     return report
 
 
-def run_cases(config: XuguConnectionConfig, case_dir: Path, output: Path, sql_runtime_profile_id: str | None = None) -> dict[str, Any]:
+def run_cases(config: XuguConnectionConfig, case_dir: Path, output: Path, sql_runtime_profile_id: str | None = None, runtime_profile: dict[str, Any] | None = None) -> dict[str, Any]:
     paths = sorted(case_dir.glob("*.yaml"))
     if not paths:
         raise ValueError(f"no YAML cases found under {case_dir}")
+    if runtime_profile is not None:
+        import xgcondb
+        validate_profile(runtime_profile, host=config.host, database=config.database, driver_version=tuple(xgcondb.version_info))
+        sql_runtime_profile_id = runtime_profile["sql_runtime_profile_id"]
     started = datetime.now(UTC)
     results: list[MvpCaseReport] = []
     for path in paths:

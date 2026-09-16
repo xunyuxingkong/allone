@@ -12,7 +12,7 @@ from .core.models import MODEL_EXPORTS
 from .core.registry import generate_enums_module, load_registry
 from .adapter.xugu import XuguConnectionConfig
 from .runtime.runner import run_cases
-from .runtime.profile import build_profile_file
+from .runtime.profile import build_profile_file, load_profile
 
 
 CONTRACT_VERSION = "1.1"
@@ -56,7 +56,8 @@ def _schema_export(args: argparse.Namespace) -> int:
 
 
 def _run_mvp(args: argparse.Namespace) -> int:
-    report = run_cases(XuguConnectionConfig.from_environment(), Path(args.cases), Path(args.output), args.runtime_profile_id)
+    profile = load_profile(Path(args.runtime_profile)) if args.runtime_profile else None
+    report = run_cases(XuguConnectionConfig.from_environment(), Path(args.cases), Path(args.output), args.runtime_profile_id, profile)
     print(json.dumps({"output": args.output, "status": report["status"], "cases": len(report["cases"])}, ensure_ascii=False, sort_keys=True))
     return 0 if report["status"] == "PASS" else 1
 
@@ -89,6 +90,7 @@ def main() -> None:
     run.add_argument("--cases", default=root / "cases" / "mvp")
     run.add_argument("--output", default=Path("artifacts") / "runs" / "latest.json")
     run.add_argument("--runtime-profile-id")
+    run.add_argument("--runtime-profile")
     run.set_defaults(handler=_run_mvp)
     profile = commands.add_parser("profile")
     profile_commands = profile.add_subparsers(dest="profile_command", required=True)
