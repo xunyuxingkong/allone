@@ -26,3 +26,4 @@ step:
   - PASS
   - FAIL
   - ERROR
+  - SKIPPED

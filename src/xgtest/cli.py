@@ -24,7 +24,14 @@ def _project_root() -> Path:
 
 def _registry_validate(args: argparse.Namespace) -> int:
     registry = load_registry(Path(args.registry))
-    print(json.dumps({name: list(values) for name, values in sorted(registry.entries.items())}, ensure_ascii=False, sort_keys=True))
+    payload = {
+        name: [
+            {"key": entry.key, **entry.metadata}
+            for entry in entries
+        ]
+        for name, entries in sorted(registry.entries.items())
+    }
+    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
     return 0
 
 

@@ -69,3 +69,4 @@ class StepStatus(StrEnum):
     PASS = "PASS"
     FAIL = "FAIL"
     ERROR = "ERROR"
+    SKIPPED = "SKIPPED"

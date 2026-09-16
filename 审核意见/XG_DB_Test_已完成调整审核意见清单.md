@@ -34,3 +34,17 @@
 - Registry Enum、JSON Schema 已重新生成。
 - 真实虚谷连接、基础读取、事务提交/回滚、错误映射与清理均已复测。
 - 本次没有修改系统 Python 或持久化数据库凭据。
+
+## 本轮依据最新问题清单完成
+
+| 原审核项 | 调整结果 | 落点 | 验证证据 |
+|---|---|---|---|
+| N1 普通异常误判 PASS | 只有显式 `ExpectedError` 才允许异常比较通过；Rows/Hash/Statement 预期遇到异常报告 ERROR，错误预期不匹配报告 FAIL。 | `src/xgtest/runtime/comparator.py`、`src/xgtest/runtime/runner.py` | Comparator 单元测试、237 全量测试与真实 MVP 回归。 |
+| N2 Runner 绕过 Core Model | Bootstrap YAML 先解码为 `BootstrapCaseInput`、`EffectiveMetadata`、`SqlStep` 和 typed Expected，再进入执行阶段。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py` | Typed bootstrap 测试与真实四用例回归。 |
+| N3 Comparator 绕过 XGC1 | SQL 行比较和 Hash 统一使用 XGC1 typed framing；rowsort 按规范化行帧排序，支持 NULL 与混合类型。 | `src/xgtest/core/canonical.py`、`src/xgtest/runtime/comparator.py` | XGC1 comparator 测试、真实 JOIN/UNION/DDL/字符串函数回归。 |
+| N4/N5 Runtime Profile 身份不稳定 | Profile 拆分 semantic identity 与物理 target context；时间、随机表名、host 等证据字段不参与 profile ID，身份使用 XGMJ1。 | `src/xgtest/runtime/profile.py` | Profile invariance 测试、237 重新构建 v0.2 Profile 并带 Profile 执行 PASS。 |
+| N6 Registry validate 序列化失败 | CLI 将 `RegistryEntry` 序列化为 key 与 metadata，而不是直接 JSON 编码 dataclass。 | `src/xgtest/cli.py` | CLI 断言测试、237 `xgtest registry validate` 实测。 |
+| N7 生命周期混在单循环 | 执行拆为 Setup/Main/Cleanup；Setup 失败跳过 Main，Cleanup 始终执行并报告 SKIPPED。 | `src/xgtest/runtime/runner.py`、`registry/statuses.yaml` | Setup failure 生命周期测试、真实 MVP Cleanup 回归。 |
+| N8 reset 名称误导 | `rollback_transaction()` 明确表示已验证能力；未验证完整会话 reset 时 `reset()` 显式抛出 NotImplementedError。 | `src/xgtest/adapter/xugu.py` | Adapter 测试与真实 MVP 回滚收尾。 |
+| N14 run_id 截断碰撞风险 | 使用 UUID4 生成运行 ID，避免时间戳摘要截断导致碰撞。 | `src/xgtest/runtime/runner.py` | 237 真实运行产物检查。 |
+| N17 错误信息缺少脱敏 | 错误提取对 password 参数和连接 URL 凭据执行统一脱敏。 | `src/xgtest/adapter/xugu.py` | Adapter 脱敏测试。 |

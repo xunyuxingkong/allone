@@ -7,6 +7,8 @@ from xgtest.core.errors import ContractError
 from xgtest.core.registry import Registry, RegistryEntry, generate_enums_module, load_registry
 from xgtest.core.yaml_loader import load_yaml
 from xgtest.cli import _project_root
+from xgtest.cli import _registry_validate
+from argparse import Namespace
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,3 +55,10 @@ def test_enum_member_name_collision_is_rejected() -> None:
     registry = Registry(entries={"features": (RegistryEntry("a-b", {}), RegistryEntry("a_b", {}))})
     with pytest.raises(ContractError, match="REGISTRY_ENUM_NAME_COLLISION"):
         generate_enums_module(registry)
+
+
+def test_registry_validate_serializes_entry_metadata(capsys) -> None:
+    assert _registry_validate(Namespace(registry=ROOT / "registry")) == 0
+    output = capsys.readouterr().out
+    assert '"key": "join"' in output
+    assert '"phase": "sql_mvp"' in output

@@ -18,9 +18,9 @@
 
 | 原审核项 | 待完成内容 | 外部依赖或验收条件 |
 |---|---|---|
-| Xugu Adapter | 当前仅具备 connect/smoke；尚未实现 execute、query/fetchmany、事务封装、列元数据、错误提取、cancel、reset、close 等最小 Adapter API。 | Adapter 单元测试与真实集成测试均覆盖。 |
-| Runtime Profile Builder | Probe 仍生成原始 JSON，尚未由 Profile Builder 形成不可变 SQLRuntimeProfile。 | 定义 Profile Schema、身份投影、证据引用和人工审查流程。 |
-| Runtime Profile Identity | 未完整采集 DB exact build、OS、arch、compatibility mode 与关键配置。 | Profile 能精确绑定真实运行环境。 |
+| Xugu Adapter | execute、query、事务、列元数据、错误提取、cancel、close 已具备；仍需 fetchmany、完整 reset 与真实 cancel/stop 证明。 | Adapter 单元测试与真实集成测试均覆盖。 |
+| Runtime Profile Builder | 已形成 v0.2 identity + evidence hash 的 Profile Builder；仍需正式 Pydantic Schema、证据引用和人工审查流程。 | 定义 Profile Schema、身份投影、证据引用和人工审查流程。 |
+| Runtime Profile Identity | 语义 identity 已与物理 target context 分离；仍需补采 DB exact build、OS、arch、compatibility mode 与关键配置。 | Profile 能精确绑定真实运行环境。 |
 | Cancel / Stop | 尚未执行有界长 SQL 的取消与服务端停止观察。 | 明确 Driver cancel 或连接隔离/关闭替代策略并实测。 |
 | Session Reset | 尚未覆盖 schema、autocommit、事务、锁、临时对象和会话参数恢复。 | 形成 reset_probe 与失败隔离策略。 |
 | Extended Type Mapping | DATE/TIME/DATETIME 目前可写入读取但返回字符串；BLOB 绑定失败；尚未定义最终 Canonical 映射策略。 | 每种类型完成 operation/mapping/canonical 三层验收。 |
@@ -33,8 +33,8 @@
 
 | 原审核项 | 待完成内容 | 完成条件 |
 |---|---|---|
-| ComparisonProfile | 仅预留部分字段，尚未实现 error/normalization/float/timestamp/resource profile 解析与执行逻辑。 | Profile 被 Compiler、Runner、Comparator 共同消费。 |
-| Typed Expected | 已定义数据结构，尚未在 DSL/Compiler/Comparator 落地。 | 不再允许业务 Expected 以任意结构绕过验证。 |
+| ComparisonProfile | Runner 已消费 mode，仍未实现 error/normalization/float/timestamp/resource profile 的统一解析与执行策略。 | Profile 被 Compiler、Runner、Comparator 共同消费。 |
+| Typed Expected | Bootstrap Runner 已完成 ExpectedRows/Hash/Error/Statement typed dispatch；正式 DSL/Compiler/Catalog 仍需接入同一模型。 | 不再允许业务 Expected 以任意结构绕过验证。 |
 | Resource Conflict Matrix | ResourceRequest 已补字段，尚未实现父子资源冲突、容量与 Admission 判定。 | 建立矩阵与并发测试。 |
 | SourceSpan | ContractError 已可携带 SourceSpan，但 YAML/Parser/Compiler 尚未提供真实行列信息。 | DSL 错误能定位文件、行、列、字段路径。 |
 | Canonical 向量覆盖 | 已覆盖一部分边界，仍缺重复行、空结果、零列、极大整数、Decimal exponent、timezone、错误 Canonical 等。 | 形成版本化完整 Golden Vector 集。 |

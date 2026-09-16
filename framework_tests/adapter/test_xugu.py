@@ -46,3 +46,9 @@ def test_smoke_probe_closes_cursor_and_connection(monkeypatch: pytest.MonkeyPatc
 
 def test_extract_error_reads_code_from_xugu_message() -> None:
     assert extract_error(RuntimeError("[E5021 L1 C1] missing table"))["code"] == "E5021"
+
+
+def test_extract_error_redacts_connection_secrets() -> None:
+    details = extract_error(RuntimeError("password=top-secret url=xugu://user:top-secret@db:1907"))
+    assert "top-secret" not in details["message"]
+    assert "<redacted>" in details["message"]

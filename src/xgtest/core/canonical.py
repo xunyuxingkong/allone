@@ -158,7 +158,10 @@ def xgc1_encode(header: Mapping[str, Any], rows: Iterable[Iterable[CanonicalCell
             raise ValueError("XGC1 row length must match column_count")
         frame = bytearray(struct.pack(">Q", len(cells)))
         for index, cell in enumerate(cells):
-            if cell.logical_type != logical_types[index]:
+            # ``null`` is a value tag and may occur in a nullable column whose
+            # declared logical type is known from another row.  All non-null
+            # values still have to match the column declaration exactly.
+            if cell.logical_type != logical_types[index] and cell.logical_type != "null":
                 raise ValueError("XGC1 cell logical type must match header")
             payload = _cell_payload(cell)
             frame.extend(bytes([_TYPE_TAGS[cell.logical_type]]))

@@ -50,7 +50,12 @@ class XuguQueryResult:
 
 def extract_error(error: Exception) -> dict[str, str | None]:
     """Return stable error attributes without exposing connection details."""
-    message = str(error)
+    message = re.sub(
+        r"(?i)(password|passwd|pwd)\s*=\s*(?:'[^']*'|\"[^\"]*\"|[^,;\s]+)",
+        r"\1=<redacted>",
+        str(error),
+    )
+    message = re.sub(r"(?i)(://[^:/\s]+:)[^@/\s]+@", r"\1<redacted>@", message)
     code = next((str(getattr(error, name)) for name in ("code", "errno") if getattr(error, name, None) is not None), None)
     if code is None:
         matched = re.search(r"\[([A-Z]\d+)\b", message)
@@ -134,6 +139,15 @@ class XuguSession:
     def rollback(self) -> None:
         self._connection().rollback()
 
+    def rollback_transaction(self) -> None:
+        """Rollback the current transaction boundary.
+
+        This deliberately names the operation precisely: a rollback does not
+        prove that session parameters, temporary objects, cursors, or locks
+        have been reset.
+        """
+        self.rollback()
+
     def cancel(self) -> None:
         cancel = getattr(self._connection(), "cancel", None)
         if cancel is None:
@@ -141,8 +155,8 @@ class XuguSession:
         cancel()
 
     def reset(self) -> None:
-        """Reset the transaction boundary; session parameters require a new session."""
-        self.rollback()
+        """Reset the complete session after adapter reset semantics are proven."""
+        raise NotImplementedError("full Xugu session reset is not verified; use rollback_transaction()")
 
     def close(self) -> None:
         if self.connection is not None:

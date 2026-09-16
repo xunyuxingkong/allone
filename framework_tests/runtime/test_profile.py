@@ -22,3 +22,19 @@ def test_profile_rejects_target_or_driver_drift() -> None:
     validate_profile(profile, host="host", database="SYSTEM", driver_version=(2, 3, 9))
     with pytest.raises(ValueError, match="RUNTIME_PROFILE_MISMATCH"):
         validate_profile(profile, host="other", database="SYSTEM", driver_version=(2, 3, 9))
+
+
+def test_profile_id_excludes_probe_run_context() -> None:
+    first = build_profile({
+        "target": {"host_hash": "host-a", "database_alias": "SYSTEM", "db_build": "b1"},
+        "driver": {"version": [2, 3, 9]},
+        "capabilities": {"connection": {"status": "VERIFIED", "started_at": "t1", "table_name": "T1"}},
+        "started_at": "t1",
+    })
+    second = build_profile({
+        "target": {"host_hash": "host-b", "database_alias": "SYSTEM", "db_build": "b1"},
+        "driver": {"version": [2, 3, 9]},
+        "capabilities": {"connection": {"status": "VERIFIED", "started_at": "t2", "table_name": "T2"}},
+        "started_at": "t2",
+    })
+    assert first["sql_runtime_profile_id"] == second["sql_runtime_profile_id"]

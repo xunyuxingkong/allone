@@ -129,6 +129,13 @@ class SqlStep(StrictModel):
     expected: ExpectedRows | ExpectedHash | ExpectedError | ExpectedStatement | None = None
 
 
+class BootstrapCaseInput(StrictModel):
+    """Typed boundary for the temporary SQL MVP bootstrap asset format."""
+
+    metadata: EffectiveMetadata
+    steps: tuple[SqlStep, ...] = Field(min_length=1)
+
+
 class QueryStep(SqlStep):
     kind: Literal["query"] = "query"
     comparison: ComparisonProfile
@@ -270,7 +277,7 @@ class ResultEvent(StrictModel):
 class MvpStepReport(StrictModel):
     id: str
     kind: str
-    status: Literal["PASS", "FAIL", "ERROR"]
+    status: Literal["PASS", "FAIL", "ERROR", "SKIPPED"]
     duration_ms: float = Field(ge=0)
     columns: tuple[str, ...] = ()
     column_types: tuple[str | None, ...] = ()
@@ -284,7 +291,7 @@ class MvpStepReport(StrictModel):
 
 class MvpCaseReport(StrictModel):
     case_id: str
-    status: Literal["PASS", "FAIL", "ERROR"]
+    status: CaseExecutionStatus
     cleanup_status: Literal["PASS", "FAILED"]
     duration_ms: float = Field(ge=0)
     steps: tuple[MvpStepReport, ...]
@@ -298,7 +305,7 @@ class MvpRunReport(StrictModel):
     finished_at: datetime
     target: dict[str, str]
     cases: tuple[MvpCaseReport, ...]
-    status: Literal["PASS", "FAIL"]
+    status: CaseExecutionStatus
 
 
 MODEL_EXPORTS: dict[str, type[BaseModel]] = {
@@ -307,6 +314,7 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         RawMetadata,
         EffectiveMetadata,
         UnifiedCase,
+        BootstrapCaseInput,
         TestPlan,
         Target,
         EnvironmentRequirement,

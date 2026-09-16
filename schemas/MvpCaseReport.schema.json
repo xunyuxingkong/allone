@@ -1,5 +1,17 @@
 {
   "$defs": {
+    "CaseExecutionStatus": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR",
+        "INFRA_RECOVERED"
+      ],
+      "title": "CaseExecutionStatus",
+      "type": "string"
+    },
     "MvpStepReport": {
       "additionalProperties": false,
       "properties": {
@@ -112,7 +124,8 @@
           "enum": [
             "PASS",
             "FAIL",
-            "ERROR"
+            "ERROR",
+            "SKIPPED"
           ],
           "title": "Status",
           "type": "string"
@@ -161,13 +174,7 @@
       "title": "Error"
     },
     "status": {
-      "enum": [
-        "PASS",
-        "FAIL",
-        "ERROR"
-      ],
-      "title": "Status",
-      "type": "string"
+      "$ref": "#/$defs/CaseExecutionStatus"
     },
     "steps": {
       "items": {
