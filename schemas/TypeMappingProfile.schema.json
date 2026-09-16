@@ -1,0 +1,60 @@
+{
+  "$id": "xgtest://schema/1.1/TypeMappingProfile",
+  "additionalProperties": false,
+  "properties": {
+    "canonical_compatibility": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Canonical Compatibility"
+    },
+    "mapping_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Status"
+    },
+    "operation_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Operation Status"
+    },
+    "status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status"
+    }
+  },
+  "title": "TypeMappingProfile",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

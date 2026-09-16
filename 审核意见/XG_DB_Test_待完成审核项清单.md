@@ -20,7 +20,7 @@
 |---|---|---|
 | Xugu Adapter | execute、query、事务、列元数据、错误提取、cancel、close 和 bounded fetchmany 已具备；仍需完整 reset 与真实 cancel/stop 证明。 | Adapter 单元测试与真实集成测试均覆盖。 |
 | Runtime Profile Builder | 已形成 v0.2 identity + evidence hash 的 Profile Builder，并有 `RuntimeProfile` Schema；仍需证据引用和人工审查流程。 | 定义 Profile Schema、身份投影、证据引用和人工审查流程。 |
-| Runtime Profile Identity | 语义 identity 已与物理 target context 分离；仍需补采 DB exact build、OS、arch、compatibility mode 与关键配置。 | Profile 能精确绑定真实运行环境。 |
+| Runtime Profile Identity | 已改为稳定白名单 Projection，并拆为严格 Pydantic Target/Driver/Capabilities 子模型；仍需补采 DB exact build、OS、arch、compatibility mode 与关键配置。 | Profile 能精确绑定真实运行环境。 |
 | Cancel / Stop | 尚未执行有界长 SQL 的取消与服务端停止观察。 | 明确 Driver cancel 或连接隔离/关闭替代策略并实测。 |
 | Session Reset | 尚未覆盖 schema、autocommit、事务、锁、临时对象和会话参数恢复。 | 形成 reset_probe 与失败隔离策略。 |
 | Extended Type Mapping | 已增加 Driver Logical Type 映射；DATE/TIME/DATETIME 目前可写入读取但返回字符串，BLOB 绑定失败，最终 Canonical 映射仍未冻结。 | 每种类型完成 operation/mapping/canonical 三层验收。 |

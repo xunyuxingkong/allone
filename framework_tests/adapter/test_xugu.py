@@ -49,8 +49,11 @@ def test_extract_error_reads_code_from_xugu_message() -> None:
 
 
 def test_extract_error_redacts_connection_secrets() -> None:
-    details = extract_error(RuntimeError("password=top-secret url=xugu://user:top-secret@db:1907"))
-    assert "top-secret" not in details["message"]
+    details = extract_error(RuntimeError(
+        "password=top-secret token=token-value Authorization: Bearer bearer-value "
+        "url=xugu://user:top-secret@db:1907"
+    ))
+    assert all(secret not in details["message"] for secret in ("top-secret", "token-value", "bearer-value"))
     assert "<redacted>" in details["message"]
 
 

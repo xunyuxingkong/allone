@@ -24,6 +24,10 @@
 | `09d5317` | Profile 与结果流式基础 | 新增 `RuntimeProfile` Pydantic 契约和 Schema；Adapter 增加 Driver Type → Logical Type 映射、bounded `fetchmany` 和 `iter_query_rows()`。 |
 | `5b59f53` | 发布输入漂移保护 | 新增 Source Snapshot 与 Bundle 内容/大小校验工具；将 MVP Report Target 类型化，补充 `MvpTargetReport` Schema 和漂移测试；同步更新审核完成/待完成清单。 |
 
+本轮后续边界收口代码已在本次提交完成，具体包括 Comparator 类型单一来源、Expected 非空约束和 Profile Identity 白名单化。
+
+本轮继续完成第二优先级中的状态与身份收口：`MvpStepReport.status` 接入 `StepStatus`，Case Report 显式保留业务、清理和恢复状态，Runtime Profile Identity 拆为严格 Pydantic 子模型，并扩展错误凭据脱敏范围。
+
 ## 3. 问题与修复对应关系
 
 ### 3.1 已修复的新发现问题
@@ -55,13 +59,30 @@
 | 大结果集只有 fetchall | 查询优先按 1000 行批次使用 `fetchmany`，并提供 `iter_query_rows()` 流式接口；MVP 报告仍会收集结果用于兼容现有输出。 | `src/xgtest/adapter/xugu.py` |
 | YAML/Temporal 边界向量不足 | 增加科学计数、下划线数字、NaN、null、Unicode 以及非法日期/时间值测试；Temporal 由格式检查升级为真实解析校验。 | `framework_tests/contract/`、`src/xgtest/core/canonical.py` |
 
+### 3.3 Issues_and_Fixes2.md 本轮 P0 边界修复
+
+| 问题 | 修复结果 | 主要落点 | 验证证据 |
+|---|---|---|---|
+| N18 Comparator timestamp/time substring bug | Comparator 采用精确类型别名和最长匹配；`timestamp`、`timestamp_tz`、`time`、`datetime` 分别得到正确 Logical Type。 | `src/xgtest/runtime/comparator.py` | 类型反向测试、237 全量测试。 |
+| N19 ExpectedError 空对象歧义 | `ExpectedError` 至少包含一个 `code`、`sqlstate` 或 `message_pattern`；`ExpectedStatement.affected_rows` 改为必填。 | `src/xgtest/core/models.py` | 空模型拒绝测试、Schema 重新生成。 |
+| N20 Profile Identity 黑名单风险 | 只对白名单 capability、type mapping、事务可见性、错误类别/代码和取消/Reset 状态建身份；原始 message、对象名、观测值不参与 ID。 | `src/xgtest/runtime/profile.py` | 随机表名、时间和随机错误消息变化的 Profile ID 稳定测试；Profile 真实执行 PASS。 |
+
+### 3.4 Issues_and_Fixes2.md 第二优先级收口
+
+| 问题 | 修复结果 | 主要落点 | 验证证据 |
+|---|---|---|---|
+| N11 MvpStepReport 状态双真源 | `MvpStepReport.status` 改用 Registry `StepStatus`，Schema 与 Runner 同步。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py` | 生命周期测试、Schema 重新导出。 |
+| N21 Cleanup Failure 未保留 primary_status | Case Report 增加 `primary_status`、`cleanup_status`、`recovery_status`、`failure_type`；清理失败会将最终状态置为 ERROR，同时保留业务主状态。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py` | Setup/Cleanup 失败反向测试、真实 MVP 回归。 |
+| O3 RuntimeProfile Identity 内部自由字典 | Identity 拆为 Target、Driver、Capabilities 及类型/事务/错误子模型，未注册嵌套字段会被拒绝。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/profile.py` | 嵌套字段拒绝测试、真实 Profile 构建与执行 PASS。 |
+| N17 Error Redaction 覆盖不足 | 增加 token、secret、authorization、api-key、access-token 和 Bearer 形式脱敏，同时保留 URL 凭据脱敏。 | `src/xgtest/adapter/xugu.py` | Adapter 脱敏反向测试。 |
+
 ## 4. 验证记录
 
 验证环境为 237 项目目录中的隔离 `.venv`，Python 3.14.7，xgcondb Driver 2.3.9；未修改系统 Python。
 
 已完成验证：
 
-- 框架测试：**37 passed**。
+- 框架测试：**42 passed**。
 - 真实虚谷四个 MVP Case（JOIN、UNION、DDL TABLE、STRING FUNCTION）：**PASS**。
 - 带 v0.2 Runtime Profile 的真实执行：**PASS**。
 - `xgtest registry validate`：可输出包含 Entry 元数据的 JSON。

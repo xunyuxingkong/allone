@@ -1,0 +1,57 @@
+{
+  "$id": "xgtest://schema/1.1/ErrorMappingProfile",
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Code"
+    },
+    "exception_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Exception Type"
+    },
+    "sqlstate": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sqlstate"
+    },
+    "status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status"
+    }
+  },
+  "title": "ErrorMappingProfile",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

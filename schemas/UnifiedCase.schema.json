@@ -452,19 +452,14 @@
       "additionalProperties": false,
       "properties": {
         "affected_rows": {
-          "anyOf": [
-            {
-              "minimum": 0,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Affected Rows"
+          "minimum": 0,
+          "title": "Affected Rows",
+          "type": "integer"
         }
       },
+      "required": [
+        "affected_rows"
+      ],
       "title": "ExpectedStatement",
       "type": "object"
     },

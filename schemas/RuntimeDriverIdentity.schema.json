@@ -1,0 +1,84 @@
+{
+  "$id": "xgtest://schema/1.1/RuntimeDriverIdentity",
+  "additionalProperties": false,
+  "description": "Stable driver/runtime fields; probe details remain evidence only.",
+  "properties": {
+    "build": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build"
+    },
+    "module": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Module"
+    },
+    "python_version": {
+      "anyOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Python Version"
+    },
+    "version": {
+      "anyOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Version"
+    }
+  },
+  "title": "RuntimeDriverIdentity",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

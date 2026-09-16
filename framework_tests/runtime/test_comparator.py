@@ -29,3 +29,12 @@ def test_rows_hash_uses_typed_xgc1_values() -> None:
 def test_rowsort_handles_null_and_mixed_values_without_python_ordering() -> None:
     expected = {"rows": [[None], [2]]}
     assert compare_rows([(2,), (None,)], expected, "rowsort")
+
+
+def test_declared_timestamp_types_do_not_match_time_substring() -> None:
+    assert compare_rows(
+        [("2026-09-16T12:00:00",)],
+        {"rows": [["2026-09-16T12:00:00"]]},
+        column_types=("timestamp",),
+        column_count=1,
+    )

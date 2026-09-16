@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,9 @@ _SEMANTIC_TARGET_KEYS = {
     "driver_version", "os", "arch", "topology", "mode",
     "configuration_fingerprint", "dataset_fingerprint",
 }
+_DRIVER_IDENTITY_KEYS = {"module", "version", "build", "python_version"}
+_CAPABILITY_KEYS = {"connection", "type_mapping", "transaction_commit_rollback", "sql_error_mapping", "cancel_stop_proof", "reset_probe"}
+_TYPE_SEMANTIC_KEYS = {"status", "operation_status", "mapping_status", "canonical_compatibility"}
 
 
 def _strip_runtime_fields(value: Any) -> Any:
@@ -47,16 +51,77 @@ def _profile_identity(evidence: dict[str, Any]) -> dict[str, Any]:
     target = evidence.get("target") if isinstance(evidence.get("target"), dict) else {}
     driver = evidence.get("driver") if isinstance(evidence.get("driver"), dict) else {}
     capabilities = evidence.get("capabilities") if isinstance(evidence.get("capabilities"), dict) else {}
-    return {
+    identity: dict[str, Any] = {
         "profile_schema_version": "0.2",
         "target": {
             key: _strip_runtime_fields(target[key])
             for key in sorted(target)
             if key in _SEMANTIC_TARGET_KEYS and _strip_runtime_fields(target[key]) is not None
         },
-        "driver": _strip_runtime_fields(driver),
-        "capabilities": _strip_runtime_fields(capabilities),
+        "driver": {
+            key: _strip_runtime_fields(driver[key])
+            for key in sorted(driver)
+            if key in _DRIVER_IDENTITY_KEYS and _strip_runtime_fields(driver[key]) is not None
+        },
+        "capabilities": _capability_identity(capabilities),
     }
+    if evidence.get("contract_set_id") is not None:
+        identity["contract_set_id"] = evidence["contract_set_id"]
+    return identity
+
+
+def _capability_identity(capabilities: dict[str, Any]) -> dict[str, Any]:
+    """Keep only stable semantic outcomes from probe evidence.
+
+    Probe timestamps, object names, raw messages, observed values and timing
+    details belong to evidence, not to the Runtime Profile semantic identity.
+    """
+    result: dict[str, Any] = {}
+    for capability_key in sorted(_CAPABILITY_KEYS):
+        value = capabilities.get(capability_key)
+        if not isinstance(value, dict):
+            continue
+        if capability_key == "type_mapping":
+            mapped: dict[str, Any] = {}
+            for type_key in sorted(value):
+                type_value = value[type_key]
+                if isinstance(type_value, dict):
+                    mapped[type_key] = {
+                        key: type_value[key]
+                        for key in sorted(_TYPE_SEMANTIC_KEYS)
+                        if key in type_value
+                    }
+            result[capability_key] = mapped
+        elif capability_key == "transaction_commit_rollback":
+            result[capability_key] = {
+                key: value[key]
+                for key in ("status", "autocommit_disabled")
+                if key in value
+            }
+            if "commit_visible_count" in value:
+                result[capability_key]["commit_visible"] = value["commit_visible_count"] > 0
+            if "rollback_visible_count" in value:
+                result[capability_key]["rollback_visible"] = value["rollback_visible_count"] == 0
+        elif capability_key == "sql_error_mapping":
+            error_identity = {
+                key: value[key]
+                for key in ("status", "exception_type", "code", "sqlstate")
+                if key in value
+            }
+            # Older probes only recorded the raw message.  Preserve a stable
+            # error-code signal without allowing random object names into ID.
+            if "code" not in error_identity and isinstance(value.get("message"), str):
+                matched = re.search(r"\[([A-Z]\d+)\b", value["message"])
+                if matched:
+                    error_identity["code"] = matched.group(1)
+            result[capability_key] = error_identity
+        else:
+            result[capability_key] = {
+                key: value[key]
+                for key in ("status", "driver_has_cancel")
+                if key in value
+            }
+    return result
 
 
 def build_profile(evidence: dict[str, Any]) -> dict[str, Any]:
@@ -75,10 +140,11 @@ def build_profile(evidence: dict[str, Any]) -> dict[str, Any]:
         "evidence_sha256": evidence_hash,
     }
     profile_id = hashlib.sha256(xgmj1_bytes(identity)).hexdigest()
-    return RuntimeProfile(
+    validated = RuntimeProfile(
         **profile_body,
         sql_runtime_profile_id=profile_id,
-    ).model_dump(mode="python")
+    )
+    return validated.model_dump(mode="python", exclude_none=True)
 
 
 def load_profile(path: Path) -> dict[str, Any]:
@@ -86,7 +152,7 @@ def load_profile(path: Path) -> dict[str, Any]:
     if not isinstance(profile, dict) or not isinstance(profile.get("sql_runtime_profile_id"), str):
         raise ValueError("runtime profile must contain sql_runtime_profile_id")
     try:
-        return RuntimeProfile.model_validate(profile).model_dump(mode="python")
+        return RuntimeProfile.model_validate(profile).model_dump(mode="python", exclude_none=True)
     except ValueError as error:
         raise ValueError(str(error)) from error
 

@@ -1,0 +1,33 @@
+{
+  "$id": "xgtest://schema/1.1/CapabilityOutcome",
+  "additionalProperties": false,
+  "properties": {
+    "driver_has_cancel": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Driver Has Cancel"
+    },
+    "status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status"
+    }
+  },
+  "title": "CapabilityOutcome",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

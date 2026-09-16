@@ -1,0 +1,57 @@
+{
+  "$id": "xgtest://schema/1.1/TransactionSemantics",
+  "additionalProperties": false,
+  "properties": {
+    "autocommit_disabled": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Autocommit Disabled"
+    },
+    "commit_visible": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Commit Visible"
+    },
+    "rollback_visible": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rollback Visible"
+    },
+    "status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status"
+    }
+  },
+  "title": "TransactionSemantics",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

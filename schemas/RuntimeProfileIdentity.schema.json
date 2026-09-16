@@ -245,46 +245,6 @@
       "title": "RuntimeDriverIdentity",
       "type": "object"
     },
-    "RuntimeProfileIdentity": {
-      "additionalProperties": false,
-      "description": "Structured semantic projection hashed into ``sql_runtime_profile_id``.",
-      "properties": {
-        "capabilities": {
-          "$ref": "#/$defs/RuntimeCapabilitiesIdentity"
-        },
-        "contract_set_id": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Contract Set Id"
-        },
-        "driver": {
-          "$ref": "#/$defs/RuntimeDriverIdentity"
-        },
-        "profile_schema_version": {
-          "const": "0.2",
-          "title": "Profile Schema Version",
-          "type": "string"
-        },
-        "target": {
-          "$ref": "#/$defs/RuntimeTargetIdentity"
-        }
-      },
-      "required": [
-        "profile_schema_version",
-        "target",
-        "driver",
-        "capabilities"
-      ],
-      "title": "RuntimeProfileIdentity",
-      "type": "object"
-    },
     "RuntimeTargetIdentity": {
       "additionalProperties": false,
       "description": "Stable target semantics used to derive a runtime profile ID.",
@@ -539,50 +499,44 @@
       "type": "object"
     }
   },
-  "$id": "xgtest://schema/1.1/RuntimeProfile",
+  "$id": "xgtest://schema/1.1/RuntimeProfileIdentity",
   "additionalProperties": false,
-  "description": "Published, validated SQL runtime profile envelope.",
+  "description": "Structured semantic projection hashed into ``sql_runtime_profile_id``.",
   "properties": {
+    "capabilities": {
+      "$ref": "#/$defs/RuntimeCapabilitiesIdentity"
+    },
+    "contract_set_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Contract Set Id"
+    },
     "driver": {
-      "additionalProperties": true,
-      "title": "Driver",
-      "type": "object"
-    },
-    "evidence_sha256": {
-      "pattern": "^[0-9a-f]{64}$",
-      "title": "Evidence Sha256",
-      "type": "string"
-    },
-    "identity": {
-      "$ref": "#/$defs/RuntimeProfileIdentity"
+      "$ref": "#/$defs/RuntimeDriverIdentity"
     },
     "profile_schema_version": {
       "const": "0.2",
       "title": "Profile Schema Version",
       "type": "string"
     },
-    "sql_runtime_profile_id": {
-      "pattern": "^[0-9a-f]{64}$",
-      "title": "Sql Runtime Profile Id",
-      "type": "string"
-    },
     "target": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "title": "Target",
-      "type": "object"
+      "$ref": "#/$defs/RuntimeTargetIdentity"
     }
   },
   "required": [
     "profile_schema_version",
-    "identity",
     "target",
     "driver",
-    "evidence_sha256",
-    "sql_runtime_profile_id"
+    "capabilities"
   ],
-  "title": "RuntimeProfile",
+  "title": "RuntimeProfileIdentity",
   "type": "object",
   "x-xg-contract-version": "1.1"
 }

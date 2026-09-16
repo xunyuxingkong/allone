@@ -1,0 +1,142 @@
+{
+  "$id": "xgtest://schema/1.1/RuntimeTargetIdentity",
+  "additionalProperties": false,
+  "description": "Stable target semantics used to derive a runtime profile ID.",
+  "properties": {
+    "arch": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Arch"
+    },
+    "configuration_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Configuration Fingerprint"
+    },
+    "database_product": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Database Product"
+    },
+    "database_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Database Version"
+    },
+    "dataset_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dataset Fingerprint"
+    },
+    "db_build": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Db Build"
+    },
+    "driver_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Driver Name"
+    },
+    "driver_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Driver Version"
+    },
+    "mode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mode"
+    },
+    "os": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Os"
+    },
+    "topology": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Topology"
+    }
+  },
+  "title": "RuntimeTargetIdentity",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from xgtest.core.identity import compute_manifest_hash, compute_plan_hash, compute_target_id, target_identity_projection
 from xgtest.core.manifest import content_sha256, verify_bundle, verify_source_snapshot
-from xgtest.core.models import BundleRef, EffectiveMetadata, SourceInfo, Target, TestPlan as PlanModel
+from xgtest.core.models import BundleRef, EffectiveMetadata, ExpectedError, ExpectedStatement, SourceInfo, Target, TestPlan as PlanModel
 from xgtest.generated.registry_enums import CaseAssetStatus, FeatureKey, IsolationScope, Level
 
 
@@ -109,3 +109,10 @@ def test_source_and_bundle_snapshot_checks_detect_drift(tmp_path) -> None:
     bundle.write_bytes(b"changed")
     with pytest.raises(ValueError, match="BUNDLE_(SIZE_MISMATCH|DRIFT)"):
         verify_bundle(bundle, expected)
+
+
+def test_expected_error_and_statement_cannot_be_empty() -> None:
+    with pytest.raises(ValidationError, match="EXPECTED_ERROR_EMPTY"):
+        ExpectedError()
+    with pytest.raises(ValidationError):
+        ExpectedStatement()

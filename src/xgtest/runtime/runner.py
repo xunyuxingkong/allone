@@ -26,7 +26,7 @@ from xgtest.core.models import (
     RawMetadata,
     SqlStep,
 )
-from xgtest.generated.registry_enums import CaseAssetStatus, CaseExecutionStatus, FeatureKey, IsolationScope, Level, StepStatus
+from xgtest.generated.registry_enums import CaseAssetStatus, CaseExecutionStatus, FailureType, FeatureKey, IsolationScope, Level, StepStatus
 from xgtest.core.yaml_loader import load_yaml
 
 from .comparator import compare_affected_rows, compare_error, compare_rows, is_expected_error
@@ -157,11 +157,11 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
     started = time.perf_counter()
     results: list[dict[str, Any]] = []
     case_status = "PASS"
+    setup_failed = False
     setup_steps = [step for step in case.steps if str(step.kind) == "setup"]
     main_steps = [step for step in case.steps if str(step.kind) in {"statement", "query"}]
     cleanup_steps = [step for step in case.steps if str(step.kind) == "cleanup"]
     try:
-        setup_failed = False
         for index, step in enumerate(setup_steps):
             item = _execute_step(session, step)
             results.append(item)
@@ -180,25 +180,50 @@ def _run_case(config: XuguConnectionConfig, path: Path) -> MvpCaseReport:
                 results.append(item)
                 if item["status"] != "PASS":
                     case_status = "ERROR" if item["status"] == "ERROR" else "FAIL"
-        # Cleanup is an independent phase and runs even when setup/main fails.
+        # Preserve the business result before cleanup can change the final
+        # outcome. Cleanup remains an independent phase.
+        primary_status = CaseExecutionStatus(case_status)
         for step in cleanup_steps:
             item = _execute_step(session, step)
             results.append(item)
             if item["status"] != "PASS":
                 case_status = "ERROR" if item["status"] == "ERROR" else "FAIL"
     finally:
+        recovery_errors: list[str] = []
         try:
             session.rollback_transaction()
-        finally:
+        except Exception as error:
+            recovery_errors.append(f"{type(error).__name__}: {error}")
+        try:
             session.close()
+        except Exception as error:
+            recovery_errors.append(f"{type(error).__name__}: {error}")
     cleanup_results = [item for item in results if item["kind"] == "cleanup"]
     cleanup_status = "PASS" if all(item["status"] == "PASS" for item in cleanup_results) else "FAILED"
+    recovery_status = "FAILED" if recovery_errors else "PASS"
+    if cleanup_status == "FAILED" or recovery_status == "FAILED":
+        final_status = CaseExecutionStatus.ERROR
+    else:
+        final_status = primary_status
     if cleanup_status == "FAILED":
-        case_status = "ERROR"
+        failure_type: FailureType | None = FailureType.FIXTURE_CLEANUP
+    elif recovery_status == "FAILED":
+        failure_type = FailureType.INFRA_RESOURCE
+    elif setup_failed:
+        failure_type = FailureType.FIXTURE_SETUP
+    elif primary_status == CaseExecutionStatus.FAIL:
+        failure_type = FailureType.ASSERTION_FAILED
+    elif primary_status == CaseExecutionStatus.ERROR:
+        failure_type = FailureType.INFRA_RESOURCE
+    else:
+        failure_type = None
     return MvpCaseReport(
         case_id=case.metadata.id,
-        status=CaseExecutionStatus(case_status),
+        status=final_status,
+        primary_status=primary_status,
         cleanup_status=cleanup_status,
+        recovery_status=recovery_status,
+        failure_type=failure_type,
         duration_ms=round((time.perf_counter() - started) * 1000, 3),
         steps=tuple(
             MvpStepReport.model_validate({**item, "status": StepStatus(item["status"])})
@@ -230,7 +255,10 @@ def run_cases(
             results.append(MvpCaseReport(
                 case_id=path.stem,
                 status=CaseExecutionStatus.ERROR,
+                primary_status=CaseExecutionStatus.ERROR,
                 cleanup_status="FAILED",
+                recovery_status="FAILED",
+                failure_type=FailureType.INFRA_RESOURCE,
                 duration_ms=0.0,
                 steps=(),
                 error=f"{type(error).__name__}: {error}",

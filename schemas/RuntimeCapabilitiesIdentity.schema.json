@@ -1,0 +1,280 @@
+{
+  "$defs": {
+    "CapabilityOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "driver_has_cancel": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Driver Has Cancel"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        }
+      },
+      "title": "CapabilityOutcome",
+      "type": "object"
+    },
+    "ErrorMappingProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Code"
+        },
+        "exception_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exception Type"
+        },
+        "sqlstate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sqlstate"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        }
+      },
+      "title": "ErrorMappingProfile",
+      "type": "object"
+    },
+    "TransactionSemantics": {
+      "additionalProperties": false,
+      "properties": {
+        "autocommit_disabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Autocommit Disabled"
+        },
+        "commit_visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commit Visible"
+        },
+        "rollback_visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rollback Visible"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        }
+      },
+      "title": "TransactionSemantics",
+      "type": "object"
+    },
+    "TypeMappingProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_compatibility": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Compatibility"
+        },
+        "mapping_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mapping Status"
+        },
+        "operation_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Status"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        }
+      },
+      "title": "TypeMappingProfile",
+      "type": "object"
+    }
+  },
+  "$id": "xgtest://schema/1.1/RuntimeCapabilitiesIdentity",
+  "additionalProperties": false,
+  "properties": {
+    "cancel_stop_proof": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CapabilityOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "connection": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CapabilityOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reset_probe": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CapabilityOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "sql_error_mapping": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorMappingProfile"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "transaction_commit_rollback": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TransactionSemantics"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "type_mapping": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/TypeMappingProfile"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Type Mapping"
+    }
+  },
+  "title": "RuntimeCapabilitiesIdentity",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

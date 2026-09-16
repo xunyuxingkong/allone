@@ -75,7 +75,7 @@ def map_driver_type(declared_type: Any) -> str | None:
 def extract_error(error: Exception) -> dict[str, str | None]:
     """Return stable error attributes without exposing connection details."""
     message = re.sub(
-        r"(?i)(password|passwd|pwd)\s*=\s*(?:'[^']*'|\"[^\"]*\"|[^,;\s]+)",
+        r"(?i)\b(password|passwd|pwd|token|secret|authorization|api[_-]?key|access[_-]?token)\s*(?:=|:)\s*(?:bearer\s+)?(?:'[^']*'|\"[^\"]*\"|[^,;\s]+)",
         r"\1=<redacted>",
         str(error),
     )

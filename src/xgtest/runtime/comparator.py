@@ -19,22 +19,33 @@ from xgtest.core.canonical import CanonicalCell, xgc1_encode
 
 _ERROR_FIELDS = ("code", "sqlstate", "message_pattern")
 _TYPE_HINTS = {
-    "date": "date",
-    "time": "time",
+    "timestamp with time zone": "timestamp_tz",
     "timestamp_tz": "timestamp_tz",
     "timestamptz": "timestamp_tz",
-    "timestamp": "timestamp",
     "datetime": "timestamp",
-    "binary": "bytes",
-    "blob": "bytes",
-    "bytes": "bytes",
+    "timestamp": "timestamp",
+    "date": "date",
+    "time": "time",
     "decimal": "decimal",
     "numeric": "decimal",
-    "float": "float",
+    "number": "decimal",
     "double": "float",
-    "int": "int",
+    "float": "float",
+    "real": "float",
+    "bigint": "int",
     "integer": "int",
+    "smallint": "int",
+    "int": "int",
     "bool": "bool",
+    "binary": "bytes",
+    "blob": "bytes",
+    "raw": "bytes",
+    "bytes": "bytes",
+    "varchar": "string",
+    "char": "string",
+    "text": "string",
+    "clob": "string",
+    "string": "string",
 }
 
 
@@ -53,9 +64,10 @@ def is_expected_error(expected: Any) -> bool:
 def _declared_logical_type(declared_type: str | None) -> str | None:
     if not declared_type:
         return None
-    value = declared_type.lower().replace("<class '", "").replace("'>", "")
-    for token, logical_type in _TYPE_HINTS.items():
-        if token in value:
+    value = " ".join(declared_type.lower().replace("<class '", "").replace("'>", "").split())
+    for token in sorted(_TYPE_HINTS, key=len, reverse=True):
+        if value == token or value.startswith(f"{token}(") or value.startswith(f"{token} "):
+            logical_type = _TYPE_HINTS[token]
             return logical_type
     return None
 

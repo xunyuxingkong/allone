@@ -1,7 +1,7 @@
 # XG DB Test 已完成调整审核意见清单
 
 > 来源：`XG_DB_Test_Current_Code_Issues_and_Fixes.md`
-> 更新日期：2026-09-15
+> 更新日期：2026-09-16
 > 范围：本清单仅记录已实际修改并完成验证的审核项；未完成或只完成部分的事项见同目录的待完成清单。
 
 ## 已完成调整
@@ -30,7 +30,7 @@
 
 ## 验证汇总
 
-- 237 项目隔离 Python 3.14：`15 passed`。
+- 237 项目隔离 Python 3.14：`42 passed`。
 - Registry Enum、JSON Schema 已重新生成。
 - 真实虚谷连接、基础读取、事务提交/回滚、错误映射与清理均已复测。
 - 本次没有修改系统 Python 或持久化数据库凭据。
@@ -55,3 +55,10 @@
 | Adapter Logical Type / fetchmany 基础能力 | 增加 Driver 类型到 Logical Type 的明确映射；查询优先使用 bounded `fetchmany`，并提供 `iter_query_rows()` 流式接口。 | `src/xgtest/adapter/xugu.py`、`src/xgtest/runtime/runner.py` | Adapter 测试、真实 MVP 回归通过。 |
 | N12 MVP Target 类型化 | MVP Run Report 的 target 改为 `MvpTargetReport` 模型，避免继续使用自由字典。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py` | Schema 生成与真实运行报告校验通过。 |
 | Source / Bundle Drift 校验基础能力 | 新增按相对路径和内容哈希校验 Source Snapshot、按大小和 SHA-256 校验 Bundle 的公共工具。 | `src/xgtest/core/manifest.py` | 漂移、缺失和越界测试通过。 |
+| N18 Comparator 时间类型子串误判 | Driver/Logical Type 解析改为精确别名、参数前缀和最长匹配，`timestamp` 不再被 `time` 子串误判。 | `src/xgtest/runtime/comparator.py` | timestamp、timestamp_tz、time、datetime 反向测试。 |
+| N19 空 ExpectedError 歧义 | `ExpectedError` 至少需要一个 matcher；空对象和全 None 预期被拒绝。 | `src/xgtest/core/models.py` | Pydantic 反向校验与 Schema 重新生成。 |
+| N20 Runtime Profile 黑名单身份 | Profile Identity 改为 capability/type/transaction/error 的稳定白名单投影，随机错误消息和观测值不进入身份。 | `src/xgtest/runtime/profile.py` | 随机表名、时间和错误消息变化仍得到相同 Profile ID。 |
+| N11 MvpStepReport 状态双真源 | `MvpStepReport.status` 改用 Registry 生成的 `StepStatus`，与 Case/Run 状态共享 Registry。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py`、`schemas/MvpStepReport.schema.json` | Runner 生命周期测试与 Schema 重新导出。 |
+| N21 Cleanup Failure 未保留主状态 | 报告增加 `primary_status`、`cleanup_status`、`recovery_status`、`failure_type`；业务失败与清理失败同时发生时最终为 ERROR 且保留 `primary_status=FAIL`。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py`、`schemas/MvpCaseReport.schema.json` | Setup/Cleanup 失败反向测试与真实 MVP 回归。 |
+| O3 RuntimeProfile Identity 内部自由字典 | 新增 RuntimeTargetIdentity、RuntimeDriverIdentity、RuntimeCapabilitiesIdentity 及类型/事务/错误子模型，严格拒绝未注册身份字段。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/profile.py`、`schemas/RuntimeProfileIdentity.schema.json` | 嵌套未知字段拒绝测试、Profile 真实构建与执行 PASS。 |
+| N17 Error Redaction 覆盖不足 | 统一脱敏 password/passwd/pwd、token、secret、authorization、api-key 和 access-token 的赋值、Bearer 与 URL 凭据。 | `src/xgtest/adapter/xugu.py` | Adapter 脱敏反向测试。 |

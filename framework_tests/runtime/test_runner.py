@@ -62,5 +62,46 @@ def test_setup_failure_skips_main_but_always_runs_cleanup(monkeypatch, tmp_path:
     monkeypatch.setattr(runner, "XuguSession", FakeSession)
     report = runner._run_case(XuguConnectionConfig("h", "1", "d", "u", "p"), case_path)
     assert report.status == "ERROR"
+    assert report.primary_status == "ERROR"
+    assert report.cleanup_status == "PASS"
+    assert report.recovery_status == "PASS"
+    assert report.failure_type == "FIXTURE_SETUP"
     assert [step.status for step in report.steps] == ["ERROR", "SKIPPED", "PASS"]
     assert calls == ["CREATE TABLE FAIL", "DROP TABLE FAIL", "rollback", "close"]
+
+
+def test_cleanup_failure_preserves_primary_failure(monkeypatch, tmp_path: Path) -> None:
+    case_path = tmp_path / "case.yaml"
+    case_path.write_text(
+        """metadata:\n  id: MVP.CLEANUP.000001\n  title: cleanup failure\n  feature: join\nsteps:\n  - id: query\n    kind: query\n    sql: SELECT 1\n    comparison:\n      mode: exact\n    expected:\n      rows:\n        - [2]\n  - id: cleanup\n    kind: cleanup\n    sql: DROP TABLE MISSING\n""",
+        encoding="utf-8",
+    )
+
+    class FakeSession:
+        def __init__(self, config):
+            pass
+
+        def open(self):
+            return self
+
+        def execute(self, sql):
+            if sql.startswith("DROP"):
+                raise RuntimeError("cleanup failed")
+            return 0
+
+        def query(self, sql):
+            return XuguQueryResult(("value",), ("int",), ((1,),))
+
+        def rollback_transaction(self):
+            pass
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(runner, "XuguSession", FakeSession)
+    report = runner._run_case(XuguConnectionConfig("h", "1", "d", "u", "p"), case_path)
+    assert report.status == "ERROR"
+    assert report.primary_status == "FAIL"
+    assert report.cleanup_status == "FAILED"
+    assert report.recovery_status == "PASS"
+    assert report.failure_type == "FIXTURE_CLEANUP"

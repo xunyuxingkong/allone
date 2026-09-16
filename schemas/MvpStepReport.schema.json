@@ -1,4 +1,18 @@
 {
+  "$defs": {
+    "StepStatus": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR",
+        "SKIPPED"
+      ],
+      "title": "StepStatus",
+      "type": "string"
+    }
+  },
   "$id": "xgtest://schema/1.1/MvpStepReport",
   "additionalProperties": false,
   "properties": {
@@ -123,14 +137,7 @@
       "title": "Sqlstate"
     },
     "status": {
-      "enum": [
-        "PASS",
-        "FAIL",
-        "ERROR",
-        "SKIPPED"
-      ],
-      "title": "Status",
-      "type": "string"
+      "$ref": "#/$defs/StepStatus"
     }
   },
   "required": [

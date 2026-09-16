@@ -12,6 +12,18 @@
       "title": "CaseExecutionStatus",
       "type": "string"
     },
+    "FailureType": {
+      "enum": [
+        "ASSERTION_FAILED",
+        "FIXTURE_SETUP",
+        "FIXTURE_CLEANUP",
+        "INFRA_NETWORK",
+        "INFRA_TIMEOUT",
+        "INFRA_RESOURCE"
+      ],
+      "title": "FailureType",
+      "type": "string"
+    },
     "MvpStepReport": {
       "additionalProperties": false,
       "properties": {
@@ -136,14 +148,7 @@
           "title": "Sqlstate"
         },
         "status": {
-          "enum": [
-            "PASS",
-            "FAIL",
-            "ERROR",
-            "SKIPPED"
-          ],
-          "title": "Status",
-          "type": "string"
+          "$ref": "#/$defs/StepStatus"
         }
       },
       "required": [
@@ -154,6 +159,18 @@
       ],
       "title": "MvpStepReport",
       "type": "object"
+    },
+    "StepStatus": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR",
+        "SKIPPED"
+      ],
+      "title": "StepStatus",
+      "type": "string"
     }
   },
   "$id": "xgtest://schema/1.1/MvpCaseReport",
@@ -188,6 +205,28 @@
       "default": null,
       "title": "Error"
     },
+    "failure_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FailureType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "primary_status": {
+      "$ref": "#/$defs/CaseExecutionStatus"
+    },
+    "recovery_status": {
+      "enum": [
+        "PASS",
+        "FAILED"
+      ],
+      "title": "Recovery Status",
+      "type": "string"
+    },
     "status": {
       "$ref": "#/$defs/CaseExecutionStatus"
     },
@@ -202,7 +241,9 @@
   "required": [
     "case_id",
     "status",
+    "primary_status",
     "cleanup_status",
+    "recovery_status",
     "duration_ms",
     "steps"
   ],

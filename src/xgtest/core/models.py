@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from xgtest.core.identity import compute_plan_hash, validate_target_id
 
 from xgtest.generated.registry_enums import (
-    AttemptStatus, CaseAssetStatus, CaseExecutionStatus, FeatureKey,
+    AttemptStatus, CaseAssetStatus, CaseExecutionStatus, FailureType, FeatureKey,
     IsolationScope, Level, ResourceAccessMode, StepStatus,
 )
 
@@ -118,9 +118,15 @@ class ExpectedError(StrictModel):
     sqlstate: str | None = None
     message_pattern: str | None = None
 
+    @model_validator(mode="after")
+    def at_least_one_matcher_required(self) -> "ExpectedError":
+        if self.code is None and self.sqlstate is None and self.message_pattern is None:
+            raise ValueError("EXPECTED_ERROR_EMPTY: at least one error matcher is required")
+        return self
+
 
 class ExpectedStatement(StrictModel):
-    affected_rows: int | None = Field(default=None, ge=0)
+    affected_rows: int = Field(ge=0)
 
 
 class SqlStep(StrictModel):
@@ -248,11 +254,81 @@ class Manifest(StrictModel):
         return self
 
 
+class RuntimeTargetIdentity(StrictModel):
+    """Stable target semantics used to derive a runtime profile ID."""
+
+    database_product: str | None = None
+    database_version: str | None = None
+    db_build: str | None = None
+    driver_name: str | None = None
+    driver_version: str | None = None
+    os: str | None = None
+    arch: str | None = None
+    topology: str | None = None
+    mode: str | None = None
+    configuration_fingerprint: str | None = None
+    dataset_fingerprint: str | None = None
+
+
+class RuntimeDriverIdentity(StrictModel):
+    """Stable driver/runtime fields; probe details remain evidence only."""
+
+    module: str | None = None
+    version: list[int | str] | tuple[int | str, ...] | str | None = None
+    build: str | None = None
+    python_version: list[int | str] | tuple[int | str, ...] | str | None = None
+
+
+class TypeMappingProfile(StrictModel):
+    status: str | None = None
+    operation_status: str | None = None
+    mapping_status: str | None = None
+    canonical_compatibility: str | bool | None = None
+
+
+class TransactionSemantics(StrictModel):
+    status: str | None = None
+    autocommit_disabled: bool | None = None
+    commit_visible: bool | None = None
+    rollback_visible: bool | None = None
+
+
+class ErrorMappingProfile(StrictModel):
+    status: str | None = None
+    exception_type: str | None = None
+    code: str | None = None
+    sqlstate: str | None = None
+
+
+class CapabilityOutcome(StrictModel):
+    status: str | None = None
+    driver_has_cancel: bool | None = None
+
+
+class RuntimeCapabilitiesIdentity(StrictModel):
+    connection: CapabilityOutcome | None = None
+    type_mapping: dict[str, TypeMappingProfile] | None = None
+    transaction_commit_rollback: TransactionSemantics | None = None
+    sql_error_mapping: ErrorMappingProfile | None = None
+    cancel_stop_proof: CapabilityOutcome | None = None
+    reset_probe: CapabilityOutcome | None = None
+
+
+class RuntimeProfileIdentity(StrictModel):
+    """Structured semantic projection hashed into ``sql_runtime_profile_id``."""
+
+    profile_schema_version: Literal["0.2"]
+    target: RuntimeTargetIdentity
+    driver: RuntimeDriverIdentity
+    capabilities: RuntimeCapabilitiesIdentity
+    contract_set_id: str | None = None
+
+
 class RuntimeProfile(StrictModel):
     """Published, validated SQL runtime profile envelope."""
 
     profile_schema_version: Literal["0.2"]
-    identity: dict[str, Any]
+    identity: RuntimeProfileIdentity
     target: dict[str, str]
     driver: dict[str, Any]
     evidence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -264,7 +340,8 @@ class RuntimeProfile(StrictModel):
 
         from xgtest.core.canonical import xgmj1_bytes
 
-        expected = hashlib.sha256(xgmj1_bytes(self.identity)).hexdigest()
+        identity = self.identity.model_dump(mode="python", exclude_none=True)
+        expected = hashlib.sha256(xgmj1_bytes(identity)).hexdigest()
         if self.sql_runtime_profile_id != expected:
             raise ValueError("RUNTIME_PROFILE_ID_MISMATCH: profile identity does not match")
         return self
@@ -318,7 +395,7 @@ class ResultEvent(StrictModel):
 class MvpStepReport(StrictModel):
     id: str
     kind: str
-    status: Literal["PASS", "FAIL", "ERROR", "SKIPPED"]
+    status: StepStatus
     duration_ms: float = Field(ge=0)
     columns: tuple[str, ...] = ()
     column_types: tuple[str | None, ...] = ()
@@ -334,7 +411,10 @@ class MvpStepReport(StrictModel):
 class MvpCaseReport(StrictModel):
     case_id: str
     status: CaseExecutionStatus
+    primary_status: CaseExecutionStatus
     cleanup_status: Literal["PASS", "FAILED"]
+    recovery_status: Literal["PASS", "FAILED"]
+    failure_type: FailureType | None = None
     duration_ms: float = Field(ge=0)
     steps: tuple[MvpStepReport, ...]
     error: str | None = None
@@ -370,6 +450,14 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         EnvironmentRequirement,
         ResourceRequest,
         Manifest,
+        RuntimeTargetIdentity,
+        RuntimeDriverIdentity,
+        TypeMappingProfile,
+        TransactionSemantics,
+        ErrorMappingProfile,
+        CapabilityOutcome,
+        RuntimeCapabilitiesIdentity,
+        RuntimeProfileIdentity,
         RuntimeProfile,
         ResultEvent,
         MvpStepReport,
