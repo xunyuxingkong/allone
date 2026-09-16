@@ -7,6 +7,7 @@ import math
 import re
 import struct
 from dataclasses import dataclass
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any, Iterable, Mapping
 
@@ -132,6 +133,19 @@ def _cell_payload(cell: CanonicalCell) -> bytes:
         expression = {"date": _DATE, "time": _TIME, "timestamp": _TIMESTAMP, "timestamp_tz": _TIMESTAMP_TZ}[logical_type]
         if not expression.fullmatch(value):
             raise ValueError(f"{logical_type} cell is not in canonical format")
+        try:
+            if logical_type == "date":
+                date.fromisoformat(value)
+            elif logical_type == "time":
+                time.fromisoformat(value)
+            elif logical_type == "timestamp":
+                parsed = datetime.fromisoformat(value)
+                if parsed.tzinfo is not None:
+                    raise ValueError("timestamp must be timezone-naive")
+            else:
+                datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as error:
+            raise ValueError(f"{logical_type} cell has invalid temporal value") from error
         return value.encode("ascii")
     if logical_type == "bytes":
         if not isinstance(value, bytes):

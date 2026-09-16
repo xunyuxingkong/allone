@@ -45,3 +45,12 @@ def test_xgc1_validates_temporal_format_and_bytes() -> None:
     assert xgc1_encode(header, [[CanonicalCell("date", "2026-09-15"), CanonicalCell("bytes", b"\x00\xff")]])
     with pytest.raises(ValueError, match="canonical format"):
         xgc1_encode(header, [[CanonicalCell("date", "yesterday"), CanonicalCell("bytes", b"")]])
+
+
+def test_xgc1_rejects_invalid_temporal_values() -> None:
+    date_header = {"mode": "exact", "column_count": 1, "logical_types": ["date"], "comparison_profile": "strict"}
+    time_header = {"mode": "exact", "column_count": 1, "logical_types": ["time"], "comparison_profile": "strict"}
+    with pytest.raises(ValueError, match="invalid temporal"):
+        xgc1_encode(date_header, [[CanonicalCell("date", "2026-99-99")]])
+    with pytest.raises(ValueError, match="invalid temporal"):
+        xgc1_encode(time_header, [[CanonicalCell("time", "25:00:00")]])

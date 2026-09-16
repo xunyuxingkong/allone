@@ -1,7 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from xgtest.core.models import EffectiveMetadata
+from xgtest.core.identity import compute_manifest_hash, compute_plan_hash, compute_target_id, target_identity_projection
+from xgtest.core.models import EffectiveMetadata, Target, TestPlan as PlanModel
 from xgtest.generated.registry_enums import CaseAssetStatus, FeatureKey, IsolationScope, Level
 
 
@@ -35,3 +36,58 @@ def test_effective_metadata_rejects_implicit_bool() -> None:
             isolation=IsolationScope.WORKER_SCHEMA,
             destructive="false",
         )
+
+
+def test_target_id_is_derived_from_semantic_projection() -> None:
+    payload = {
+        "database_product": "xugu",
+        "database_version": "7",
+        "db_build": "b1",
+        "driver_name": "xgcondb",
+        "driver_version": "2.3.9",
+        "os": "linux",
+        "arch": "x86_64",
+        "topology": "single",
+        "mode": "default",
+        "configuration_fingerprint": "a" * 64,
+    }
+    target = Target(target_id=compute_target_id(payload), **payload)
+    assert target.target_id == compute_target_id(target)
+    assert "target_id" not in target_identity_projection({**payload, "target_id": target.target_id, "host": "db-a"})
+    with pytest.raises(ValidationError, match="TARGET_ID_MISMATCH"):
+        Target(target_id="0" * 64, **payload)
+
+
+def test_plan_hash_is_order_independent_for_target_entries() -> None:
+    payload = {
+        "database_product": "xugu", "database_version": "7", "db_build": "b1",
+        "driver_name": "xgcondb", "driver_version": "2.3.9", "os": "linux",
+        "arch": "x86_64", "topology": "single", "mode": "default",
+        "configuration_fingerprint": "b" * 64,
+    }
+    first = Target(target_id=compute_target_id(payload), **payload)
+    second_payload = {**payload, "db_build": "b2"}
+    second = Target(target_id=compute_target_id(second_payload), **second_payload)
+    plan_a = PlanModel(selector="mvp", targets=(first, second), expected_executions=())
+    plan_b = PlanModel(selector="mvp", targets=(second, first), expected_executions=())
+    assert compute_plan_hash(plan_a) == compute_plan_hash(plan_b)
+
+
+def test_manifest_hash_sorts_set_like_entries() -> None:
+    base = {
+        "run_id": "run-1",
+        "contract_set_id": "c" * 64,
+        "plan": {"selector": "mvp", "targets": [], "expected_executions": []},
+        "bundles": [{"content_hash": "b" * 64, "size": 2}, {"content_hash": "a" * 64, "size": 1}],
+        "git_commit": "deadbeef",
+        "dirty": False,
+        "source_snapshot_hash": "d" * 64,
+        "catalog_snapshot_id": "catalog-1",
+        "plan_hash": "e" * 64,
+        "case_entries": ["CASE.B", "CASE.A"],
+        "target_entries": [],
+        "runtime_versions": {"runner": "1", "compiler": "1"},
+    }
+    reordered = {**base, "bundles": list(reversed(base["bundles"])), "case_entries": list(reversed(base["case_entries"]))}
+    assert compute_manifest_hash(base) == compute_manifest_hash(reordered)
+    assert compute_manifest_hash(base) != compute_manifest_hash({**base, "run_id": "run-2"})

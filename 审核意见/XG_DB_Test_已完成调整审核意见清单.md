@@ -48,3 +48,6 @@
 | N8 reset 名称误导 | `rollback_transaction()` 明确表示已验证能力；未验证完整会话 reset 时 `reset()` 显式抛出 NotImplementedError。 | `src/xgtest/adapter/xugu.py` | Adapter 测试与真实 MVP 回滚收尾。 |
 | N14 run_id 截断碰撞风险 | 使用 UUID4 生成运行 ID，避免时间戳摘要截断导致碰撞。 | `src/xgtest/runtime/runner.py` | 237 真实运行产物检查。 |
 | N17 错误信息缺少脱敏 | 错误提取对 password 参数和连接 URL 凭据执行统一脱敏。 | `src/xgtest/adapter/xugu.py` | Adapter 脱敏测试。 |
+| Target Identity Projection | Target ID 由语义字段经 XGMJ1 + SHA-256 自动计算并在模型构造时校验；Host 等物理上下文不参与 Target 语义 ID。 | `src/xgtest/core/identity.py`、`src/xgtest/core/models.py` | Target 正反向校验与语义投影测试。 |
+| Manifest / Plan Identity 基础规则 | Plan/Manifest 身份投影提供稳定集合排序、XGMJ1 编码和 SHA-256 计算；Manifest 校验 Plan Hash 与 Target ID。 | `src/xgtest/core/identity.py`、`src/xgtest/core/models.py` | 目标重排、Bundle/Case 重排和 Run 变化测试。 |
+| YAML / Temporal Golden Vector 增补 | 增加科学计数、下划线数字、NaN、null、Unicode 以及非法日期/时间值的契约向量。 | `framework_tests/contract/test_registry.py`、`src/xgtest/core/canonical.py` | 237 契约测试通过。 |

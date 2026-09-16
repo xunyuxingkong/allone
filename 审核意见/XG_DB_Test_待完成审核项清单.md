@@ -9,9 +9,9 @@
 | 原审核项 | 待完成内容 | 完成条件 |
 |---|---|---|
 | Core Model 职责拆分 | 当前模型仍集中在 `models.py`，尚未拆为 asset/planning/execution/result/resource 等模块。 | 模块拆分完成，导入边界稳定，Parser/Compiler/Catalog 不再自建 DTO。 |
-| Target Identity | 已扩展 Target Snapshot 字段，但尚未由稳定 Identity Projection 自动计算和校验 target_id。 | 实现 Target 身份投影、Golden Vector 与重复环境识别测试。 |
-| Manifest 1 | 已扩展字段，但 case entry、expected execution、bundle dependency 与 runtime version 仍未形成完整可校验的正式 Manifest 发布流程。 | 实现 Manifest identity projection、Descriptor、向量与拒绝规则。 |
-| YAML Golden Vector | 已校准核心标量，但未覆盖 nested duplicate、科学计数、`.nan`、Unicode、null、所有边界格式。 | 建立 `framework_tests/contract/yaml/` 标准向量并跨 Loader 审核。 |
+| Target Identity | 已实现基础 Target Identity Projection、target_id 自动校验和正反向向量；仍需重复环境识别及完整 Environment/Target 注册表。 | 实现 Target 身份投影、Golden Vector 与重复环境识别测试。 |
+| Manifest 1 | 已实现 Plan/Manifest 基础身份投影、集合排序和 Plan Hash 校验；仍需正式 Manifest 发布流程、Bundle Descriptor、依赖快照和 Source Drift Protection。 | 实现 Manifest identity projection、Descriptor、向量与拒绝规则。 |
+| YAML Golden Vector | 已补科学计数、下划线数字、`.nan`、Unicode、null 和非法时间值；仍需独立向量目录、nested duplicate、超大输入和跨 Loader 审核。 | 建立 `framework_tests/contract/yaml/` 标准向量并跨 Loader 审核。 |
 | G0A Contract Test 覆盖 | 现有测试仍不足以冻结 G0A。 | 补全 Registry、Model、Canonical、YAML、Schema 的正反向 Golden Vector。 |
 
 ## P1：运行时与适配层
@@ -37,7 +37,7 @@
 | Typed Expected | Bootstrap Runner 已完成 ExpectedRows/Hash/Error/Statement typed dispatch；正式 DSL/Compiler/Catalog 仍需接入同一模型。 | 不再允许业务 Expected 以任意结构绕过验证。 |
 | Resource Conflict Matrix | ResourceRequest 已补字段，尚未实现父子资源冲突、容量与 Admission 判定。 | 建立矩阵与并发测试。 |
 | SourceSpan | ContractError 已可携带 SourceSpan，但 YAML/Parser/Compiler 尚未提供真实行列信息。 | DSL 错误能定位文件、行、列、字段路径。 |
-| Canonical 向量覆盖 | 已覆盖一部分边界，仍缺重复行、空结果、零列、极大整数、Decimal exponent、timezone、错误 Canonical 等。 | 形成版本化完整 Golden Vector 集。 |
+| Canonical 向量覆盖 | 已补部分 Temporal 语义边界；仍缺重复行、空结果、零列、极大整数、Decimal exponent、timezone、错误 Canonical 等。 | 形成版本化完整 Golden Vector 集。 |
 
 ## 建议执行顺序
 

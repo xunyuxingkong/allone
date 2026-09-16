@@ -51,6 +51,21 @@ def test_yaml_core_scalar_edges(tmp_path: Path) -> None:
     assert loaded["timestamp"] == "2026-09-15"
 
 
+def test_yaml_core_golden_edges(tmp_path: Path) -> None:
+    source = tmp_path / "core-golden.yaml"
+    source.write_text(
+        """scientific: 1e3\nunderscored: 1_000\nnan: .nan\nnull_value: null\nlegacy_yes: yes\nunicode: \"é\"\n""",
+        encoding="utf-8",
+    )
+    loaded = load_yaml(source)
+    assert loaded["scientific"] == 1000.0
+    assert loaded["underscored"] == 1000
+    assert loaded["nan"] != loaded["nan"]
+    assert loaded["null_value"] is None
+    assert loaded["legacy_yes"] == "yes"
+    assert loaded["unicode"] == "é"
+
+
 def test_enum_member_name_collision_is_rejected() -> None:
     registry = Registry(entries={"features": (RegistryEntry("a-b", {}), RegistryEntry("a_b", {}))})
     with pytest.raises(ContractError, match="REGISTRY_ENUM_NAME_COLLISION"):
