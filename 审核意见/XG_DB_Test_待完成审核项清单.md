@@ -10,7 +10,7 @@
 |---|---|---|
 | Core Model 职责拆分 | 当前模型仍集中在 `models.py`，尚未拆为 asset/planning/execution/result/resource 等模块。 | 模块拆分完成，导入边界稳定，Parser/Compiler/Catalog 不再自建 DTO。 |
 | Target Identity | 已实现基础 Target Identity Projection、target_id 自动校验和正反向向量；仍需重复环境识别及完整 Environment/Target 注册表。 | 实现 Target 身份投影、Golden Vector 与重复环境识别测试。 |
-| Manifest 1 | 已实现 Plan/Manifest 基础身份投影、集合排序和 Plan Hash 校验；仍需正式 Manifest 发布流程、Bundle Descriptor、依赖快照和 Source Drift Protection。 | 实现 Manifest identity projection、Descriptor、向量与拒绝规则。 |
+| Manifest 1 | 已实现 Plan/Manifest 基础身份投影、集合排序和 Plan Hash 校验，并提供 Source/Bundle Drift 校验工具；仍需正式 Manifest 发布流程、Bundle Descriptor、依赖快照和 Runner 强制接入。 | 实现 Manifest identity projection、Descriptor、向量与拒绝规则。 |
 | YAML Golden Vector | 已补科学计数、下划线数字、`.nan`、Unicode、null 和非法时间值；仍需独立向量目录、nested duplicate、超大输入和跨 Loader 审核。 | 建立 `framework_tests/contract/yaml/` 标准向量并跨 Loader 审核。 |
 | G0A Contract Test 覆盖 | 现有测试仍不足以冻结 G0A。 | 补全 Registry、Model、Canonical、YAML、Schema 的正反向 Golden Vector。 |
 
@@ -35,6 +35,7 @@
 |---|---|---|
 | ComparisonProfile | Runner 已消费 mode，仍未实现 error/normalization/float/timestamp/resource profile 的统一解析与执行策略。 | Profile 被 Compiler、Runner、Comparator 共同消费。 |
 | Typed Expected | Bootstrap Runner 已完成 ExpectedRows/Hash/Error/Statement typed dispatch；正式 DSL/Compiler/Catalog 仍需接入同一模型。 | 不再允许业务 Expected 以任意结构绕过验证。 |
+| MVP Report Target | MVP Target 已改为 `MvpTargetReport`；正式 Runner 仍需使用完整 Target/Environment 模型并关联 Manifest。 | 报告 Target 与正式 Target/Environment 身份统一。 |
 | Resource Conflict Matrix | ResourceRequest 已补字段，尚未实现父子资源冲突、容量与 Admission 判定。 | 建立矩阵与并发测试。 |
 | SourceSpan | ContractError 已可携带 SourceSpan，但 YAML/Parser/Compiler 尚未提供真实行列信息。 | DSL 错误能定位文件、行、列、字段路径。 |
 | Canonical 向量覆盖 | 已补部分 Temporal 语义边界；仍缺重复行、空结果、零列、极大整数、Decimal exponent、timezone、错误 Canonical 等。 | 形成版本化完整 Golden Vector 集。 |

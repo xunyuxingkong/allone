@@ -2,7 +2,8 @@ import pytest
 from pydantic import ValidationError
 
 from xgtest.core.identity import compute_manifest_hash, compute_plan_hash, compute_target_id, target_identity_projection
-from xgtest.core.models import EffectiveMetadata, Target, TestPlan as PlanModel
+from xgtest.core.manifest import content_sha256, verify_bundle, verify_source_snapshot
+from xgtest.core.models import BundleRef, EffectiveMetadata, SourceInfo, Target, TestPlan as PlanModel
 from xgtest.generated.registry_enums import CaseAssetStatus, FeatureKey, IsolationScope, Level
 
 
@@ -91,3 +92,20 @@ def test_manifest_hash_sorts_set_like_entries() -> None:
     reordered = {**base, "bundles": list(reversed(base["bundles"])), "case_entries": list(reversed(base["case_entries"]))}
     assert compute_manifest_hash(base) == compute_manifest_hash(reordered)
     assert compute_manifest_hash(base) != compute_manifest_hash({**base, "run_id": "run-2"})
+
+
+def test_source_and_bundle_snapshot_checks_detect_drift(tmp_path) -> None:
+    source_path = tmp_path / "case.xgt"
+    source_path.write_text("SELECT 1\n", encoding="utf-8")
+    source = SourceInfo(relative_path="case.xgt", source_hash=content_sha256(source_path))
+    verify_source_snapshot(tmp_path, (source,))
+    source_path.write_text("SELECT 2\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="SOURCE_DRIFT"):
+        verify_source_snapshot(tmp_path, (source,))
+    bundle = tmp_path / "bundle.bin"
+    bundle.write_bytes(b"bundle")
+    expected = BundleRef(content_hash=content_sha256(bundle), size=bundle.stat().st_size)
+    verify_bundle(bundle, expected)
+    bundle.write_bytes(b"changed")
+    with pytest.raises(ValueError, match="BUNDLE_(SIZE_MISMATCH|DRIFT)"):
+        verify_bundle(bundle, expected)

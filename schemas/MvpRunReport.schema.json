@@ -207,6 +207,40 @@
       ],
       "title": "MvpStepReport",
       "type": "object"
+    },
+    "MvpTargetReport": {
+      "additionalProperties": false,
+      "description": "Typed target context emitted by the bootstrap runner.",
+      "properties": {
+        "database_alias": {
+          "title": "Database Alias",
+          "type": "string"
+        },
+        "host_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Host Hash",
+          "type": "string"
+        },
+        "sql_runtime_profile_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sql Runtime Profile Id"
+        }
+      },
+      "required": [
+        "database_alias",
+        "host_hash"
+      ],
+      "title": "MvpTargetReport",
+      "type": "object"
     }
   },
   "$id": "xgtest://schema/1.1/MvpRunReport",
@@ -243,11 +277,7 @@
       "$ref": "#/$defs/CaseExecutionStatus"
     },
     "target": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "title": "Target",
-      "type": "object"
+      "$ref": "#/$defs/MvpTargetReport"
     }
   },
   "required": [

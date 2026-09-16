@@ -340,12 +340,20 @@ class MvpCaseReport(StrictModel):
     error: str | None = None
 
 
+class MvpTargetReport(StrictModel):
+    """Typed target context emitted by the bootstrap runner."""
+
+    database_alias: str
+    host_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    sql_runtime_profile_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+
 class MvpRunReport(StrictModel):
     schema_version: Literal["1"] = "1"
     run_id: str
     started_at: datetime
     finished_at: datetime
-    target: dict[str, str]
+    target: MvpTargetReport
     cases: tuple[MvpCaseReport, ...]
     status: CaseExecutionStatus
 
@@ -366,6 +374,7 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         ResultEvent,
         MvpStepReport,
         MvpCaseReport,
+        MvpTargetReport,
         MvpRunReport,
     )
 }

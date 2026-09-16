@@ -22,6 +22,7 @@ from xgtest.core.models import (
     MvpCaseReport,
     MvpRunReport,
     MvpStepReport,
+    MvpTargetReport,
     RawMetadata,
     SqlStep,
 )
@@ -238,11 +239,11 @@ def run_cases(
         run_id=uuid.uuid4().hex,
         started_at=started,
         finished_at=datetime.now(UTC),
-        target={
-            "database_alias": config.database,
-            "host_hash": hashlib.sha256(config.host.encode()).hexdigest(),
-            **({"sql_runtime_profile_id": sql_runtime_profile_id} if sql_runtime_profile_id else {}),
-        },
+        target=MvpTargetReport(
+            database_alias=config.database,
+            host_hash=hashlib.sha256(config.host.encode()).hexdigest(),
+            sql_runtime_profile_id=sql_runtime_profile_id,
+        ),
         cases=tuple(results),
         status=CaseExecutionStatus.PASS if all(item.status == "PASS" for item in results) else CaseExecutionStatus.FAIL,
     )

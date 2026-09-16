@@ -53,3 +53,5 @@
 | YAML / Temporal Golden Vector 增补 | 增加科学计数、下划线数字、NaN、null、Unicode 以及非法日期/时间值的契约向量。 | `framework_tests/contract/test_registry.py`、`src/xgtest/core/canonical.py` | 237 契约测试通过。 |
 | Runtime Profile Pydantic 契约 | 新增 `RuntimeProfile` 模型和 Schema，Profile 加载时执行字段及 identity 校验。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/profile.py`、`schemas/RuntimeProfile.schema.json` | 237 全量测试与 Profile 执行通过。 |
 | Adapter Logical Type / fetchmany 基础能力 | 增加 Driver 类型到 Logical Type 的明确映射；查询优先使用 bounded `fetchmany`，并提供 `iter_query_rows()` 流式接口。 | `src/xgtest/adapter/xugu.py`、`src/xgtest/runtime/runner.py` | Adapter 测试、真实 MVP 回归通过。 |
+| N12 MVP Target 类型化 | MVP Run Report 的 target 改为 `MvpTargetReport` 模型，避免继续使用自由字典。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py` | Schema 生成与真实运行报告校验通过。 |
+| Source / Bundle Drift 校验基础能力 | 新增按相对路径和内容哈希校验 Source Snapshot、按大小和 SHA-256 校验 Bundle 的公共工具。 | `src/xgtest/core/manifest.py` | 漂移、缺失和越界测试通过。 |
