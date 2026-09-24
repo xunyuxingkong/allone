@@ -36,3 +36,12 @@ def test_unrelated_resources_are_admitted() -> None:
     decision = evaluate_admission((held,), (requested,))
     assert decision.allowed
     assert decision.conflicts == ()
+
+
+def test_v01_does_not_expand_grandparents_or_enforce_quantity() -> None:
+    grandparent = _request("cluster-a", ResourceAccessMode.EXCLUSIVE)
+    grandchild = _request("schema-a", ResourceAccessMode.SHARED_READ, parent="database-a")
+    assert evaluate_admission((grandparent,), (grandchild,)).allowed
+    first = _request("schema-a", ResourceAccessMode.SHARED_READ).model_copy(update={"quantity": 100})
+    second = _request("schema-a", ResourceAccessMode.SHARED_READ).model_copy(update={"quantity": 100})
+    assert evaluate_admission((first,), (second,)).allowed

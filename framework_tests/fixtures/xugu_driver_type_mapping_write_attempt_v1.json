@@ -1,0 +1,187 @@
+{
+  "driver_module": "xgcondb",
+  "driver_version": [
+    2,
+    3,
+    9
+  ],
+  "probe_version": "1",
+  "results": [
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "int",
+      "sql_declared_type": "INT",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "integer",
+      "sql_declared_type": "INTEGER",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "bigint",
+      "sql_declared_type": "BIGINT",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "smallint",
+      "sql_declared_type": "SMALLINT",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "numeric",
+      "sql_declared_type": "NUMERIC(10,2)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "decimal",
+      "sql_declared_type": "DECIMAL(10,2)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "number",
+      "sql_declared_type": "NUMBER(10,2)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "float",
+      "sql_declared_type": "FLOAT",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "double",
+      "sql_declared_type": "DOUBLE",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "char",
+      "sql_declared_type": "CHAR(8)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "varchar",
+      "sql_declared_type": "VARCHAR(32)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "text",
+      "sql_declared_type": "TEXT",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "date",
+      "sql_declared_type": "DATE",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "time",
+      "sql_declared_type": "TIME",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "datetime",
+      "sql_declared_type": "DATETIME",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "timestamp",
+      "sql_declared_type": "TIMESTAMP",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "timestamp_tz",
+      "sql_declared_type": "TIMESTAMP WITH TIME ZONE",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "binary",
+      "sql_declared_type": "BINARY(8)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E19132",
+      "error_type": "OperationalError",
+      "name": "varbinary",
+      "sql_declared_type": "VARBINARY(8)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "raw",
+      "sql_declared_type": "RAW(8)",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "blob",
+      "sql_declared_type": "BLOB",
+      "status": "FAILED"
+    },
+    {
+      "cleanup": "PASS",
+      "error_code": "E22007",
+      "error_type": "OperationalError",
+      "name": "boolean",
+      "sql_declared_type": "BOOLEAN",
+      "status": "FAILED"
+    }
+  ]
+}

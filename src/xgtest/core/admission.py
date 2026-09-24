@@ -1,4 +1,4 @@
-"""Pure resource conflict rules shared by planners and admission callers."""
+"""Admission Conflict Rules v0.1: pure pairwise conflict evaluation only."""
 
 from __future__ import annotations
 
@@ -7,6 +7,9 @@ from typing import Iterable
 
 from xgtest.core.models import ResourceRequest
 from xgtest.generated.registry_enums import ResourceAccessMode
+
+
+ADMISSION_RULES_VERSION = "0.1"
 
 
 @dataclass(frozen=True)
@@ -44,11 +47,12 @@ def evaluate_admission(
     *,
     same_owner: bool = False,
 ) -> AdmissionDecision:
-    """Evaluate a batch atomically using the frozen access-mode matrix.
+    """Evaluate a batch with the v0.1 access-mode matrix.
 
     ``same_owner`` models multiple sessions within one Attempt. They are
     merged by the caller and must not block one another at Admission level.
-    The function is pure and does not mutate the held set.
+    This pure function does not grant resources, track capacity, traverse
+    multi-level ancestors, or provide a persistent atomic lease.
     """
     if same_owner:
         return AdmissionDecision(allowed=True)

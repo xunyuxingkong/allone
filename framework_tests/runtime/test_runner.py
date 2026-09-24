@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from xgtest.adapter.xugu import XuguConnectionConfig, XuguQueryResult
 from xgtest.core.yaml_loader import load_yaml
 from xgtest.runtime.comparator import compare_rows
@@ -26,6 +28,18 @@ def test_bootstrap_case_is_decoded_to_typed_models() -> None:
     assert case.metadata.id == "MVP.JOIN.000001"
     assert case.steps[0].kind == "setup"
     assert case.steps[4].expected.rows == ((2, "two", 20),)
+
+
+def test_bootstrap_case_rejects_mixed_expected_before_execution(tmp_path: Path) -> None:
+    case_path = tmp_path / "mixed.yaml"
+    case_path.write_text(
+        "metadata:\n  id: MVP.MIXED.000001\n  feature: join\n"
+        "steps:\n  - id: query\n    kind: query\n    sql: SELECT 1\n"
+        "    expected:\n      rows: []\n      code: E5021\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="EXPECTED_AMBIGUOUS"):
+        runner._load_bootstrap_case(case_path)
 
 
 def test_setup_failure_skips_main_but_always_runs_cleanup(monkeypatch, tmp_path: Path) -> None:

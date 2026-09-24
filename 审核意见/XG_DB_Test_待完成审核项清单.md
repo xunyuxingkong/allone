@@ -12,7 +12,7 @@
 | Target Identity | 已实现基础 Target Identity Projection、target_id 自动校验和正反向向量；仍需重复环境识别及完整 Environment/Target 注册表。 | 实现 Target 身份投影、Golden Vector 与重复环境识别测试。 |
 | Manifest 1 | 已实现 Plan/Manifest 基础身份投影、集合排序和 Plan Hash 校验，并提供 Source/Bundle Drift 校验工具；仍需正式 Manifest 发布流程、Bundle Descriptor、依赖快照和 Runner 强制接入。 | 实现 Manifest identity projection、Descriptor、向量与拒绝规则。 |
 | YAML Golden Vector | 已补科学计数、下划线数字、`.nan`、Unicode、null 和非法时间值；仍需独立向量目录、nested duplicate、超大输入和跨 Loader 审核。 | 建立 `framework_tests/contract/yaml/` 标准向量并跨 Loader 审核。 |
-| G0A Contract Test 覆盖 | 现有测试仍不足以冻结 G0A。 | 补全 Registry、Model、Canonical、YAML、Schema 的正反向 Golden Vector。 |
+| G0A Contract Test 覆盖 | 已补 Runtime Profile、Typed Expected、Admission 和真实 Driver 元数据样本，生成可复算候选描述符；当前 G0A 验收仍为 HOLD。 | 数据库恢复可写后完成表往返探测与四类 MVP 复验，审定完整支持类型集合并记录 Freeze Git 提交。 |
 
 ## P1：运行时与适配层
 
@@ -23,7 +23,7 @@
 | Runtime Profile Identity | 已改为稳定白名单 Projection，并拆为严格 Pydantic Target/Driver/Capabilities 子模型；仍需补采 DB exact build、OS、arch、compatibility mode 与关键配置。 | Profile 能精确绑定真实运行环境。 |
 | Cancel / Stop | 尚未执行有界长 SQL 的取消与服务端停止观察。 | 明确 Driver cancel 或连接隔离/关闭替代策略并实测。 |
 | Session Reset | 尚未覆盖 schema、autocommit、事务、锁、临时对象和会话参数恢复。 | 形成 reset_probe 与失败隔离策略。 |
-| Extended Type Mapping | 已增加 Driver Logical Type 映射；DATE/TIME/DATETIME 目前可写入读取但返回字符串，BLOB 绑定失败，最终 Canonical 映射仍未冻结。 | 每种类型完成 operation/mapping/canonical 三层验收。 |
+| Extended Type Mapping | 真实只读样本取得 21/22 组元数据：NUMERIC 返回 float、时间戳返回非 Canonical 字符串且 TZ 元数据退化、BINARY/RAW 返回 VARCHAR；本轮数据库只读，表往返证据仍缺。 | 在可写环境逐类型完成 operation/mapping/canonical 三层验收，冻结正式支持集合。 |
 | Python × Driver 矩阵 | 只完成 Python 3.14 + Driver 2.3.9 的真实验证。 | 对 3.11、3.12、3.13、3.14 分别执行 import/connect/query/type/transaction 验证。 |
 | Real Integration CI | 仅声明 marker，尚无受控内网/本地真实虚谷任务。 | 增加不可公开凭据的集成任务、环境选择与制品脱敏策略。 |
 | Driver 制品治理 | Driver ZIP 仍在 Git。 | 提供 Nexus/Artifactory/MinIO/内部制品库地址后迁移为 artifact_ref + SHA-256 + 安装脚本。 |

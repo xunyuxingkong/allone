@@ -129,6 +129,32 @@ class ExpectedStatement(StrictModel):
     affected_rows: int = Field(ge=0)
 
 
+TYPED_EXPECTED_VERSION = "1"
+
+
+def decode_expected(value: dict[str, Any]) -> ExpectedRows | ExpectedHash | ExpectedError | ExpectedStatement:
+    """Decode one unambiguous expected variant at the asset boundary."""
+    if not isinstance(value, dict):
+        raise ValueError("EXPECTED_INVALID: expected must be a mapping")
+    variants = (
+        ("rows", ExpectedRows),
+        ("sha256", ExpectedHash),
+        ("affected_rows", ExpectedStatement),
+    )
+    selected = [model for key, model in variants if key in value]
+    if any(key in value for key in ("code", "sqlstate", "message_pattern")):
+        selected.append(ExpectedError)
+    if len(selected) != 1:
+        raise ValueError("EXPECTED_AMBIGUOUS: expected must select exactly one variant")
+    model = selected[0]
+    if model is ExpectedRows:
+        rows = value["rows"]
+        if not isinstance(rows, (list, tuple)) or any(not isinstance(row, (list, tuple)) for row in rows):
+            raise ValueError("EXPECTED_ROWS_INVALID: rows must be a list of rows")
+        return ExpectedRows.model_validate({**value, "rows": tuple(tuple(row) for row in rows)})
+    return model.model_validate(value)
+
+
 class SqlStep(StrictModel):
     id: str = Field(pattern=r"^[a-z][a-z0-9_-]*$")
     kind: Literal["setup", "statement", "query", "cleanup"]

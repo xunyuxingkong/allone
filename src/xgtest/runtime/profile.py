@@ -86,22 +86,27 @@ def _capability_identity(capabilities: dict[str, Any]) -> dict[str, Any]:
             for type_key in sorted(value):
                 type_value = value[type_key]
                 if isinstance(type_value, dict):
-                    mapped[type_key] = {
+                    type_identity = {
                         key: type_value[key]
                         for key in sorted(_TYPE_SEMANTIC_KEYS)
                         if key in type_value
                     }
-            result[capability_key] = mapped
+                    if type_identity:
+                        mapped[type_key] = type_identity
+            if mapped:
+                result[capability_key] = mapped
         elif capability_key == "transaction_commit_rollback":
-            result[capability_key] = {
+            transaction_identity = {
                 key: value[key]
                 for key in ("status", "autocommit_disabled")
                 if key in value
             }
             if "commit_visible_count" in value:
-                result[capability_key]["commit_visible"] = value["commit_visible_count"] > 0
+                transaction_identity["commit_visible"] = value["commit_visible_count"] > 0
             if "rollback_visible_count" in value:
-                result[capability_key]["rollback_visible"] = value["rollback_visible_count"] == 0
+                transaction_identity["rollback_visible"] = value["rollback_visible_count"] == 0
+            if transaction_identity:
+                result[capability_key] = transaction_identity
         elif capability_key == "sql_error_mapping":
             error_identity = {
                 key: value[key]
@@ -114,13 +119,16 @@ def _capability_identity(capabilities: dict[str, Any]) -> dict[str, Any]:
                 matched = re.search(r"\[([A-Z]\d+)\b", value["message"])
                 if matched:
                     error_identity["code"] = matched.group(1)
-            result[capability_key] = error_identity
+            if error_identity:
+                result[capability_key] = error_identity
         else:
-            result[capability_key] = {
+            outcome = {
                 key: value[key]
                 for key in ("status", "driver_has_cancel")
                 if key in value
             }
+            if outcome:
+                result[capability_key] = outcome
     return result
 
 

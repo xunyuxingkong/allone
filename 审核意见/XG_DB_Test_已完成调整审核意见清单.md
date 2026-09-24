@@ -30,7 +30,7 @@
 
 ## 验证汇总
 
-- 237 项目隔离 Python 3.14：`47 passed`。
+- 237 项目隔离 Python 3.14：`90 passed`。
 - Registry Enum、JSON Schema 已重新生成。
 - 真实虚谷连接、基础读取、事务提交/回滚、错误映射与清理均已复测。
 - 本次没有修改系统 Python 或持久化数据库凭据。
@@ -65,3 +65,7 @@
 | O5 Logical Type Mapping 重复实现 | Adapter 与 Comparator 共用 Core Logical Type 映射，采用精确别名和参数前缀，避免两套规则漂移。 | `src/xgtest/core/logical_types.py`、`src/xgtest/adapter/xugu.py`、`src/xgtest/runtime/comparator.py` | Adapter/Comparator 类型边界测试。 |
 | SourceSpan 未贯穿 YAML 重复键错误 | DuplicateKeyError 保留 YAML 文件、行、列信息，便于后续 Parser/Compiler 统一扩展。 | `src/xgtest/core/errors.py`、`src/xgtest/core/yaml_loader.py` | 重复键 SourceSpan 反向测试。 |
 | Resource Conflict Matrix 缺少共享实现 | 新增纯函数 Admission 冲突矩阵，支持 READ/WRITE/EXCLUSIVE、父资源重叠和同 Attempt 豁免；正式持久化 Lease 仍保留待办。 | `src/xgtest/core/admission.py` | 资源矩阵对称性、父资源和无关资源测试。 |
+| Runtime Profile Identity Golden Vector | 固定 v0.2 基准 ID，覆盖运行期噪声不变和语义变化必变两组向量。 | `framework_tests/contract/runtime_profile/test_identity_vectors.py` | 237 项目 Python 环境全量测试通过。 |
+| Typed Expected Union 边界 | 资产解码只允许单一 Expected 变体；混合字段、空对象、非法计数和空 matcher 在执行前拒绝，区分 0 行与 1 行 0 列。 | `src/xgtest/core/models.py`、`src/xgtest/runtime/runner.py` | Expected 边界及 Bootstrap 解码反向测试。 |
+| Admission v0.1 支持范围 | 明确该模块仅做纯函数冲突判定，并用测试锁定不支持多级祖先和容量的边界。 | `docs/14_Admission_Conflict_Rules_v0.1.md`、`src/xgtest/core/admission.py` | Admission 边界测试。 |
+| 真实 Driver 元数据只读样本 | 取得 xgcondb 2.3.9 的 21/22 组只读表达式元数据；保留 NUMERIC、TIMESTAMP_TZ、BINARY/RAW 等受限结论。 | `tools/probes/xugu_driver_type_mapping_probe.py`、`framework_tests/fixtures/xugu_driver_type_mapping_v1.json` | 237 真实连接探测与固定样本测试；表往返因数据库只读未完成。 |

@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 
+LOGICAL_TYPE_MAPPING_VERSION = "1"
+
+
 # Longer aliases must be checked first so ``timestamp with time zone`` and
 # ``timestamp`` are not shadowed by the shorter ``time`` alias.
 _TYPE_ALIASES: tuple[tuple[str, str], ...] = tuple(sorted(

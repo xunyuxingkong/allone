@@ -16,15 +16,13 @@ from xgtest.core.models import (
     ComparisonProfile,
     EffectiveMetadata,
     ExpectedError,
-    ExpectedHash,
-    ExpectedRows,
-    ExpectedStatement,
     MvpCaseReport,
     MvpRunReport,
     MvpStepReport,
     MvpTargetReport,
     RawMetadata,
     SqlStep,
+    decode_expected,
 )
 from xgtest.generated.registry_enums import CaseAssetStatus, CaseExecutionStatus, FailureType, FeatureKey, IsolationScope, Level, StepStatus
 from xgtest.core.yaml_loader import load_yaml
@@ -80,14 +78,7 @@ def _load_bootstrap_case(path: Path) -> BootstrapCaseInput:
             step_payload["comparison"] = ComparisonProfile.model_validate(comparison)
         expected = step_payload.get("expected")
         if isinstance(expected, dict):
-            if "rows" in expected:
-                step_payload["expected"] = ExpectedRows(rows=tuple(tuple(row) for row in expected["rows"]))
-            elif "sha256" in expected:
-                step_payload["expected"] = ExpectedHash.model_validate(expected)
-            elif any(key in expected for key in ("code", "sqlstate", "message_pattern")):
-                step_payload["expected"] = ExpectedError.model_validate(expected)
-            elif "affected_rows" in expected:
-                step_payload["expected"] = ExpectedStatement.model_validate(expected)
+            step_payload["expected"] = decode_expected(expected)
         typed_steps.append(SqlStep.model_validate(step_payload))
     return BootstrapCaseInput.model_validate({"metadata": effective_metadata, "steps": tuple(typed_steps)})
 
@@ -110,7 +101,7 @@ def _execute_step(session: XuguSession, step: SqlStep) -> dict[str, Any]:
             item["columns"], item["column_types"], item["logical_types"], item["rows"] = query_result.columns, query_result.column_types, query_result.logical_types, query_result.rows
             comparison = step.comparison
             mode = comparison.mode if comparison is not None else "exact"
-            item["status"] = "FAIL" if is_expected_error(expected) else (
+            item["status"] = "FAIL" if is_expected_error(step.expected) else (
                 "PASS" if compare_rows(
                     list(query_result.rows), expected, mode,
                     query_result.logical_types or query_result.column_types, len(query_result.columns),
@@ -118,7 +109,7 @@ def _execute_step(session: XuguSession, step: SqlStep) -> dict[str, Any]:
             )
         else:
             item["affected_rows"] = session.execute(step.sql)
-            if is_expected_error(expected):
+            if is_expected_error(step.expected):
                 # The statement succeeded even though the asset explicitly
                 # required an error.
                 item["status"] = "FAIL"
@@ -126,8 +117,8 @@ def _execute_step(session: XuguSession, step: SqlStep) -> dict[str, Any]:
                 item["status"] = "PASS" if compare_affected_rows(item["affected_rows"], expected) else "FAIL"
     except Exception as error:
         details = extract_error(error)
-        if is_expected_error(expected):
-            item["status"] = "PASS" if compare_error(error, expected) else "FAIL"
+        if isinstance(step.expected, ExpectedError):
+            item["status"] = "PASS" if compare_error(error, step.expected) else "FAIL"
         else:
             item["status"] = "ERROR"
         item.update({

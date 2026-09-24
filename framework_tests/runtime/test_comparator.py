@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 from decimal import Decimal
 
+from xgtest.core.models import ExpectedError
 from xgtest.runtime.comparator import compare_affected_rows, compare_error, compare_rows, is_expected_error, rows_sha256
 
 
@@ -16,10 +17,9 @@ def test_compare_statement_count_and_error() -> None:
     assert compare_affected_rows(2, {"affected_rows": 2})
     error = SimpleNamespace(code="E5021", sqlstate=None)
     error.__str__ = lambda self: "missing table E5021"
-    assert compare_error(error, {"code": "E5021"})
+    assert compare_error(error, ExpectedError(code="E5021"))
     assert not compare_error(error, {"rows": [[1]]})
-    assert not compare_error(error, {})
-    assert not is_expected_error({"code": None})
+    assert not is_expected_error({"code": "E5021"})
 
 
 def test_rows_hash_uses_typed_xgc1_values() -> None:

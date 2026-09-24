@@ -16,23 +16,12 @@ from typing import Any
 from xgtest.adapter.xugu import extract_error
 from xgtest.core.canonical import CanonicalCell, xgc1_encode
 from xgtest.core.logical_types import map_declared_logical_type
+from xgtest.core.models import ExpectedError
 
-
-_ERROR_FIELDS = ("code", "sqlstate", "message_pattern")
 
 def is_expected_error(expected: Any) -> bool:
-    """Return whether *expected* explicitly declares an error expectation.
-
-    A normal rows/count expectation must never be treated as an error
-    expectation merely because a database operation raised an exception.
-    ``ExpectedError`` model dumps include these keys even when values are
-    ``None``; an empty mapping does not qualify.
-    """
-
-    return isinstance(expected, dict) and any(
-        isinstance(expected.get(key), str) and bool(expected[key])
-        for key in _ERROR_FIELDS
-    )
+    """Use the validated variant, never infer it from dictionary keys."""
+    return isinstance(expected, ExpectedError)
 
 
 def _declared_logical_type(declared_type: str | None) -> str | None:
@@ -157,14 +146,14 @@ def compare_affected_rows(actual: int, expected: Any) -> bool:
     return isinstance(expected, dict) and actual == expected.get("affected_rows")
 
 
-def compare_error(error: Exception, expected: Any) -> bool:
+def compare_error(error: Exception, expected: ExpectedError) -> bool:
     if not is_expected_error(expected):
         return False
     details = extract_error(error)
     message, code, sqlstate = details["message"], details["code"], details["sqlstate"]
-    if expected.get("code") is not None and str(expected["code"]) != code:
+    if expected.code is not None and expected.code != code:
         return False
-    if expected.get("sqlstate") is not None and str(expected["sqlstate"]) != str(sqlstate):
+    if expected.sqlstate is not None and expected.sqlstate != str(sqlstate):
         return False
-    pattern = expected.get("message_pattern")
+    pattern = expected.message_pattern
     return pattern is None or (isinstance(pattern, str) and re.search(pattern, message) is not None)

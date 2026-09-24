@@ -92,7 +92,7 @@
 
 已完成验证：
 
-- 框架测试：**47 passed**。
+- 框架测试：**90 passed**（当前本轮累计）。
 - 真实虚谷四个 MVP Case（JOIN、UNION、DDL TABLE、STRING FUNCTION）：**PASS**。
 - 带 v0.2 Runtime Profile 的真实执行：**PASS**。
 - `xgtest registry validate`：可输出包含 Entry 元数据的 JSON。
@@ -102,6 +102,13 @@
 - 数据库测试对象均执行清理，未在目标库留下本轮 MVP 表。
 
 ## 5. 当前仍待完成
+
+### 5.1 进入主线前的本轮收口（2026-09-24）
+
+- Runtime Profile v0.2 身份向量、Typed Expected Union 边界、Admission v0.1 范围声明已完成。
+- 真实 xgcondb 2.3.9 取得 21/22 组只读表达式元数据，并将不可精确 Canonical 的类型保留为受限；固定样本在 `framework_tests/fixtures/`。
+- 237 项目隔离环境 90 个框架测试通过；Registry 校验、Schema 重新导出比对和旧证据 Profile 构建通过。
+- 236 当前因集群降级返回 `E22007`（只读），22/22 个建表探测无法运行，真实四类 MVP 本轮不能复验。`docs/G0A_ACCEPTANCE.md` 标记 HOLD，尚未发布正式 `contract_set_id`。
 
 以下事项没有在本轮伪造为完成状态：
 
