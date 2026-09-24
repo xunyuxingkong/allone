@@ -107,7 +107,7 @@
 
 - Runtime Profile v0.2 身份向量、Typed Expected Union 边界、Admission v0.1 范围声明已完成。
 - 真实 xgcondb 2.3.9 取得 21/22 组只读表达式元数据，并将不可精确 Canonical 的类型保留为受限；固定样本在 `framework_tests/fixtures/`。
-- 237 项目隔离环境 90 个框架测试通过；Registry 校验、Schema 重新导出比对和旧证据 Profile 构建通过。
+- 237 项目隔离环境 91 个框架测试通过；Registry 校验、Schema 重新导出比对和旧证据 Profile 构建通过。
 - 236 当前因集群降级返回 `E22007`（只读），22/22 个建表探测无法运行，真实四类 MVP 本轮不能复验。`docs/G0A_ACCEPTANCE.md` 标记 HOLD，尚未发布正式 `contract_set_id`。
 
 以下事项没有在本轮伪造为完成状态：

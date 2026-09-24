@@ -1,5 +1,5 @@
 {
-  "contract_set_id": "5c1fbe2cb3f9b250ef7ed2b53be5cb3353829b3a8d2e8eadb1b0b7eada5dd6c4",
+  "contract_set_id": "43776d42f5749b58559b1180c5b9274ebad24c5048034d85deb09701a42b316a",
   "contract_version": "1.1",
   "descriptor_version": "1",
   "generated": {
@@ -33,7 +33,7 @@
     "framework_tests/contract/runtime_profile/test_identity_vectors.py": "f86b827df82b2fff354224b5425811e7c0e18c25ae083bb6a227523ca8815f1a",
     "framework_tests/contract/test_admission.py": "9d835ed406ae09898cd78a541edebd4473b5ee54fce81f912cf24d7636301337",
     "framework_tests/contract/test_canonical.py": "d75b20cd02a217f99f6148a1acb93e3e2ca45a361197280eda750ada9228bf59",
-    "framework_tests/contract/test_contract_set.py": "2a4bda6a4a4d7be09db82f1c27faa8bec524335a0a2e68dc432d8d6101598458",
+    "framework_tests/contract/test_contract_set.py": "7b2afc995c24c9c938dd15d52c6bcb21f5392da762b48f6b94c1819e0df0bf1d",
     "framework_tests/contract/test_driver_mapping_fixture.py": "29093887b60141c65bebe1e724ae548f99b481b826354b70dd2cde18345f043e",
     "framework_tests/contract/test_expected_boundary.py": "c224d26f2b4b593b6ac752b087d275b0861338c196aa831f735fd78bf5457b34",
     "framework_tests/contract/test_models.py": "a7e3f05d2f143e8e6225c0c8c04dcae453514474bf8d28fb52f3f6a0c6205721",
@@ -49,7 +49,7 @@
     "src/xgtest/core/__init__.py": "7c5e966bbc576dbd96e9f02fd93ec12b030dcc73131db109f65232c61f9aff13",
     "src/xgtest/core/admission.py": "0f324115656120b65fded97fccb8ed2989f73e08421dd41af9283eab2cd9ed2b",
     "src/xgtest/core/canonical.py": "6a87fe3a9d1ef80777f11c0fe5c912e62e8bcebfe7fb09bd661d6ac22c073975",
-    "src/xgtest/core/contract_set.py": "facbeb8d67dfe9838c35b7f6fbdc4f11a110320f166fc55d6715dcf8cf8af5af",
+    "src/xgtest/core/contract_set.py": "7cd92fea965172f56be962a43d23e21a8ebf06996aa137e597b525d36fbff3d7",
     "src/xgtest/core/errors.py": "1a8d6cbce7083e32ae4d0e0b24971964d47234d862728cc3113c943283ecafc8",
     "src/xgtest/core/identity.py": "8ec11ab3ec07efcd61056f1c0fbbafba013021df9060b57a860d64d3001cb762",
     "src/xgtest/core/logical_types.py": "bee4d53502ab16d465dce010d5976289f5efeaf87e9bd3699176ab1fca39f45e",

@@ -21,7 +21,9 @@ def _content_hashes(root: Path, directories: tuple[str, ...], files: tuple[str, 
     for directory in directories:
         paths.extend(path for path in (root / directory).rglob("*") if path.is_file() and path.suffix in {".py", ".yaml", ".json"})
     return {
-        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        path.relative_to(root).as_posix(): hashlib.sha256(
+            path.read_bytes().replace(b"\r\n", b"\n")
+        ).hexdigest()
         for path in sorted(paths)
     }
 
