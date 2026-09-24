@@ -1,6 +1,6 @@
 # G0A 验收候选快照
 
-状态：**HOLD，尚未 Freeze**（2026-09-24）。`freeze_git_commit`、正式 `contract_set_id` 发布和进入 XGT Parser 主线，均等待以下真实 Driver 验收完成。当前候选描述符见 [contract-descriptor-candidate.json](g0a/contract-descriptor-candidate.json)。候选 `contract_set_id` 为 `43776d42f5749b58559b1180c5b9274ebad24c5048034d85deb09701a42b316a`，由描述符身份投影经 XGMJ1/SHA-256 得到；它不是已发布的 Freeze ID。源码哈希统一使用 LF 换行，确保 Windows 与 Linux 重算一致。
+状态：**HOLD，尚未 Freeze**（2026-09-24）。`freeze_git_commit`、正式 `contract_set_id` 发布和进入 XGT Parser 主线，均等待以下真实 Driver 验收完成。当前候选描述符见 [contract-descriptor-candidate.json](g0a/contract-descriptor-candidate.json)。候选 `contract_set_id` 为 `a0f9d22048aaa864e742f8f8f6c101cd8b5ac26d67e8771ae95cb82b1cdd63ad`，由描述符身份投影经 XGMJ1/SHA-256 得到；它不是已发布的 Freeze ID。源码哈希统一使用 LF 换行，确保 Windows 与 Linux 重算一致。
 
 | 检查 | 结果 | 证据或限制 |
 |---|---|---|
@@ -8,7 +8,7 @@
 | Typed Expected v1 | PASS | 空/混合/负数/空字符串拒绝；`rows: []` 表示 0 行，`rows: [[]]` 表示 1 行 0 列；Bootstrap 解码在执行前拒绝混合结构。 |
 | Admission Conflict Rules v0.1 | PASS（限定范围） | 同资源、直接父子和访问模式矩阵通过；完整准入不在 v0.1 范围，见 [14_Admission_Conflict_Rules_v0.1.md](14_Admission_Conflict_Rules_v0.1.md)。 |
 | Registry / Schema | PASS | 237 项目 Python 环境执行 `registry validate`，Schema 重新导出与仓库文件逐项比较无差异。 |
-| Framework Tests | PASS | 237 隔离 Python 3.14：91 tests passed。 |
+| Framework Tests | PASS | 237 隔离 Python 3.14：113 tests passed（含 Query MVP）。 |
 | Runtime Profile Build | PASS | 旧有脱敏证据构建出的 v0.2 Profile ID 为 `84d78277f2e244aba87b2249911d17652919606127ebdf17df2501dfd7bc888c`。 |
 | 真实 Xugu Driver 元数据 | PARTIAL | xgcondb 2.3.9 在只读表达式探测中取得 21/22 组元数据；`VARBINARY(8)` 为语法错误。详细样本见 [xugu_driver_type_mapping_v1.json](../framework_tests/fixtures/xugu_driver_type_mapping_v1.json)，SHA-256 `2d525d7d85b529c940940c7b86a981cfa5b64afca462d0d096637d03fc350e07`。 |
 | 真实 Xugu 四类 MVP | 历史 PASS，当前 BLOCKED | 2026-09-16 曾完成 JOIN、UNION、DDL TABLE、STRING FUNCTION 四用例 PASS；本轮数据库返回 `E22007`（集群降级只读），22/22 建表样本无法执行，不能复验 DDL/写入/清理完整链。失败记录见 [xugu_driver_type_mapping_write_attempt_v1.json](../framework_tests/fixtures/xugu_driver_type_mapping_write_attempt_v1.json)，SHA-256 `f59263185f061a9bfa780d4d9cd0430215b35cfbb9533ccb9ae68403b220e8af`。 |

@@ -10,8 +10,13 @@ from .canonical import xgmj1_sha256
 
 DESCRIPTOR_VERSION = "1"
 CONTRACT_VERSION = "1.1"
-_SOURCE_DIRS = ("registry", "src/xgtest/core", "framework_tests/contract")
-_SOURCE_FILES = ("src/xgtest/cli.py",)
+_SOURCE_DIRS = ("registry", "src/xgtest/core", "src/xgtest/query", "framework_tests/contract")
+_SOURCE_FILES = (
+    "src/xgtest/cli.py",
+    "src/xgtest/runtime/profile.py",
+    "src/xgtest/runtime/comparator.py",
+    "src/xgtest/adapter/xugu.py",
+)
 _GENERATED_DIRS = ("schemas",)
 _GENERATED_FILES = ("src/xgtest/generated/registry_enums.py",)
 

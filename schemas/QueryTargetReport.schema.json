@@ -1,0 +1,41 @@
+{
+  "$id": "xgtest://schema/1.1/QueryTargetReport",
+  "additionalProperties": false,
+  "properties": {
+    "contract_set_id": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Contract Set Id",
+      "type": "string"
+    },
+    "database_alias": {
+      "title": "Database Alias",
+      "type": "string"
+    },
+    "host_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Host Hash",
+      "type": "string"
+    },
+    "sql_runtime_profile_id": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sql Runtime Profile Id"
+    }
+  },
+  "required": [
+    "database_alias",
+    "host_hash",
+    "contract_set_id"
+  ],
+  "title": "QueryTargetReport",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

@@ -1,92 +1,336 @@
-# XG DB Test 当前代码实现问题与修正方案清单
+# XG DB Test 当前代码实现问题与修正方案清单（最新整理版）
 
-> 评审对象：`xunyuxingkong/allone` 当前 `main` 分支最新提交  
-> 最新提交：`3d0f71a333a856bfc51808c668998ea3e2303006`  
-> 提交说明：`feat: add contract framework and Xugu adapter probes`  
-> 评审日期：2026-09-15  
-> 目的：汇总当前已提交代码中需要修正、补齐或继续收口的问题，并明确每项问题的原因、风险、修正方案、优先级和验收标准。
+> 仓库：`xunyuxingkong/allone`  
+> 当前 `main` 最新提交：`242dd99db360b94679cdfb9e70eb032e27bc784e`  
+> 最新提交：`feat: build SQL runtime profiles from probes`  
+> 上一轮评审基线：`3d0f71a333a856bfc51808c668998ea3e2303006`  
+> 更新日期：2026-09-16  
+> 目的：在原问题清单基础上重新整理——已解决项明确标记“已解决”；未解决、部分解决和最新代码中新发现的问题统一保留，并给出原因、风险、修正方案和验收标准。
 
 ---
 
-## 1. 总体结论
+# 1. 总体结论
 
-当前实现方向正确，已经开始落地：
+本轮代码相较上一轮已经有明显进展，已经新增或完善：
 
 ```text
-Python 工程骨架
-Registry
-Pydantic Strict Core Model
-JSON Schema 导出
-XGMJ1 / XGC1 Canonical 编码
-framework_tests
-Xugu Adapter Smoke Probe
-Xugu Capability Probe
-CI Contract Verification
+RegistryEntry 元数据
+Registry Enum 单一事实源
+Enum 名称碰撞检查
+Core Model 大幅扩充
+ResultEvent 完整身份字段
+Target / ResourceRequest / Manifest 扩充
+YAML 1.2 Core 风格 Resolver
+Schema 全目录重建与 Contract Identity
+Python 版本范围调整
+XuguSession
+SQL MVP Diagnostic Runner
+类型化 MVP Report
+SQL Comparator
+Runtime Profile Builder
+四类 MVP Bootstrap Case
+DECIMAL / Transaction Probe 修正
+Extended Type Probe 状态拆分
 ```
 
-但现在还不适合直接大规模推进 Parser / Compiler / Catalog / Runner。原因是最底层的：
+当前已经从：
 
 ```text
-Core Model
-Registry
-YAML Decoder
-Canonical Contract
-Schema 生成
-Xugu Probe
+Phase 0A 基础骨架
 ```
 
-仍有一些基础契约问题。如果不先修正，后续模块会建立在不稳定模型上，容易形成较大的契约债务和返工。
-
-优先级约定：
+推进到了：
 
 ```text
-P0：进入 Parser / Compiler / Catalog 之前必须修正
+Phase 0A 后半段
++
+部分 Phase 1 Diagnostic Vertical Slice
+```
+
+但最新代码也暴露了一个新的核心风险：
+
+> **可运行 Runner / Comparator / Runtime Profile 的实现速度，已经开始超过正式 Contract / Canonical / Manifest 主链的落地速度。**
+
+因此当前最优先事项不是继续增加更多 Case、Worker 或功能，而是先把执行正确性、Contract 一致性、Canonical 一致性、Runtime Profile 身份稳定性和 Runner 生命周期语义收紧。
+
+---
+
+# 2. 状态与优先级说明
+
+状态：
+
+```text
+✅ 已解决
+🟡 部分解决 / 仍需收口
+❌ 未解决
+🆕 新发现
+```
+
+优先级：
+
+```text
+P0：继续推进正式 Parser / Compiler / Catalog 前应修正
 P1：Phase 1 早期必须修正
-P2：可以稍后补齐，但 G1 前必须解决
+P2：G1 前处理
 ```
 
 ---
 
-# 2. P0：Core Model 与正式 SQL MVP 契约不完整
+# 3. 原问题清单最新状态总览
 
-## 当前问题
+| 编号 | 原问题 | 当前状态 | 最新判断 |
+|---|---|---|---|
+| 1 | Core Model 过薄 | 🟡 部分解决 | 已大幅扩充，但正式 Runner 尚未使用 |
+| 2 | ResultEvent 过薄 | ✅ 已解决 | 核心身份字段已补齐 |
+| 3 | Target 过薄 | ✅ 结构已解决 | 但 Diagnostic Runner 未使用正式 Target |
+| 4 | Manifest 过薄 | 🟡 部分解决 | 结构扩充，但执行链尚未使用 Manifest/Bundle |
+| 5 | Python 3.14 锁死 | ✅ 已解决 | 已改为 `>=3.11,<3.15` |
+| 6 | YAML 1.2 Core 不完整 | 🟡 基本解决 | Resolver 已重构，Golden Vector 仍需补齐 |
+| 7 | Enum 名称碰撞风险 | ✅ 已解决 | 已加 `REGISTRY_ENUM_NAME_COLLISION` |
+| 8 | Registry 丢失 Entry 元数据 | ✅ 已解决 | 已增加 `RegistryEntry.metadata` |
+| 9 | Registry 与 Literal 双真源 | 🟡 基本解决 | 核心状态已改用生成 Enum，仍有自由字符串 |
+| 10 | Schema stale 文件无法发现 | ✅ 已解决 | 已采用临时目录整体重建 |
+| 11 | Schema 缺契约身份 | ✅ 已解决 | 已加入 `$id` 和 contract version |
+| 12 | DECIMAL Probe 写死 FAILED | ✅ 已解决 | 已按实际 Driver Python 类型动态判断 |
+| 13 | Transaction Probe observer 快照污染 | ✅ 已解决 | 已改用 fresh observer connection |
+| 14 | Extended Type `VERIFIED` 语义过宽 | 🟡 基本解决 | 已拆 operation/mapping/canonical，但判定仍偏粗 |
+| 15 | Probe Artifact 暴露 host | 🟡 部分解决 | 改成 host_hash，但无盐 Hash 仍有问题 |
+| 16 | Canonical Golden Vector 不足 | 🟡 部分解决 | 已补 Decimal/NaN/±0/Temporal/Bytes，仍不完整 |
+| 17 | Temporal 只按 `str` 编码 | 🟡 部分解决 | 已校验格式形状，但未校验真实日期/时区语义 |
+| 18 | NaN / ±0 Golden Vector 不足 | ✅ 基础问题已解决 | 已有对应一致性测试 |
+| 19 | ComparisonProfile 太简化 | 🟡 基本解决 | 已增加 error/normalization/float/timestamp policy |
+| 20 | `expected: Any` 过宽 | 🟡 模型已解决 | Core Model 已类型化，但 Runner 尚未使用它 |
+| 21 | Resource access mode 不完整 | ✅ 已解决 | 已支持 `shared_read/shared_write/exclusive` |
+| 22 | ResourceRequest 缺 resource_type/impact | ✅ 基本解决 | 已加入 type/impact/parent/quantity |
+| 23 | Generated Enum 类名可读性差 | ✅ 已解决 | 已增加显式 Enum Class Name 映射 |
+| 24 | ContractError 信息不足 | 🟡 部分解决 | 仍需 SourceSpan / line / column |
+| 25 | Xugu Adapter 只有 connect/smoke | 🟡 部分解决 | 已增加 XuguSession，但 reset/probe/cancel 仍未完成 |
+| 26 | Probe 没有 Runtime Profile | 🟡 已开始解决 | 已新增 Profile Builder，但还不是正式 Contract Model |
+| 27 | Runtime Profile Identity 信息不足 | ❌ 未解决 | 当前仍缺正式身份投影和稳定性 |
+| 28 | CI 没有 Real Xugu Integration 分层 | 🟡 部分解决 | 已有 marker，但不等于已有真实 Integration CI |
+| 29 | Driver ZIP 直接提交 Git | ❌ 未解决 | 建议迁移制品仓库 |
+| 30 | `requirements.lock` 机制不清 | ❌ 未解决 | 仍需确定正式 lock 工具 |
+| 31 | Contract Test 数量不足 | 🟡 部分解决 | 数量已增加，但还不足以完整 Freeze |
 
-`src/xgtest/core/models.py` 已经定义：
+---
+
+# 4. 已解决项
+
+## 4.1 ✅ ResultEvent 核心结构已补齐
+
+现在已经包含：
 
 ```text
-RawMetadata
-EffectiveMetadata
-UnifiedCase
-Target
-ResourceRequest
-TestPlan
-Manifest
-Run
-CaseExecution
-Attempt
-StepResult
-ArtifactRef
-ResultEvent
+schema_version
+event_id
+run_id
+case_id
+attempt_id
+target_id
+environment_id
+producer_epoch
+assignment_epoch
+sequence
+fencing_token
+timestamp
+event_type
+payload
 ```
 
-方向正确，但目前多数还是最小骨架。
+原“ResultEvent 太薄”的结构性问题已解决。
 
-例如 `EffectiveMetadata` 只有：
+后续属于 Result Engine 实现的问题包括：
 
 ```text
-id
-title
-module
-feature
-level
-status
-tags
-timeout
-isolation
-destructive
+event_id 唯一规则
+duplicate event
+conflicting duplicate
+sequence gap
+late event
+terminal state immutable
+durable ACK
 ```
 
-而正式设计中 SQL MVP 还需要考虑：
+---
+
+## 4.2 ✅ Target Model 结构已基本补齐
+
+当前已有：
+
+```text
+database_product
+database_version
+db_build
+driver_name
+driver_version
+os
+arch
+topology
+mode
+configuration_fingerprint
+dataset_fingerprint
+sql_runtime_profile_id
+target_id
+```
+
+Target 结构层面的原问题已解决。
+
+后续只需固定唯一算法：
+
+```text
+Target Identity Projection
+→ XGMJ1
+→ SHA-256
+→ target_id
+```
+
+不能允许 `target_id` 由调用方自由拼接。
+
+---
+
+## 4.3 ✅ Registry Entry 元数据已保留
+
+当前 `RegistryEntry` 已保存：
+
+```text
+key
+metadata
+```
+
+不再静默丢弃 `phase` 等属性。
+
+---
+
+## 4.4 ✅ Registry Enum Collision 已解决
+
+现在已对多个 Registry Key 规范化为同一 Python Enum Member 的情况做冲突检测，并抛出：
+
+```text
+REGISTRY_ENUM_NAME_COLLISION
+```
+
+---
+
+## 4.5 ✅ Generated Enum 类名已改进
+
+现在有显式类名：
+
+```text
+FeatureKey
+CapabilityKey
+FailureType
+IsolationScope
+ResourceAccessMode
+CaseAssetStatus
+CaseExecutionStatus
+AttemptStatus
+StepStatus
+```
+
+---
+
+## 4.6 ✅ Python 3.14 单版本锁死已解决
+
+已调整为：
+
+```text
+Python >=3.11,<3.15
+```
+
+并增加 `xugu_integration` pytest marker。
+
+后续仍应生成真实：
+
+```text
+Python Version × Xugu Driver Version
+```
+
+兼容矩阵，但原问题已解决。
+
+---
+
+## 4.7 ✅ Schema stale 文件问题已解决
+
+Schema 现在采用：
+
+```text
+临时空目录生成
+→ 删除旧 Schema 目录
+→ 整体替换
+```
+
+不会继续残留已删除 Model 的旧 Schema。
+
+---
+
+## 4.8 ✅ Schema Contract Identity 已解决
+
+生成 Schema 已加入：
+
+```text
+$id
+x-xg-contract-version
+```
+
+---
+
+## 4.9 ✅ DECIMAL Probe 写死 FAILED 已解决
+
+现在已按实际 Driver 返回类型判断：
+
+```text
+decimal.Decimal
+→ EXACT
+→ Canonical VERIFIED
+
+其他类型，例如 float
+→ LOSSY
+→ Canonical FAILED
+```
+
+---
+
+## 4.10 ✅ Transaction Probe observer 污染已解决
+
+现在每次事务可见性检查通过 fresh observer connection 查询，避免旧 observer transaction snapshot 导致误判。
+
+---
+
+## 4.11 ✅ Resource Access Mode 基础结构已解决
+
+当前 Registry 已定义：
+
+```text
+shared_read
+shared_write
+exclusive
+```
+
+---
+
+## 4.12 ✅ ResourceRequest 主要字段已补齐
+
+当前已有：
+
+```text
+resource_type
+resource_id
+scope
+access_mode
+quantity
+impact_scope
+parent_identity
+```
+
+---
+
+# 5. 部分解决但仍需继续收口的问题
+
+## 5.1 P0：Core Model 已扩充，但正式执行链并未使用
+
+### 已完成
+
+当前 Raw/Effective Metadata 已增加：
 
 ```text
 metadata_version
@@ -101,10 +345,6 @@ reset_contract
 cleanup_timeout
 requirements
 resources
-fixtures
-source
-oracle
-issue
 owner
 since
 until
@@ -113,273 +353,74 @@ disabled_reason
 replaced_by
 ```
 
-Case Lifecycle 里也缺少 `generated` 等正式状态。
+Status / Feature / Level / Isolation 也已使用 Registry Enum。
 
-## 原因与风险
+### 剩余问题
 
-如果现在直接继续实现 Parser / Compiler / Catalog：
-
-```text
-当前简化模型
-→ Parser
-→ Compiler
-→ Catalog Schema
-```
-
-后续补字段会导致：
+最新 Runner 仍然：
 
 ```text
-Parser Header 重构
-Metadata Resolver 重构
-Catalog Schema 变更
-Compiler Hash 输入变化
-Manifest 内容变化
-Coverage / Review 逻辑变化
+load_yaml()
+→ dict
+→ case.get()
+→ step.get()
+→ 直接执行数据库
 ```
 
-这属于典型的基础契约返工。
-
-## 修正方案
-
-建议将 Core Model 按职责拆分：
+即：
 
 ```text
-src/xgtest/core/models/
-
-asset.py
-planning.py
-execution.py
-result.py
-coverage.py
-resource.py
+Core Model 很严格
+Runner 却完全绕过 Core Model
 ```
 
-SQL MVP 至少先完整定义：
+当前 `cases/mvp/*.yaml` 也并不满足完整 `EffectiveMetadata` 所要求的字段。
 
-### Asset / Case
+### 风险
+
+会出现：
 
 ```text
-RawMetadata
-EffectiveMetadata
-SourceInfo
-UnifiedCase
-SqlStep
-QueryStep
-FixtureRef
-CoverageClaim
-CoverageReview
-ComparisonProfile
+Schema/Contract 判非法
+但 Runner 仍然能执行
 ```
 
-### Planning
+### 优化方案
+
+短期先增加：
 
 ```text
-TestPlan
-Target
-EnvironmentRequirement
-ExpectedExecution
-Manifest
-BundleRef
+BootstrapCaseInput / MvpCaseInput
 ```
 
-### Execution
+并要求：
 
 ```text
-Run
-CaseExecution
-Attempt
-StepResult
+raw YAML
+→ Pydantic model_validate
+→ Runner
 ```
 
-### Resource
+正式实现再切到：
 
 ```text
-ResourceRequest
-ResourceIdentity
-ResourceScope
-AccessMode
+DSL
+→ Parser/Resolver
+→ UnifiedCase
+→ Runner
 ```
 
-### Result
+### 验收标准
 
-```text
-ResultEvent
-ArtifactRef
-```
-
-不要求所有业务逻辑在 Phase 0 就实现，但结构和语义应先统一。
-
-## 验收标准
-
-- SQL MVP 所需共享字段全部进入 Core Model；
-- Parser / Compiler / Catalog 不再自行创建 DTO；
-- 字段语义与 Metadata 设计一致；
-- Lifecycle 状态统一从 Registry 获取；
-- 不使用 `dict[str, Any]` 充当关键业务对象。
-
-当前建议状态：
-
-```text
-P0A-04 Core Model = IN_PROGRESS
-```
+Runner 不再通过 `dict.get()` 读取核心执行字段。
 
 ---
 
-# 3. P0：ResultEvent 模型过于简化
+## 5.2 P0：Manifest 结构已扩充，但执行链未使用
 
-## 当前实现
+### 已完成
 
-```text
-attempt_id
-producer_epoch
-sequence
-event_type
-payload
-```
-
-## 问题
-
-正式 Result Event 至少要能表达：
-
-```text
-schema_version
-event_id
-run_id
-case_id
-attempt_id
-target_id
-environment_id
-producer_epoch
-assignment_epoch
-sequence
-fencing_token
-timestamp
-event_type
-payload
-```
-
-其中部分字段 Phase 4 才真正强制，但模型应提前区分：
-
-```text
-Core Event Identity
-Distributed Extension
-```
-
-## 风险
-
-后续很容易演变成：
-
-```text
-Phase1ResultEvent
-Phase4AgentResultEvent
-```
-
-两套事件协议，从而导致 Result Store、Event Replay、Projection、Retry 都需要兼容两套模型。
-
-## 修正方案
-
-现在就定义完整结构，允许分布式字段在 Phase 1 可选：
-
-```text
-schema_version
-event_id
-run_id
-case_id
-attempt_id
-target_id
-environment_id
-producer_epoch
-assignment_epoch
-sequence
-fencing_token
-timestamp
-event_type
-payload
-```
-
-Phase 1：
-
-```text
-assignment_epoch = null
-fencing_token = null
-environment_id = local environment id
-```
-
-Phase 4 再提高约束。
-
-## 验收标准
-
-- Event 有稳定唯一身份；
-- 可进行幂等去重；
-- 可按 sequence 重放；
-- Late Event 可准确定位 Attempt；
-- Phase 4 无需重新定义事件格式。
-
----
-
-# 4. P0：Target 模型过于简化
-
-## 当前实现
-
-```text
-target_id
-db_build
-driver_version
-sql_runtime_profile_id
-```
-
-## 问题
-
-Target 表示的是“逻辑测试目标”，不是一个普通连接配置。
-
-建议至少包含：
-
-```text
-database product/version/build
-driver name/version
-os
-arch
-topology
-mode
-configuration fingerprint
-dataset fingerprint
-sql_runtime_profile_id
-```
-
-## 风险
-
-Target 信息不足时：
-
-```text
-Baseline
-Matrix
-Retry Migration
-Environment Matching
-Delta
-```
-
-都无法可靠判断两个执行环境是否属于同一个逻辑目标。
-
-## 修正方案
-
-定义结构化 Target Snapshot，并由稳定 Identity Projection 生成 `target_id`，不要让 `target_id` 只是任意字符串。
-
----
-
-# 5. P0：Manifest 当前只能算骨架，不能冻结为正式 Manifest 1
-
-## 当前实现
-
-```text
-run_id
-contract_set_id
-plan
-bundles
-```
-
-## 缺失
-
-正式 Manifest 仍需要：
+Manifest 已加入：
 
 ```text
 git_commit
@@ -389,105 +430,50 @@ catalog_snapshot_id
 plan_hash
 case_entries
 target_entries
-expected_executions
 runtime_versions
-bundle dependency list
 ```
 
-## 风险
+### 未完成
 
-现在就冻结 Manifest 1，后面必然产生协议变更。
-
-## 修正方案
-
-当前结构暂时视为：
+当前 `xgtest run` 仍是：
 
 ```text
-ManifestCore
+case_dir
+→ glob YAML
+→ 直接读取工作区
+→ 执行
 ```
 
-只有当 XGMJ1 Identity Projection、Target Entry、Case Entry、Runtime Version 等都落地后，再冻结正式 Manifest 1。
+缺少：
+
+```text
+Selector
+Plan
+Target Expansion
+Manifest Freeze
+Bundle
+Source Drift Verify
+```
+
+### 优化方案
+
+当前 Runner 明确定位为：
+
+```text
+bootstrap / diagnostic runner
+```
+
+正式 Runner 只接受：
+
+```text
+Frozen Manifest + Bundle
+```
 
 ---
 
-# 6. P0：Python 3.14 锁定过早
+## 5.3 P1：YAML 1.2 Resolver 基本完成，但 Contract Vector 仍不足
 
-## 当前实现
-
-`pyproject.toml`：
-
-```toml
-requires-python = ">=3.14,<3.15"
-```
-
-CI：
-
-```yaml
-python-version: "3.14"
-```
-
-## 问题
-
-目前没有正式证据证明真实 `xgcondb` Driver 对 Python 3.14 支持稳定。
-
-现有 Adapter 测试使用 monkeypatch 模拟 `xgcondb`，不能证明真实 Driver 可用。
-
-## 风险
-
-可能出现：
-
-```text
-Framework CI PASS
-真实 xgcondb 在 Python 3.14 无法导入/运行
-```
-
-最终整个工程环境被迫回退。
-
-## 修正方案
-
-先建立：
-
-```text
-Python 3.11
-Python 3.12
-Python 3.13
-Python 3.14
-```
-
-与真实 Driver 的兼容矩阵，至少验证：
-
-```text
-import xgcondb
-connect
-cursor
-SELECT 1
-basic type read
-transaction
-```
-
-再冻结正式 Python 范围。
-
----
-
-# 7. P0：YAML Loader 还不是真正完整的 YAML 1.2 Core
-
-## 当前实现
-
-已经处理：
-
-```text
-on/off 不再当 bool
-true/false 正常解析
-duplicate key reject
-```
-
-这是正确的。
-
-## 问题
-
-当前仍复制 PyYAML SafeLoader 的其他 resolver，因此可能保留部分 YAML 1.1 数字解析行为。
-
-需要重点测试：
+建议至少固定以下输入：
 
 ```yaml
 a: 0123
@@ -497,352 +483,75 @@ d: .inf
 e: -.inf
 f: .nan
 g: 1_000
+h: 2026-09-16
+i: yes
+j: no
+k: ON
+l: Null
 ```
 
-## 风险
-
-不同语言、不同 Loader 对相同 Metadata 产生不同解析结果。
-
-## 修正方案
-
-建立：
+并增加：
 
 ```text
-framework_tests/contract/yaml/
+1__0
+0o_1
+nested duplicate
+unhashable mapping key
+深层嵌套
+超大输入
 ```
 
-Golden Vector，覆盖：
-
-```text
-bool
-null
-integer
-octal
-hex
-float
-scientific
-inf/nan
-timestamp-looking scalar
-on/off/yes/no
-unicode
-duplicate key
-nested duplicate key
-```
-
-不能只靠修几个 PyYAML Resolver 来近似 YAML 1.2 Core。
+建议建立固定 `framework_tests/contract/yaml/` Golden Vector 数据集。
 
 ---
 
-# 8. P0：Registry Enum 生成存在成员名碰撞风险
+## 5.4 P1：Extended Type Probe 已拆状态，但语义判定仍偏粗
 
-## 当前实现
+### 已完成
 
-```python
-key.upper().replace(".", "_").replace("-", "_")
-```
-
-## 问题
-
-例如：
-
-```text
-a-b
-a_b
-a.b
-```
-
-都会生成：
-
-```text
-A_B
-```
-
-## 修正方案
-
-Enum 生成前建立：
-
-```text
-normalized_member_name -> original key
-```
-
-映射。
-
-发现冲突直接：
-
-```text
-REGISTRY_ENUM_NAME_COLLISION
-```
-
-失败。
-
----
-
-# 9. P0：Registry 只保留 key，其他元信息被静默丢弃
-
-## 当前问题
-
-YAML 已经出现：
-
-```yaml
-- key: sql.execute
-  phase: sql_mvp
-```
-
-但加载器只留下：
-
-```text
-sql.execute
-```
-
-`phase` 被丢弃。
-
-## 风险
-
-Registry 无法真正成为 Single Source of Truth。
-
-后续可能需要：
-
-```text
-phase
-description
-category
-introduced_version
-deprecated_version
-retry_policy
-resource_scope
-owner
-```
-
-## 修正方案
-
-定义：
-
-```python
-RegistryEntry
-```
-
-包含：
-
-```text
-key
-phase
-description
-metadata
-```
-
-Registry 保存 Entry，而不是 tuple[str]。
-
-Enum 生成只读取 `entry.key`。
-
----
-
-# 10. P0：Registry 与 Pydantic Literal 形成双真源
-
-## 当前问题
-
-模型中：
-
-```python
-status: Literal["draft", "review", "active", ...]
-```
-
-同时 Registry 里也维护状态。
-
-## 风险
-
-Registry 新增状态，例如：
-
-```text
-generated
-```
-
-但模型 Literal 忘记同步，就出现两套定义。
-
-## 修正方案
-
-模型直接使用生成 Enum：
-
-```python
-status: CaseAssetStatus
-level: Level
-isolation: IsolationScope
-```
-
-同样适用于：
-
-```text
-FailureType
-ResourceAccessMode
-Capability
-```
-
----
-
-# 11. P0：Schema Export 无法发现 stale schema
-
-## 当前流程
-
-```bash
-xgtest schema export
-git diff --exit-code -- schemas
-```
-
-## 问题
-
-如果一个 Model 已从 `MODEL_EXPORTS` 删除，旧的：
-
-```text
-OldModel.schema.json
-```
-
-仍会留在目录中，export 不会删除，Git Diff 也可能仍然干净。
-
-## 修正方案
-
-推荐：
-
-```text
-生成到临时空目录
-→ 比较文件集合
-→ 比较文件内容
-```
-
-或者清理所有 generator-managed schema 后重新生成。
-
----
-
-# 12. P0：Schema 缺少稳定契约身份
-
-## 问题
-
-当前自动导出的 Schema 缺少明确：
-
-```text
-$id
-schema version
-contract version
-```
-
-## 修正方案
-
-生成时注入类似：
-
-```json
-{
-  "$id": "xgtest://schema/1.1/EffectiveMetadata",
-  "x-xg-contract-version": "1.1"
-}
-```
-
-并在 Core Contract Descriptor 中记录：
-
-```text
-schema file
-sha256
-contract_set_id
-```
-
----
-
-# 13. P1：DECIMAL Probe 被硬编码为 FAILED
-
-## 当前问题
-
-Capability Probe 中 decimal 状态直接写死为 FAILED，而不是根据 Driver 实际返回类型判断。
-
-## 风险
-
-未来 Driver 行为改变后，Probe 仍会输出旧结论。
-
-## 修正方案
-
-按真实值判断：
-
-```text
-Decimal -> VERIFIED
-float -> LOSSY/FAILED
-other -> UNKNOWN/FAILED
-```
-
-最好拆：
+已有：
 
 ```text
 operation_status
 mapping_status
 canonical_compatibility
+status
 ```
 
----
+### 当前不足
 
-# 14. P1：事务可见性 Probe 可能受 observer 自身事务快照污染
-
-## 当前逻辑
-
-同一个 `second_connection` 先验证 rollback，再继续验证 commit。
-
-## 风险
-
-第一次 SELECT 可能已经建立事务快照，第二次 SELECT 看不到主连接刚提交的数据。
-
-此时：
+主要还是用：
 
 ```text
-commit_visible_count == 0
+type(fetched) is type(input)
 ```
 
-并不能证明主连接 COMMIT 失败。
+判断 EXACT。
 
-## 修正方案
-
-每次 visibility check 使用 fresh observer connection，或显式重置 observer transaction。
-
-推荐封装：
+这不能发现：
 
 ```text
-fresh_count(...)
+datetime 精度截断
+timezone 丢失
+binary 长度变化
+BLOB 内容截断
 ```
 
-每次新连接进行验证。
+### 优化方案
 
----
-
-# 15. P1：Extended Type Probe 的 VERIFIED 语义过宽
-
-## 当前逻辑
-
-只要：
+每种类型至少验证：
 
 ```text
-INSERT 成功
-SELECT 成功
+type equality
+value equality
+precision equality
+scale equality
+length equality
+timezone equality
+round-trip equality
 ```
 
-就标记 VERIFIED。
-
-## 问题
-
-SQL 操作成功和 Driver Mapping 正确不是一回事。
-
-例如：
-
-```text
-DATE 输入 date
-返回 str
-```
-
-不能直接认为满足 Canonical 要求。
-
-## 修正方案
-
-拆成：
-
-```text
-operation_status
-mapping_status
-canonical_compatibility
-```
-
-mapping 可以使用：
+再得出：
 
 ```text
 EXACT
@@ -854,139 +563,151 @@ UNKNOWN
 
 ---
 
-# 16. P1：Probe Artifact 默认包含 host / port / database
+## 5.5 P1：Probe 隐私处理改善，但 host_hash 仍不够安全
 
-## 风险
+当前已从原始 Host 改成：
 
-Artifacts 如果被上传到 CI 或共享位置，会暴露内部网络和数据库命名信息。
+```text
+SHA256(host)
+```
 
-## 修正方案
+但 IP/短主机名属于低熵值，可枚举反查。
 
-默认 Artifact 建议只保存：
+### 优化方案
+
+优先不保存 Host，只保留：
 
 ```text
 environment_id
 target_ref
-host_hash
-database_alias
 ```
 
-完整连接信息仅允许本地 debug 模式。
+如确实需要关联，使用：
+
+```text
+HMAC-SHA256(secret_salt, host)
+```
+
+而不是无盐 SHA-256。
+
+`database_alias` 同样需要评估是否属于内部敏感信息。
 
 ---
 
-# 17. P1：Canonical Golden Vector 覆盖不足
+## 5.6 P1：Canonical Golden Vector 已补充，但仍不完整
 
-当前测试只覆盖很少的 Canonical 情况。
-
-至少补充：
+目前已有：
 
 ```text
-int +0/-0
-大整数
-Decimal 1/1.0/1.00
-Decimal exponent
-极小 Decimal
-float +0/-0
-多种 NaN payload
-+Inf/-Inf
-空字符串
-尾空格
-Unicode
+Decimal 1.00 == 1
+NaN canonicalization
++0.0 / -0.0
+date format
 bytes 00/FF
+```
+
+仍建议补：
+
+```text
+大整数
+负大整数
+极小 Decimal
+Decimal exponent
+Decimal 0E-N
+float +Inf/-Inf
+多个不同 NaN payload
+empty string
+trailing spaces
+Unicode combining form
+isolated surrogate
 NULL vs "NULL"
-重复行
-空结果
-零列/零行
-date/time/timestamp
+empty result
+duplicate rows
+zero-column result
+time
+timestamp
 timestamp_tz
+timezone offset edge
 ```
 
 ---
 
-# 18. P1：date/time/timestamp 当前只检查 str，不检查语义格式
+## 5.7 P1：Temporal 已做格式检查，但缺真正语义校验
 
-## 当前问题
-
-`date/time/timestamp/timestamp_tz` 只要求 Python 类型是 `str`。
-
-因此：
+当前 Regex 可以验证“长得像”：
 
 ```text
-"abc"
-"yesterday"
+YYYY-MM-DD
+HH:MM:SS
+Timestamp
+Timestamp TZ
 ```
 
-也可能被编码。
-
-## 修正方案
-
-明确 Canonical 格式：
+但例如：
 
 ```text
-date        YYYY-MM-DD
-time        HH:MM:SS[.fraction]
-timestamp   YYYY-MM-DDTHH:MM:SS[.fraction]
-timestamp_tz 明确统一 offset/UTC canonical rule
+2026-99-99
+25:99:99
++99:99
 ```
 
-并严格验证。
+仍可能通过形状检查。
+
+### 优化方案
+
+用真正解析器验证：
+
+```text
+date.fromisoformat
+time.fromisoformat
+datetime.fromisoformat
+```
+
+再重新编码成 Canonical 文本。
+
+对 `timestamp_tz` 还必须明确：
+
+```text
+保留 offset
+```
+
+还是：
+
+```text
+统一转换 UTC/Z
+```
+
+并用 Golden Vector 固定。
 
 ---
 
-# 19. P1：Float NaN / ±0 需要完整跨平台 Golden Vector
+## 5.8 P1：ComparisonProfile 已扩展，但策略仍为自由字符串
 
-当前 NaN 统一为固定 bit pattern，方向正确。
-
-需要增加：
+当前已有：
 
 ```text
-多个 NaN payload -> 同一 Canonical NaN
-+0.0
--0.0
+error_profile
+normalization_profile
+float_policy
+timestamp_policy
 ```
 
-确保不同平台结果完全一致。
+后续稳定后建议建立 Registry：
+
+```text
+comparison_modes
+normalization_profiles
+float_policies
+timestamp_policies
+```
+
+不用立即全部 Enum 化，但正式 Release Case 前应冻结。
 
 ---
 
-# 20. P1：ComparisonProfile 过于简化
+## 5.9 P1：Expected Model 已类型化，但 Runner 未使用
 
-当前：
-
-```text
-mode
-canonical_version
-```
-
-后续还需要承载：
-
-```text
-error profile
-normalization profile
-float policy
-timestamp policy
-error code/sqlstate/message rule
-resource limit
-```
-
-建议现在就预留结构，避免未来完全替换模型。
-
----
-
-# 21. P1：SqlStep.expected 使用 Any 过宽
-
-## 当前问题
-
-```python
-expected: Any | None
-```
-
-使 Expected 基本没有 Schema 约束。
-
-## 修正方案
-
-尽早定义类型化 Expected：
+Core Model 已有：
 
 ```text
 ExpectedRows
@@ -995,386 +716,1260 @@ ExpectedError
 ExpectedStatement
 ```
 
-这也与 XGT Typed Expected 设计一致。
+但 Runner 仍传递自由 `dict/Any` 给 Comparator。
+
+### 优化方案
+
+严格 Dispatch：
+
+```text
+ExpectedRows      -> compare_rows
+ExpectedHash      -> compare_hash
+ExpectedError     -> compare_error
+ExpectedStatement -> compare_affected_rows
+```
+
+Comparator 不再根据字典 key 猜 Expected 类型。
 
 ---
 
-# 22. P1：ResourceRequest access_mode 不完整
+## 5.10 P1：ContractError 仍需 SourceSpan
 
-当前只有：
-
-```text
-shared_read
-exclusive
-```
-
-资源模型后续至少需要：
+正式 Parser/Compiler 阶段建议支持：
 
 ```text
-read
-write
-exclusive
-```
-
-或：
-
-```text
-shared_read
-shared_write
-exclusive
-```
-
-必须与 Resource Conflict Matrix 保持一致。
-
----
-
-# 23. P1：ResourceRequest 缺 resource_type / impact_scope
-
-当前：
-
-```text
-resource_id
-scope
-access_mode
-capacity
-```
-
-建议补：
-
-```text
-resource_type
-resource_id
-access_mode
-quantity
-impact_scope
-parent/ancestor identity
-```
-
-否则 Admission 逻辑无法准确表达父子资源冲突。
-
----
-
-# 24. P1：Generated Enum 类名可读性一般
-
-自动生成：
-
-```text
-StatusesCaseAsset
-Capabilities
-Features
-```
-
-能工作，但业务代码可读性较差。
-
-建议建立 Registry 名称到 Enum Class Name 的显式映射：
-
-```text
-CaseAssetStatus
-AttemptStatus
-RunStatus
-FeatureKey
-CapabilityKey
-FailureType
-IsolationScope
-ResourceAccessMode
-```
-
----
-
-# 25. P1：ContractError 还需要 SourceSpan / details
-
-当前：
-
-```text
-code
-path
-message
-```
-
-方向正确。
-
-后续 Parser/Compiler 错误还应该支持：
-
-```text
-source file
+file
 line
 column
-field path
+field_path
+code
+message
 details
 cause
 ```
 
-否则真实 DSL 报错定位体验会较差。
-
 ---
 
-# 26. P1：当前 Xugu Adapter 只能算 connection bootstrap
+## 5.11 P1：XuguSession 基础能力已有，但 Reset / Probe 尚未成立
 
-现在主要是：
-
-```text
-connect
-smoke_probe
-```
-
-不能把 A-07 视为完成。
-
-真正最小 Adapter 仍需：
+当前已有：
 
 ```text
+open
 execute
-query/fetchmany
+query
 begin
 commit
 rollback
-autocommit
-column metadata
-error extraction
 cancel
 reset
-probe
 close
 ```
 
----
-
-# 27. P1：Capability Probe 应生成 Runtime Profile，而不只是孤立 JSON
-
-建议流程：
+但现在：
 
 ```text
-Raw Probe Evidence
-        ↓
-Profile Builder
-        ↓
-SQLRuntimeProfile
+reset() = rollback()
 ```
 
-将“观察结果”和“正式能力判定”分开。
+这不是完整 Session Reset。
 
-这样可保留原始证据，又可以通过规则/人工审查形成正式 Profile。
+真正 Reset 至少涉及：
+
+```text
+transaction
+autocommit
+isolation
+schema
+role
+timezone
+session parameter
+temporary object
+prepared handle
+cursor
+lock
+```
+
+### 优化方案
+
+当前 `reset()` 先改名为：
+
+```text
+rollback_transaction()
+```
+
+等 A-06 验证后再实现真正：
+
+```text
+reset()
+probe()
+```
+
+无法证明 clean 时必须销毁连接。
 
 ---
 
-# 28. P1：Probe 缺少完整 Profile Identity 信息
+## 5.12 P1：Real Xugu Integration CI 仍未真正完成
 
-Runtime Profile 应至少绑定：
+虽然已有 `xugu_integration` marker，但 marker 只是测试分类，不等于真实 CI。
+
+还需要：
 
 ```text
-DB exact build
-Driver version
-OS
-arch
-compatibility mode
-关键配置
+内网 Runner
+真实 Driver
+真实 Xugu
+独立凭据
+Integration Artifact
 ```
 
-当前报告信息还不足以成为正式 Runtime Profile Identity。
+建议独立命令：
 
----
-
-# 29. P1：CI 需要区分 Contract CI 与 Real Xugu Integration CI
-
-公共/普通 CI 可以继续只做：
-
-```text
-pytest
-registry
-schema generation
-contract vectors
-```
-
-另外增加内网/本地真实环境任务：
-
-```text
+```bash
 pytest -m xugu_integration
 ```
 
-两者不能混为一谈。
-
-Mock Adapter PASS 不能作为真实 Xugu 能力 VERIFIED 的证据。
+与公共 Contract CI 分开。
 
 ---
 
-# 30. P1：厂商 Driver ZIP 不建议长期放 Git
+## 5.13 P1：Driver ZIP 仍不建议长期留 Git
 
-当前仓库包含 Driver ZIP。
-
-长期建议迁移到：
+建议迁移到：
 
 ```text
 Nexus
 Artifactory
 MinIO
-内部 Package Registry
+Internal Package Registry
 ```
 
-Git 中只保存：
+Git 只保存：
 
-```text
-driver version
-sha256
-artifact_ref
-install script
+```yaml
+driver_version:
+sha256:
+artifact_ref:
 ```
-
-这样更适合版本治理，也避免仓库膨胀和分发边界问题。
 
 ---
 
-# 31. P1：requirements.lock 需要正式可复现生成机制
+## 5.14 P1：依赖锁文件机制仍需明确
 
-应明确使用：
+建议正式选择：
 
 ```text
-uv lock
+uv.lock
 pip-tools
-poetry lock
+Poetry lock
 ```
 
-等一种正式方式。
-
-不要把普通 `pip freeze` 结果长期当完整可复现锁文件。
+不要长期让 `requirements.lock` 只是一次普通 `pip freeze`。
 
 ---
 
-# 32. P2：当前 Contract Test 数量不足，不足以 G0A Freeze
+# 6. 最新代码中新发现的 P0 问题
 
-目前测试主要覆盖：
+## N1. P0 Critical：普通 SQL 报错可能被 `compare_error()` 误判为 PASS
+
+### 当前逻辑
+
+Runner 对任何异常都会调用：
 
 ```text
-unknown field
-strict bool
-Registry deterministic
-duplicate YAML key
-on/off
-一个 XGMJ1 Hash
-基础 XGC1 frame
-Xugu smoke mock
+compare_error(error, step.expected)
 ```
 
-G0A 前至少补：
-
-### Registry
+而 `compare_error()` 在 expected 没有：
 
 ```text
-duplicate registry key
-unknown registry
-enum name collision
-malformed entry
-metadata preservation
+code
+sqlstate
+message_pattern
 ```
 
-### YAML
+时最终可能返回 `True`。
 
-```text
-nested duplicate
-octal/hex
-float
-nan/inf
-timestamp-looking scalar
-null
-boolean
+例如正常 Query：
+
+```yaml
+expected:
+  rows:
+    - [2, two, 20]
 ```
 
-### Core Model
+实际 SQL 却报：
 
 ```text
-invalid id
-invalid timeout
-missing required
-invalid lifecycle
-target identity
-resource identity
-manifest identity
+table not found
 ```
 
-### Canonical
+此时 `expected` 并不是 ExpectedError，但当前 Comparator 仍可能把这个异常判成 PASS。
 
-按前述完整 Golden Vector 补齐。
+### 风险
 
----
-
-# 33. 推荐修正顺序
-
-建议下一阶段按下面顺序，而不是直接开始 Parser：
+这是严重测试正确性问题：
 
 ```text
-1. Registry 真正成为单一事实源
-2. Core Model 补全
-3. Pydantic Literal 改用 Registry Enum
-4. YAML 1.2 Core 行为校准
-5. Schema stale 检查
-6. Schema 契约身份
-7. Canonical Golden Vector 补齐
-8. 修 DECIMAL Probe
-9. 修事务 observer Probe
-10. Extended Type Probe 状态拆分
-11. Runtime Profile Builder
-12. Python × Driver 兼容矩阵
-13. G0A Review
-14. 再进入 XGT Parser / Compiler / Catalog
+SQL 真失败
+→ 测试框架报告 PASS
+```
+
+### 原因
+
+Comparator 根据自由 Dict 猜 Expected 类型，而不是通过类型系统显式 Dispatch。
+
+### 修正方案
+
+只有 `ExpectedError` 才允许异常比较：
+
+```text
+ExpectedError:
+    没报错 -> FAIL
+    报错 -> compare_error()
+
+ExpectedRows / ExpectedHash / ExpectedStatement:
+    报错 -> ERROR
+```
+
+Comparator 改成只接收 `ExpectedError`，不能再接收 `Any`。
+
+### 必须增加测试
+
+```text
+ExpectedRows + DB Exception -> ERROR
+ExpectedStatement + DB Exception -> ERROR
+ExpectedError + matching Exception -> PASS
+ExpectedError + wrong code -> FAIL
+ExpectedError + no exception -> FAIL
 ```
 
 ---
 
-# 34. 当前建议状态
+## N2. P0：Runner 绕过所有 Core Contract / Parser / Compiler
 
-| 工作包 | 当前建议状态 |
+当前路径：
+
+```text
+YAML
+→ load_yaml()
+→ dict.get()
+→ XuguSession
+```
+
+而正式设计是：
+
+```text
+DSL
+→ Decoder
+→ Parser
+→ Metadata Resolver
+→ UnifiedCase
+→ Compiler
+→ Catalog
+→ Selector
+→ Manifest
+→ Bundle
+→ Runner
+```
+
+### 风险
+
+形成两套世界：
+
+```text
+Core Contract：严格
+Diagnostic Runner：宽松
+```
+
+### 修正方案
+
+短期：
+
+```text
+BootstrapCaseInput.model_validate(raw)
+```
+
+正式：
+
+```text
+Runner 只接受 UnifiedCase / CompiledCase
+```
+
+后续正式执行只接受：
+
+```text
+Manifest + Bundle 中的 Compiled Case
+```
+
+当前 `cases/mvp/*.yaml` 必须明确标注为 Bootstrap Asset，而不是正式 Test Asset。
+
+---
+
+## N3. P0：Comparator 完全绕过 XGC1 Canonical
+
+当前 SQL Rows Hash 使用：
+
+```text
+json.dumps(..., default=str)
+→ SHA256
+```
+
+这与已有：
+
+```text
+CanonicalCell
+XGC1
+typed framing
+```
+
+构成第二套 Canonical 实现。
+
+### 风险 1：逻辑类型丢失
+
+例如：
+
+```text
+Decimal("1.0")
+"1.0"
+date(...)
+datetime(...)
+bytes(...)
+```
+
+可能全部被 `default=str` 转换。
+
+### 风险 2：Hash 与正式 Contract 不一致
+
+测试资产 Expected Hash 和 Runner Actual Hash 可能使用不同算法。
+
+### 风险 3：rowsort 不稳定
+
+当前直接：
+
+```python
+sorted(actual)
+```
+
+混合：
+
+```text
+None
+int
+str
+Decimal
+```
+
+可能直接抛 `TypeError`。
+
+### 修正方案
+
+唯一主链：
+
+```text
+Driver Value
+→ Runtime Type Mapping
+→ CanonicalCell
+→ XGC1
+```
+
+Exact：
+
+```text
+Canonical Row Frame 按原顺序比较
+```
+
+RowSort：
+
+```text
+Canonical Row Frame bytes 排序
+```
+
+Hash：
+
+```text
+XGC1 stream
+→ SHA256
+```
+
+删除 SQL Result Hash 中 `json.dumps(default=str)` 方案。
+
+---
+
+## N4. P0：Runtime Profile ID 当前不是稳定语义身份
+
+### 当前实现
+
+```text
+evidence_hash = SHA256(整个 Probe Evidence)
+profile_body 包含 evidence_sha256
+profile_id = SHA256(profile_body)
+```
+
+但 Probe Evidence 中包含：
+
+```text
+started_at
+finished_at
+随机 table 名
+运行期字段
+```
+
+因此同一个环境重复 Probe 两次，也可能产生不同 `sql_runtime_profile_id`。
+
+### 问题本质
+
+Profile ID 应表示：
+
+```text
+Runtime Semantics Identity
+```
+
+而不是：
+
+```text
+某次 Probe Run Identity
+```
+
+### 修正方案
+
+拆分：
+
+```text
+ProbeEvidence
+RuntimeProfile
+```
+
+ProbeEvidence 可以包含时间、随机表名、Artifact 等运行期数据。
+
+Runtime Profile Identity Projection 只包含：
+
+```text
+profile_schema_version
+contract_set_id
+db exact build
+driver exact version
+os
+arch
+mode
+configuration fingerprint
+type mapping
+error mapping
+cancel semantics
+reset/probe semantics
+capability limitations
+```
+
+然后：
+
+```text
+XGMJ1(ProfileIdentityProjection)
+→ SHA256
+→ sql_runtime_profile_id
+```
+
+`evidence_sha256` 只用于审计，不参与 Profile ID。
+
+---
+
+## N5. P0：Runtime Profile 把物理 Host 上下文混入语义身份
+
+当前 Profile target 保留：
+
+```text
+host_hash
+database_alias
+```
+
+这属于 Environment Evidence，不属于 Runtime Semantic Identity。
+
+### 风险
+
+同版本、同配置的 Cluster A / Cluster B 可能只因为 Host 不同就产生不同 Profile ID，破坏：
+
+```text
+Target / Environment 分离
+```
+
+### 修正方案
+
+Runtime Profile 分：
+
+```text
+identity
+evidence_context
+```
+
+identity：
+
+```text
+DB build
+Driver
+OS/arch
+mode
+configuration fingerprint
+mapping/cancel/reset semantics
+```
+
+evidence_context：
+
+```text
+environment_id
+host_hash（如必须）
+database_alias
+probe_run_id
+```
+
+后者不进入 `sql_runtime_profile_id`。
+
+---
+
+## N6. P0 Bug：`xgtest registry validate` 可能无法序列化 `RegistryEntry`
+
+当前 Registry 值已经是：
+
+```text
+tuple[RegistryEntry]
+```
+
+CLI 却直接：
+
+```text
+json.dumps(list(values))
+```
+
+标准 JSON 不会自动序列化 dataclass。
+
+### 可能结果
+
+```text
+TypeError: Object of type RegistryEntry is not JSON serializable
+```
+
+### 修正方案
+
+显式：
+
+```python
+[
+    {"key": entry.key, **entry.metadata}
+    for entry in entries
+]
+```
+
+或者给 Registry 提供 `to_dict()`。
+
+### 验收标准
+
+CI 必须真实执行：
+
+```bash
+xgtest registry validate
+```
+
+而不是只通过 Loader 单测间接验证。
+
+---
+
+## N7. P0：Setup / Main / Cleanup 没有真正分阶段执行
+
+当前 Runner 把：
+
+```text
+setup
+statement
+query
+cleanup
+```
+
+放在同一个循环中。
+
+异常被捕获后继续执行下一 Step。
+
+### 问题场景
+
+```text
+setup_left FAIL
+↓
+insert_left 继续执行
+↓
+query 继续执行
+↓
+制造级联错误
+↓
+cleanup
+```
+
+### 正确语义
+
+```text
+Prepare
+↓
+Setup
+    失败 -> Main 不执行
+↓
+Main
+↓
+Cleanup（无论 Main 成败都执行）
+↓
+Reset
+↓
+Probe
+```
+
+### 修正方案
+
+至少拆：
+
+```text
+run_setup()
+run_main()
+run_cleanup()
+```
+
+Cleanup 必须进入独立 finally 生命周期。
+
+### 必测
+
+```text
+Setup FAIL -> Main 不执行，Cleanup 执行
+Main FAIL -> Cleanup 执行
+Cleanup FAIL -> primary_status 保留 + cleanup failure 单独记录
+```
+
+---
+
+# 7. 最新代码中新发现的 P1 问题
+
+## N8. P1：`XuguSession.reset()` 名称具有误导性
+
+当前：
+
+```text
+reset() = rollback()
+```
+
+完整 Reset 应包含事务、autocommit、isolation、schema、role、timezone、session parameter、temp object、prepared handle、cursor、lock 等。
+
+### 修正方案
+
+当前先改名为：
+
+```text
+rollback_transaction()
+```
+
+只有 A-06 验证完成后才提供真正 `reset()` / `probe()`。
+
+不能证明 clean 时销毁连接。
+
+---
+
+## N9. P1：Query 使用 `fetchall()`，与大结果目标冲突
+
+当前：
+
+```text
+cursor.fetchall()
+→ tuple(rows)
+```
+
+MVP 小数据没问题，但不能固化成正式 Adapter API。
+
+### 修正方案
+
+正式 Query API 支持：
+
+```text
+fetchmany(batch_size)
+row iterator
+streaming canonicalizer
+incremental hash
+external rowsort
+```
+
+---
+
+## N10. P1：当前 MVP YAML Case 不是正式 XGT DSL
+
+新增的：
+
+```text
+cases/mvp/join.yaml
+union.yaml
+ddl_table.yaml
+string_function.yaml
+```
+
+非常适合作为纵向验证资产，但正式 SQL DSL 是 `.xgt`。
+
+### 风险
+
+YAML Runner 越完善，后续越容易偏离正式 XGT 设计。
+
+### 修正方案
+
+把这些文件明确标为：
+
+```text
+bootstrap / diagnostic assets
+```
+
+建议放：
+
+```text
+framework_tests/integration/assets/sql_mvp/
+```
+
+或：
+
+```text
+cases/bootstrap/
+```
+
+正式资产继续使用：
+
+```text
+tests/query/.../*.xgt
+```
+
+---
+
+## N11. P1：MVP Report 又硬编码了一套 Status
+
+Core 已有：
+
+```text
+StepStatus
+CaseExecutionStatus
+AttemptStatus
+```
+
+但 MVP Report 又用：
+
+```text
+Literal["PASS", "FAIL", "ERROR"]
+```
+
+### 修正方案
+
+统一使用 Registry Enum。
+
+并补：
+
+```text
+RunStatus Registry
+```
+
+不要形成第二套状态源。
+
+---
+
+## N12. P1：MVP Run Report 的 Target 又退化成自由 Dict
+
+正式 `Target` 已经结构化，但 `MvpRunReport` 又定义：
+
+```text
+target: dict[str, str]
+```
+
+### 修正方案
+
+改用：
+
+```text
+TargetSnapshot
+```
+
+或最小：
+
+```text
+TargetRef:
+  target_id
+  sql_runtime_profile_id
+  environment_id
+```
+
+---
+
+## N13. P1：Runnable Path 没有 Manifest / Bundle / Source Drift Protection
+
+当前：
+
+```text
+glob *.yaml
+→ 读取当前文件
+→ 执行
+```
+
+选例和真正执行之间没有 Freeze。
+
+### 修正方案
+
+当前 CLI 建议明确叫：
+
+```text
+xgtest bootstrap-run
+```
+
+正式 `xgtest run` 留给：
+
+```text
+Plan
+→ Manifest
+→ Bundle
+→ Verify Hash
+→ Execute
+```
+
+---
+
+## N14. P1：Run ID 仅由开始时间 Hash 截断生成
+
+当前类似：
+
+```text
+SHA256(started_at)[:16]
+```
+
+作为 Diagnostic ID 可以，但不应成为正式 Run Identity。
+
+### 修正方案
+
+推荐：
+
+```text
+UUIDv7
+```
+
+或 ULID。
+
+`manifest_hash` 作为单独的不可变输入身份，不能与 Run ID 混用。
+
+---
+
+## N15. P1：PASS Report 保存全部 Rows，不符合长期规模目标
+
+当前 Report 直接存：
+
+```text
+rows
+columns
+column_types
+```
+
+### 修正方案
+
+正式模式默认：
+
+PASS：
+
+```text
+row_count
+result_hash
+duration
+status
+```
+
+FAIL 才保存：
+
+```text
+expected
+actual sample
+diff
+artifact URI
+```
+
+大结果必须落 Artifact，不塞主 JSONL/Event。
+
+---
+
+## N16. P1：Column Type 只是 `str(driver_type)`，不是 Logical Type
+
+当前直接把 Driver `cursor.description` type code 转字符串。
+
+### 修正方案
+
+增加：
+
+```text
+DriverColumnMetadata
+→ Runtime Profile Type Mapper
+→ LogicalType
+```
+
+Comparator 只理解 Logical Type，不理解 Xugu Driver Type Code。
+
+---
+
+## N17. P1：Error Message 尚缺统一脱敏
+
+`extract_error()` 会直接返回 `str(error)`，Runner 再直接写 Report。
+
+数据库错误有可能包含：
+
+```text
+SQL
+对象名
+路径
+参数
+连接信息
+```
+
+### 修正方案
+
+增加统一：
+
+```text
+ErrorRedactor
+```
+
+在进入：
+
+```text
+ResultEvent
+Artifact
+Report
+Log
+```
+
+前脱敏。
+
+---
+
+## N18. P1：无盐 `host_hash` 可被枚举反查
+
+与 Probe 隐私问题一致。
+
+优先不要保存 Host；需要关联时使用：
+
+```text
+HMAC-SHA256(environment_secret, host)
+```
+
+---
+
+# 8. Runtime Profile 专项优化方案
+
+Runtime Profile 是最新提交的重点，建议现在就收口。
+
+## 8.1 建立正式 Pydantic Model
+
+建议定义：
+
+```text
+SQLRuntimeProfile
+RuntimeTargetIdentity
+DriverIdentity
+TypeMappingProfile
+ErrorMappingProfile
+CancelProfile
+ResetProfile
+CapabilityProfile
+EvidenceRef
+```
+
+不要长期用自由 `dict[str, Any]`。
+
+---
+
+## 8.2 Profile ID 使用稳定 Identity Projection
+
+推荐：
+
+```text
+SQLRuntimeProfile
+→ identity_projection()
+→ XGMJ1
+→ SHA-256
+→ sql_runtime_profile_id
+```
+
+不得将以下字段加入身份：
+
+```text
+started_at
+finished_at
+random table
+artifact path
+probe run id
+physical host
+```
+
+---
+
+## 8.3 Evidence Hash 与 Profile ID 分离
+
+推荐模型：
+
+```text
+Runtime Profile
+  ├── sql_runtime_profile_id
+  └── evidence_refs[]
+        ├── evidence_sha256
+        ├── probe_run_id
+        └── timestamp
+```
+
+同一个 Profile 可以拥有多次 Probe Evidence。
+
+---
+
+## 8.4 Profile 绑定 Contract Set
+
+至少记录：
+
+```text
+core_contract_set_id
+canonical_version
+probe_version
+profile_schema_version
+```
+
+避免旧 Profile 被错误复用于新 Contract。
+
+---
+
+# 9. Comparator 专项重构方案
+
+目标接口建议改成：
+
+```text
+compare(
+    actual: CanonicalResult,
+    expected: TypedExpected,
+    profile: ComparisonProfile
+) -> ValidationResult
+```
+
+不要继续使用：
+
+```text
+compare_rows(list, Any, mode)
+compare_error(Exception, Any)
+```
+
+## Exact
+
+```text
+Driver Rows
+→ Canonical Cells
+→ XGC1 Row Frames
+→ 顺序比较
+```
+
+## RowSort
+
+```text
+Canonical Row Frame
+→ bytes lexical sort
+→ compare
+```
+
+## Hash
+
+```text
+XGC1 Canonical Stream
+→ SHA256
+```
+
+## Expected Error
+
+只有 `ExpectedError` 才能进入 Error Comparator。
+
+返回值建议从 `bool` 升级为：
+
+```text
+ValidationResult:
+  matched
+  reason_code
+  expected_summary
+  actual_summary
+```
+
+方便 Result / Allure / Debug。
+
+---
+
+# 10. 当前推荐修正顺序
+
+## 第一批：必须马上修
+
+```text
+1. N1：修复普通 SQL Exception 被误判 PASS
+2. N6：修复 registry validate 的 RegistryEntry JSON 序列化
+3. N3：Comparator 接入 Canonical/XGC1
+4. N2：Runner 至少通过 Typed Bootstrap Model
+5. N7：拆 Setup / Main / Cleanup 生命周期
+6. N4/N5：重做 Runtime Profile Identity Projection
+```
+
+---
+
+## 第二批：G0A / 第一条可信 JOIN 前完成
+
+```text
+7. Core Model 剩余字段和 Enum 收口
+8. YAML Golden Vector 补齐
+9. Canonical Golden Vector 补齐
+10. Temporal 真正语义校验
+11. Runtime Profile Pydantic Model
+12. Target/Profile Identity 使用 XGMJ1
+13. Mvp Report Status/Target 去双真源
+```
+
+---
+
+## 第三批：Phase 1 正式 Runner 前完成
+
+```text
+14. Manifest / Bundle / Source Drift
+15. Adapter Logical Type Mapping
+16. Reset / Probe
+17. Timeout / Cancel / Stop Proof
+18. Streaming fetchmany / incremental hash
+19. Error Redaction
+20. PASS Report 极简化
+21. Real Xugu Integration CI
+```
+
+---
+
+# 11. 建议当前工作包状态
+
+| 工作包 | 建议状态 |
 |---|---|
-| P0A-02 工程骨架 | ACCEPTED / 接近 ACCEPTED |
-| P0A-03 Registry | IN_PROGRESS |
-| P0A-04 Core Model | IN_PROGRESS |
-| P0A-05 Schema / Validation | IN_PROGRESS |
-| P0A-06 Golden Vector | IN_PROGRESS |
-| G0A | NOT READY |
-| A-01 Xugu Environment | IN_PROGRESS |
-| A-02 Type Probe | IN_PROGRESS |
-| A-03 Transaction Probe | IN_PROGRESS |
-| A-04 Error Probe | IN_PROGRESS |
-| A-05 Cancel/Stop | NOT VERIFIED |
-| A-06 Reset/Probe | NOT VERIFIED |
-| A-07 Runtime Profile | NOT READY |
+| P0A-02 工程骨架 | ✅ ACCEPTED |
+| P0A-03 Registry | 🟡 接近 ACCEPTED |
+| P0A-04 Core Model | 🟡 IN_PROGRESS |
+| P0A-05 Schema / Validation | 🟡 接近 ACCEPTED |
+| P0A-06 Golden Vector | 🟡 IN_PROGRESS |
+| G0A Core Contract Gate | 🟡 NOT READY |
+| A-01 Environment / Driver | 🟡 IN_PROGRESS |
+| A-02 Type Mapping | 🟡 IN_PROGRESS |
+| A-03 Transaction | ✅ 基础 Probe 已具备 |
+| A-04 Error Mapping | 🟡 IN_PROGRESS |
+| A-05 Cancel / Stop Proof | ❌ UNKNOWN |
+| A-06 Reset / Probe | ❌ UNKNOWN |
+| A-07 Runtime Profile | 🟡 IN_PROGRESS |
+| P1 Diagnostic Runner | 🟡 已有 Bootstrap 实现 |
+| P1 Formal Runner | ❌ 尚未成立 |
+| P1 Comparator | 🟡 已有初版，但需 Canonical 重构 |
 
 ---
 
-# 35. 下一提交最应该处理的 8 项
+# 12. G0A 是否可以冻结
 
-如果只看最优先事项：
+当前仍不建议立刻 Freeze。
+
+主要阻塞已经不是“模型数量太少”，而是以下契约一致性问题：
 
 ```text
-1. 补全 SQL MVP Core Model
-2. 补全 ResultEvent / Target / Manifest 核心身份
-3. Registry Entry 保存元数据 + Enum Collision 检查
-4. 模型改用 Registry Enum，消除双真源
-5. 校准完整 YAML 1.2 Core 行为
-6. 修复 DECIMAL Probe 和事务可见性 Probe
-7. Schema Export 增加 stale 检查与契约身份
-8. 实测真实 xgcondb 的 Python 支持范围
+Runner 绕过 Model
+Comparator 绕过 Canonical
+Runtime Profile ID 不稳定
+Registry Validate 存在具体实现 Bug
+```
+
+G0A Freeze 前建议最低要求：
+
+```text
+[ ] Registry validate 可真实执行
+[ ] Core Model / Registry Enum 一致
+[ ] YAML 核心 Vector 稳定
+[ ] XGMJ1 / XGC1 Vector 稳定
+[ ] Comparator 不再维护第二套 Canonical
+[ ] Runtime Profile Identity Projection 固定
 ```
 
 ---
 
-# 36. 最终判断
+# 13. 对当前 Bootstrap Runner 的定位建议
 
-当前代码最大的优点：
-
-> 架构思想已经真正进入代码，而不是继续停留在设计文档。
-
-当前最大的风险：
-
-> Core Contract 还没稳定，就继续往 Parser / Compiler / Catalog 推进。
-
-因此当前最合适的路线是：
+当前 Runner 很有价值，因为它能快速验证：
 
 ```text
-Registry / Core Model / YAML / Canonical / Probe 修稳
-        ↓
-完成 G0A
-        ↓
-冻结 Core Contract
-        ↓
-Parser / Compiler / Catalog
+Driver
+真实数据库
+SQL
+Expected
+Report
 ```
 
-这样后续多个 Agent 并行开发时，基础接口不会频繁漂移，整体返工会明显减少。
+不要删除。
+
+但建议明确定位：
+
+```text
+Bootstrap / Diagnostic Runner
+```
+
+它的目的：
+
+```text
+提前发现 Driver / DB / Oracle 问题
+```
+
+而不是代替正式 XG DB Test Runner。
+
+正式 Runner 仍应遵循：
+
+```text
+XGT
+→ Parse
+→ Compile
+→ Catalog
+→ Select
+→ Manifest
+→ Bundle
+→ Resource Admission
+→ Execute
+→ Canonical Validate
+→ Cleanup
+→ Reset
+→ Probe
+→ Result Event
+```
+
+---
+
+# 14. 最终判断
+
+本轮已经有大量问题被正确修复，特别是：
+
+```text
+Registry
+Core Model
+Target
+ResultEvent
+Schema
+DECIMAL Probe
+Transaction Probe
+YAML Resolver
+```
+
+当前最需要防止的是：
+
+> **为了尽快得到“能跑 SQL”的 MVP，在正式架构旁边形成一条永久存在的简化执行链。**
+
+下一阶段应把 Bootstrap Runner 中验证有效的能力逐步接回正式架构：
+
+```text
+Typed Contract
+Canonical
+Runtime Profile
+Manifest
+Result Model
+```
+
+而不是继续让：
+
+```text
+raw YAML dict
+JSON default=str hash
+自由 dict Profile
+```
+
+扩散。
+
+先处理本文件列出的 P0 问题，再继续 Parser / Compiler / Catalog，会显著降低后续多 Agent 并行开发的返工成本。

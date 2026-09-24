@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "id": "QUERY.ORDERING_02_ORDER",
+    "title": "ORDER BY rows",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "ordering"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT value FROM (SELECT 2 AS value UNION ALL SELECT 1 AS value) q ORDER BY value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ]
+      }
+    }
+  ]
+}

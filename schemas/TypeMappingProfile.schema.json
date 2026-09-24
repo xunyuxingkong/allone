@@ -17,6 +17,41 @@
       "default": null,
       "title": "Canonical Compatibility"
     },
+    "canonical_encoding": {
+      "anyOf": [
+        {
+          "enum": [
+            "VERIFIED",
+            "FAILED",
+            "UNKNOWN"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Canonical Encoding"
+    },
+    "mapping_fidelity": {
+      "anyOf": [
+        {
+          "enum": [
+            "EXACT",
+            "LOSSY",
+            "AMBIGUOUS",
+            "UNKNOWN"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Fidelity"
+    },
     "mapping_status": {
       "anyOf": [
         {
@@ -52,6 +87,22 @@
       ],
       "default": null,
       "title": "Status"
+    },
+    "support_status": {
+      "anyOf": [
+        {
+          "enum": [
+            "SUPPORTED",
+            "UNSUPPORTED"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Support Status"
     }
   },
   "title": "TypeMappingProfile",

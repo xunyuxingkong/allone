@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "id": "QUERY.BASIC_04_NULL",
+    "title": "Typed NULL",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "basic",
+      "null"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT CAST(NULL AS INTEGER) AS value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            null
+          ]
+        ]
+      }
+    }
+  ]
+}

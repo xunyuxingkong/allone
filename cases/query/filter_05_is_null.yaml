@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "id": "QUERY.FILTER_05_IS_NULL",
+    "title": "IS NULL predicate",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "filter",
+      "null"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT 1 AS value WHERE NULL IS NULL",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            1
+          ]
+        ]
+      }
+    }
+  ]
+}

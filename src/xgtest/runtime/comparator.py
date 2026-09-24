@@ -14,8 +14,8 @@ from decimal import Decimal
 from typing import Any
 
 from xgtest.adapter.xugu import extract_error
-from xgtest.core.canonical import CanonicalCell, xgc1_encode
-from xgtest.core.logical_types import map_declared_logical_type
+from xgtest.core.canonical import CanonicalCell, xgc1_encode, xgc1_iter_encode
+from xgtest.core.logical_types import map_declared_logical_type, query_type_support
 from xgtest.core.models import ExpectedError
 
 
@@ -118,7 +118,42 @@ def rows_sha256(rows: list[tuple[Any, ...]], column_types: list[str | None] | tu
     return hashlib.sha256(stream).hexdigest()
 
 
-def compare_rows(actual: list[tuple[Any, ...]], expected: Any, mode: str = "exact", column_types: list[str | None] | tuple[str | None, ...] | None = None, column_count: int | None = None) -> bool:
+def rows_sha256_stream(rows: Any, column_types: tuple[str | None, ...], column_count: int) -> str:
+    """Hash a row iterator with the same XGC1 framing as ``rows_sha256``."""
+    if len(column_types) != column_count:
+        raise ValueError("QUERY_COLUMN_METADATA_INVALID")
+    logical_types: list[str] = []
+    for declared_type in column_types:
+        logical_type, supported = query_type_support(declared_type)
+        if not supported or logical_type is None:
+            raise UnsupportedQueryTypeError(str(declared_type))
+        logical_types.append(logical_type)
+    header = {
+        "mode": "hash",
+        "column_count": column_count,
+        "logical_types": logical_types,
+        "comparison_profile": "sql-mvp-v1",
+    }
+
+    def canonical_rows():
+        for row in rows:
+            if len(row) != column_count:
+                raise ValueError("SQL result row width does not match column_count")
+            yield tuple(_cell(value, logical_types[index]) for index, value in enumerate(row))
+
+    digest = hashlib.sha256()
+    for chunk in xgc1_iter_encode(header, canonical_rows()):
+        digest.update(chunk)
+    return digest.hexdigest()
+
+
+class UnsupportedQueryTypeError(TypeError):
+    def __init__(self, declared_type: str) -> None:
+        self.declared_type = declared_type
+        super().__init__(f"UNSUPPORTED_TYPE: {declared_type}")
+
+
+def compare_rows(actual: list[tuple[Any, ...]], expected: Any, mode: str = "exact", column_types: list[str | None] | tuple[str | None, ...] | None = None, column_count: int | None = None, *, strict: bool = False) -> bool:
     if not isinstance(expected, dict):
         return False
     if "sha256" in expected:
@@ -136,6 +171,8 @@ def compare_rows(actual: list[tuple[Any, ...]], expected: Any, mode: str = "exac
         actual_stream, actual_frames = _xgc1_rows(actual, mode=mode, column_types=column_types, column_count=column_count)
         expected_stream, expected_frames = _xgc1_rows(normalized, mode=mode, column_types=column_types, column_count=column_count or (len(actual[0]) if actual else None))
     except (TypeError, ValueError):
+        if strict:
+            raise
         return False
     if mode == "rowsort":
         return sorted(actual_frames) == sorted(expected_frames)

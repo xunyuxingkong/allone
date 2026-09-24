@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.STRING_02_LOWER",
+    "title": "LOWER function",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "string"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT LOWER('XUGU') AS value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            "xugu"
+          ]
+        ]
+      }
+    }
+  ]
+}

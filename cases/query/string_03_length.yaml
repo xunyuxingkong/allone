@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.STRING_03_LENGTH",
+    "title": "LENGTH function",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "string"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT LENGTH('xugu') AS value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            4
+          ]
+        ]
+      }
+    }
+  ]
+}

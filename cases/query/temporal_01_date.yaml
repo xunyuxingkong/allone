@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.TEMPORAL_01_DATE",
+    "title": "DATE cast",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "temporal"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT CAST('2026-09-24' AS DATE) AS value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            "2026-09-24"
+          ]
+        ]
+      }
+    }
+  ]
+}

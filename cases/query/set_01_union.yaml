@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "id": "QUERY.SET_01_UNION",
+    "title": "UNION distinct",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "set"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT 1 AS value UNION SELECT 2 AS value ORDER BY value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "id": "QUERY.SET_02_UNION_ALL",
+    "title": "UNION ALL row sort",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "set"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT 2 AS value UNION ALL SELECT 1 AS value",
+      "comparison": {
+        "mode": "rowsort"
+      },
+      "expected": {
+        "rows": [
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ]
+      }
+    }
+  ]
+}

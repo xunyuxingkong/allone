@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession, extract_error, map_driver_type, smoke_probe
+from xgtest.adapter.xugu import QueryResultTooLargeError, XuguConnectionConfig, XuguSession, extract_error, map_driver_type, smoke_probe
 
 
 def test_config_requires_every_secret_reference() -> None:
@@ -96,4 +96,70 @@ def test_query_uses_bounded_fetchmany_and_exposes_logical_types(monkeypatch: pyt
     result = session.query("SELECT 1")
     assert result.rows == ((1, "one"), (2, "two"))
     assert result.logical_types == ("int", "string")
+    session.close()
+
+
+def test_query_materialization_limit_closes_cursor(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    class Cursor:
+        description = (("ID", "INTEGER"),)
+
+        def execute(self, sql, parameters=()):
+            pass
+
+        def fetchmany(self, size):
+            return [(1,), (2,)]
+
+        def close(self):
+            calls.append("cursor.close")
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+
+        def close(self):
+            pass
+
+    monkeypatch.setitem(sys.modules, "xgcondb", SimpleNamespace(Connect=lambda **_: Connection()))
+    session = XuguSession(XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password")).open()
+    with pytest.raises(QueryResultTooLargeError, match="QUERY_RESULT_TOO_LARGE_FOR_COMPARISON"):
+        session.query("SELECT 1", max_rows=1)
+    assert calls == ["cursor.close"]
+    session.close()
+
+
+def test_query_stream_exposes_metadata_and_closes_after_consumption(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    class Cursor:
+        description = (("ID", "INTEGER"),)
+
+        def __init__(self):
+            self.batches = [[(1,), (2,)], []]
+
+        def execute(self, sql, parameters=()):
+            pass
+
+        def fetchmany(self, size):
+            assert size == 1000
+            return self.batches.pop(0)
+
+        def close(self):
+            calls.append("cursor.close")
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+
+        def close(self):
+            pass
+
+    monkeypatch.setitem(sys.modules, "xgcondb", SimpleNamespace(Connect=lambda **_: Connection()))
+    session = XuguSession(XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password")).open()
+    query = session.query_stream("SELECT 1")
+    assert query.columns == ("ID",)
+    assert query.logical_types == ("int",)
+    assert list(query.rows) == [(1,), (2,)]
+    assert calls == ["cursor.close"]
     session.close()

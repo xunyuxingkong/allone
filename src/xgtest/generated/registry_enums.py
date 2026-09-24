@@ -13,12 +13,14 @@ class FailureType(StrEnum):
     INFRA_NETWORK = "INFRA_NETWORK"
     INFRA_TIMEOUT = "INFRA_TIMEOUT"
     INFRA_RESOURCE = "INFRA_RESOURCE"
+    UNSUPPORTED_TYPE = "UNSUPPORTED_TYPE"
 
 class FeatureKey(StrEnum):
     JOIN = "join"
     UNION = "union"
     DDL_TABLE = "ddl_table"
     STRING_FUNCTION = "string_function"
+    QUERY = "query"
 
 class IsolationScope(StrEnum):
     SESSION = "session"

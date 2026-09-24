@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.STRING_06_QUOTE",
+    "title": "Escaped quote literal",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "string"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT 'x''ugu' AS value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            "x'ugu"
+          ]
+        ]
+      }
+    }
+  ]
+}

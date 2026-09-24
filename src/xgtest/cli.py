@@ -13,6 +13,9 @@ from .core.registry import generate_enums_module, load_registry
 from .adapter.xugu import XuguConnectionConfig
 from .runtime.runner import run_cases
 from .runtime.profile import build_profile_file, load_profile
+from .core.contract_set import build_contract_descriptor
+from .query.loader import validate_query_directory
+from .query.runner import run_query_cases
 
 
 CONTRACT_VERSION = "1.1"
@@ -75,6 +78,35 @@ def _profile_build(args: argparse.Namespace) -> int:
     return 0
 
 
+def _contract_verify(args: argparse.Namespace) -> int:
+    descriptor = build_contract_descriptor(Path(args.root))
+    expected_path = Path(args.candidate)
+    expected = json.loads(expected_path.read_text(encoding="utf-8"))
+    if descriptor != expected:
+        print("CONTRACT_DESCRIPTOR_STALE")
+        return 1
+    print("CONTRACT_DESCRIPTOR_OK")
+    return 0
+
+
+def _query_validate(args: argparse.Namespace) -> int:
+    report = validate_query_directory(Path(args.cases))
+    print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+    return 0 if report["status"] == "PASS" else 1
+
+
+def _query_run(args: argparse.Namespace) -> int:
+    profile = load_profile(Path(args.runtime_profile)) if args.runtime_profile else None
+    report = run_query_cases(
+        XuguConnectionConfig.from_environment(),
+        Path(args.cases),
+        Path(args.output),
+        runtime_profile=profile,
+    )
+    print(json.dumps({"output": args.output, "status": report["status"], "cases": len(report["cases"])}, ensure_ascii=False, sort_keys=True))
+    return 0 if report["status"] == "PASS" else 1
+
+
 def main() -> None:
     root = _project_root()
     parser = argparse.ArgumentParser(prog="xgtest")
@@ -105,5 +137,21 @@ def main() -> None:
     build.add_argument("--evidence", required=True)
     build.add_argument("--output", required=True)
     build.set_defaults(handler=_profile_build)
+    contract = commands.add_parser("contract")
+    contract_commands = contract.add_subparsers(dest="contract_command", required=True)
+    verify = contract_commands.add_parser("verify")
+    verify.add_argument("--root", default=root)
+    verify.add_argument("--candidate", default=root / "docs" / "g0a" / "contract-descriptor-candidate.json")
+    verify.set_defaults(handler=_contract_verify)
+    query = commands.add_parser("query")
+    query_commands = query.add_subparsers(dest="query_command", required=True)
+    query_validate = query_commands.add_parser("validate")
+    query_validate.add_argument("--cases", default=root / "cases" / "query")
+    query_validate.set_defaults(handler=_query_validate)
+    query_run = query_commands.add_parser("run")
+    query_run.add_argument("--cases", default=root / "cases" / "query")
+    query_run.add_argument("--output", default=Path("artifacts") / "runs" / "query-latest.json")
+    query_run.add_argument("--runtime-profile")
+    query_run.set_defaults(handler=_query_run)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

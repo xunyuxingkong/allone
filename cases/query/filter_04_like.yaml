@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.FILTER_04_LIKE",
+    "title": "LIKE predicate",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "filter"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT 'xugu' AS value WHERE 'xugu' LIKE 'x%'",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            "xugu"
+          ]
+        ]
+      }
+    }
+  ]
+}

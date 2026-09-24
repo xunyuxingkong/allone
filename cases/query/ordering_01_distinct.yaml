@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.ORDERING_01_DISTINCT",
+    "title": "DISTINCT rows",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "ordering"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT DISTINCT value FROM (SELECT 1 AS value UNION ALL SELECT 1 AS value) q",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            1
+          ]
+        ]
+      }
+    }
+  ]
+}

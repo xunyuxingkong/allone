@@ -42,6 +42,7 @@
           "enum": [
             "exact",
             "rowsort",
+            "sha256",
             "expected_error"
           ],
           "title": "Mode",
@@ -471,7 +472,8 @@
         "join",
         "union",
         "ddl_table",
-        "string_function"
+        "string_function",
+        "query"
       ],
       "title": "FeatureKey",
       "type": "string"

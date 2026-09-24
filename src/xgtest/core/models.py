@@ -92,7 +92,7 @@ class SourceInfo(StrictModel):
 
 
 class ComparisonProfile(StrictModel):
-    mode: Literal["exact", "rowsort", "expected_error"]
+    mode: Literal["exact", "rowsort", "sha256", "expected_error"]
     canonical_version: Literal["1"] = "1"
     error_profile: str | None = None
     normalization_profile: str | None = None
@@ -173,6 +173,38 @@ class BootstrapCaseInput(StrictModel):
 class QueryStep(SqlStep):
     kind: Literal["query"] = "query"
     comparison: ComparisonProfile
+    expected: ExpectedRows | ExpectedHash | ExpectedError
+
+    @field_validator("sql")
+    @classmethod
+    def sql_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("QUERY_SQL_EMPTY")
+        return value
+
+    @model_validator(mode="after")
+    def expected_variant_matches_mode(self) -> "QueryStep":
+        if self.comparison.mode == "expected_error" and not isinstance(self.expected, ExpectedError):
+            raise ValueError("QUERY_EXPECTED_MODE_MISMATCH: expected_error requires ExpectedError")
+        if self.comparison.mode != "expected_error" and isinstance(self.expected, ExpectedError):
+            raise ValueError("QUERY_EXPECTED_MODE_MISMATCH: ExpectedError requires expected_error mode")
+        if self.comparison.mode == "sha256" and not isinstance(self.expected, ExpectedHash):
+            raise ValueError("QUERY_EXPECTED_MODE_MISMATCH: sha256 requires ExpectedHash")
+        if self.comparison.mode != "sha256" and isinstance(self.expected, ExpectedHash):
+            raise ValueError("QUERY_EXPECTED_MODE_MISMATCH: ExpectedHash requires sha256 mode")
+        return self
+
+
+class QueryCaseInput(StrictModel):
+    metadata: EffectiveMetadata
+    steps: tuple[QueryStep, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def step_ids_are_unique(self) -> "QueryCaseInput":
+        ids = [step.id for step in self.steps]
+        if len(ids) != len(set(ids)):
+            raise ValueError("QUERY_STEP_ID_DUPLICATED: step IDs must be unique")
+        return self
 
 
 class CoverageClaim(StrictModel):
@@ -310,6 +342,9 @@ class TypeMappingProfile(StrictModel):
     operation_status: str | None = None
     mapping_status: str | None = None
     canonical_compatibility: str | bool | None = None
+    mapping_fidelity: Literal["EXACT", "LOSSY", "AMBIGUOUS", "UNKNOWN"] | None = None
+    canonical_encoding: Literal["VERIFIED", "FAILED", "UNKNOWN"] | None = None
+    support_status: Literal["SUPPORTED", "UNSUPPORTED"] | None = None
 
 
 class TransactionSemantics(StrictModel):
@@ -464,6 +499,47 @@ class MvpRunReport(StrictModel):
     status: CaseExecutionStatus
 
 
+class QueryStepReport(StrictModel):
+    id: str
+    status: StepStatus
+    duration_ms: float = Field(ge=0)
+    columns: tuple[str, ...] = ()
+    column_types: tuple[str | None, ...] = ()
+    logical_types: tuple[str | None, ...] = ()
+    row_count: int | None = Field(default=None, ge=0)
+    result_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    error_type: str | None = None
+    error_code: str | None = None
+    sqlstate: str | None = None
+    error: str | None = None
+
+
+class QueryCaseReport(StrictModel):
+    case_id: str
+    status: CaseExecutionStatus
+    failure_type: FailureType | None = None
+    duration_ms: float = Field(ge=0)
+    steps: tuple[QueryStepReport, ...]
+    error: str | None = None
+
+
+class QueryTargetReport(StrictModel):
+    database_alias: str
+    host_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    sql_runtime_profile_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    contract_set_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class QueryRunReport(StrictModel):
+    schema_version: Literal["1"] = "1"
+    run_id: str
+    started_at: datetime
+    finished_at: datetime
+    target: QueryTargetReport
+    cases: tuple[QueryCaseReport, ...]
+    status: CaseExecutionStatus
+
+
 MODEL_EXPORTS: dict[str, type[BaseModel]] = {
     model.__name__: model
     for model in (
@@ -471,6 +547,8 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         EffectiveMetadata,
         UnifiedCase,
         BootstrapCaseInput,
+        QueryStep,
+        QueryCaseInput,
         TestPlan,
         Target,
         EnvironmentRequirement,
@@ -490,5 +568,9 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         MvpCaseReport,
         MvpTargetReport,
         MvpRunReport,
+        QueryStepReport,
+        QueryCaseReport,
+        QueryTargetReport,
+        QueryRunReport,
     )
 }

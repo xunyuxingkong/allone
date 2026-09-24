@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.SUBQUERY_02_IN",
+    "title": "IN subquery",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "subquery"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT 1 AS value WHERE 1 IN (SELECT 1)",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            1
+          ]
+        ]
+      }
+    }
+  ]
+}

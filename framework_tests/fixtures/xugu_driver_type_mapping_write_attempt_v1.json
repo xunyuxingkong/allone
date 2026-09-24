@@ -8,180 +8,246 @@
   "probe_version": "1",
   "results": [
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "int",
       "sql_declared_type": "INT",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "integer",
       "sql_declared_type": "INTEGER",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "bigint",
       "sql_declared_type": "BIGINT",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "smallint",
       "sql_declared_type": "SMALLINT",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "numeric",
       "sql_declared_type": "NUMERIC(10,2)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "decimal",
       "sql_declared_type": "DECIMAL(10,2)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "number",
       "sql_declared_type": "NUMBER(10,2)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "float",
       "sql_declared_type": "FLOAT",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "double",
       "sql_declared_type": "DOUBLE",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "char",
       "sql_declared_type": "CHAR(8)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "varchar",
       "sql_declared_type": "VARCHAR(32)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "text",
       "sql_declared_type": "TEXT",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "date",
       "sql_declared_type": "DATE",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "time",
       "sql_declared_type": "TIME",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "datetime",
       "sql_declared_type": "DATETIME",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "timestamp",
       "sql_declared_type": "TIMESTAMP",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "timestamp_tz",
       "sql_declared_type": "TIMESTAMP WITH TIME ZONE",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "binary",
       "sql_declared_type": "BINARY(8)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E19132",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "varbinary",
       "sql_declared_type": "VARBINARY(8)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "raw",
       "sql_declared_type": "RAW(8)",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "blob",
       "sql_declared_type": "BLOB",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     },
     {
+      "canonical_encoding": "UNKNOWN",
       "cleanup": "PASS",
       "error_code": "E22007",
       "error_type": "OperationalError",
+      "mapping_fidelity": "UNKNOWN",
       "name": "boolean",
       "sql_declared_type": "BOOLEAN",
-      "status": "FAILED"
+      "status": "FAILED",
+      "support_status": "UNSUPPORTED"
     }
   ]
 }

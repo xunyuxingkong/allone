@@ -16,8 +16,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_registry_loads_and_generates_deterministically() -> None:
     registry = load_registry(ROOT / "registry")
-    assert registry.keys("features") == ("join", "union", "ddl_table", "string_function")
+    assert registry.keys("features") == ("join", "union", "ddl_table", "string_function", "query")
     assert registry.get("features", "join").metadata == {"phase": "sql_mvp"}
+    assert registry.get("features", "query").metadata == {"phase": "query_mvp"}
     first = generate_enums_module(registry)
     assert first == generate_enums_module(registry)
     assert 'JOIN = "join"' in first

@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "id": "QUERY.ERROR_01_MISSING_TABLE",
+    "title": "Expected missing table error",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "error"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT * FROM XGT_QUERY_MVP_MISSING_TABLE",
+      "comparison": {
+        "mode": "expected_error"
+      },
+      "expected": {
+        "code": "E5021"
+      }
+    }
+  ]
+}

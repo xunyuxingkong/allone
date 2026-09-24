@@ -18,6 +18,7 @@ import xgcondb
 
 from xgtest.adapter.xugu import XuguConnectionConfig, connect, extract_error, map_driver_type
 from xgtest.core.canonical import CanonicalCell, xgc1_encode
+from xgtest.core.logical_types import classify_type_mapping
 
 
 PROBE_VERSION = "1"
@@ -97,9 +98,17 @@ def _probe_one(config: XuguConnectionConfig, name: str, sql_type: str, literal: 
             "value_repr": repr(value),
             "canonical_compatibility": _canonical_status(value, logical_type),
         })
+        result.update(classify_type_mapping(
+            sql_type,
+            result["normalized_driver_type"],
+            result["value_python_class"],
+            result["canonical_compatibility"],
+            result["status"],
+        ))
     except Exception as error:
         details = extract_error(error)
         result.update({"status": "FAILED", "error_code": details["code"], "error_type": type(error).__name__})
+        result.update(classify_type_mapping(sql_type, None, None, "UNKNOWN", result["status"]))
     finally:
         if cursor is not None:
             try:
@@ -146,9 +155,17 @@ def _probe_read_only(config: XuguConnectionConfig, name: str, sql_type: str, lit
             "value_repr": repr(value),
             "canonical_compatibility": _canonical_status(value, logical_type),
         })
+        result.update(classify_type_mapping(
+            sql_type,
+            result["normalized_driver_type"],
+            result["value_python_class"],
+            result["canonical_compatibility"],
+            result["status"],
+        ))
     except Exception as error:
         details = extract_error(error)
         result.update({"status": "FAILED", "error_code": details["code"], "error_type": type(error).__name__})
+        result.update(classify_type_mapping(sql_type, None, None, "UNKNOWN", result["status"]))
     finally:
         if cursor is not None:
             cursor.close()

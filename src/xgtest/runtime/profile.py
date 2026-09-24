@@ -29,7 +29,10 @@ _SEMANTIC_TARGET_KEYS = {
 }
 _DRIVER_IDENTITY_KEYS = {"module", "version", "build", "python_version"}
 _CAPABILITY_KEYS = {"connection", "type_mapping", "transaction_commit_rollback", "sql_error_mapping", "cancel_stop_proof", "reset_probe"}
-_TYPE_SEMANTIC_KEYS = {"status", "operation_status", "mapping_status", "canonical_compatibility"}
+_TYPE_SEMANTIC_KEYS = {
+    "status", "operation_status", "mapping_status", "canonical_compatibility",
+    "mapping_fidelity", "canonical_encoding", "support_status",
+}
 
 
 def _strip_runtime_fields(value: Any) -> Any:

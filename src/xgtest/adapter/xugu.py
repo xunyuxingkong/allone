@@ -51,6 +51,18 @@ class XuguQueryResult:
     logical_types: tuple[str | None, ...] = ()
 
 
+@dataclass(frozen=True)
+class XuguQueryStream:
+    columns: tuple[str, ...]
+    column_types: tuple[str | None, ...]
+    logical_types: tuple[str | None, ...]
+    rows: Iterator[tuple[Any, ...]]
+
+
+class QueryResultTooLargeError(ValueError):
+    pass
+
+
 def map_driver_type(declared_type: Any) -> str | None:
     """Map a DB-API type name to the framework logical type vocabulary."""
     return map_declared_logical_type(declared_type)
@@ -123,7 +135,7 @@ class XuguSession:
         finally:
             cursor.close()
 
-    def query(self, sql: str, parameters: tuple[Any, ...] = ()) -> XuguQueryResult:
+    def query(self, sql: str, parameters: tuple[Any, ...] = (), max_rows: int | None = None) -> XuguQueryResult:
         cursor = self._connection().cursor()
         try:
             cursor.execute(sql, parameters)
@@ -137,8 +149,12 @@ class XuguSession:
                     if not batch:
                         break
                     rows.extend(tuple(row) for row in batch)
+                    if max_rows is not None and len(rows) > max_rows:
+                        raise QueryResultTooLargeError(f"QUERY_RESULT_TOO_LARGE_FOR_COMPARISON: limit={max_rows}")
             else:
                 rows.extend(tuple(row) for row in cursor.fetchall())
+                if max_rows is not None and len(rows) > max_rows:
+                    raise QueryResultTooLargeError(f"QUERY_RESULT_TOO_LARGE_FOR_COMPARISON: limit={max_rows}")
             return XuguQueryResult(
                 columns=tuple(str(item[0]) for item in description),
                 column_types=column_types,
@@ -147,6 +163,36 @@ class XuguSession:
             )
         finally:
             cursor.close()
+
+    def query_stream(self, sql: str, parameters: tuple[Any, ...] = (), batch_size: int = 1000) -> XuguQueryStream:
+        if batch_size < 1:
+            raise ValueError("batch_size must be positive")
+        cursor = self._connection().cursor()
+        try:
+            cursor.execute(sql, parameters)
+            description = cursor.description or ()
+            columns = tuple(str(item[0]) for item in description)
+            column_types = tuple(str(item[1]) if len(item) > 1 and item[1] is not None else None for item in description)
+            logical_types = tuple(map_driver_type(item) for item in column_types)
+        except Exception:
+            cursor.close()
+            raise
+
+        def rows() -> Iterator[tuple[Any, ...]]:
+            try:
+                fetchmany = getattr(cursor, "fetchmany", None)
+                if callable(fetchmany):
+                    while True:
+                        batch = fetchmany(batch_size)
+                        if not batch:
+                            return
+                        yield from (tuple(row) for row in batch)
+                else:
+                    yield from (tuple(row) for row in cursor.fetchall())
+            finally:
+                cursor.close()
+
+        return XuguQueryStream(columns, column_types, logical_types, rows())
 
     def iter_query_rows(self, sql: str, parameters: tuple[Any, ...] = (), batch_size: int = 1000) -> Iterator[tuple[Any, ...]]:
         """Yield query rows in bounded batches for large-result callers."""

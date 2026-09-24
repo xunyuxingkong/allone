@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "id": "QUERY.JOIN_02_LEFT",
+    "title": "LEFT JOIN derived rows",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "join"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT a.n, b.label FROM (SELECT 1 AS n) a LEFT JOIN (SELECT 2 AS n, 'other' AS label) b ON a.n = b.n",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            1,
+            null
+          ]
+        ]
+      }
+    }
+  ]
+}

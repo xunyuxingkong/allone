@@ -1,0 +1,189 @@
+{
+  "$defs": {
+    "ComparisonProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Canonical Version",
+          "type": "string"
+        },
+        "error_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Profile"
+        },
+        "float_policy": {
+          "default": "canonical_ieee754",
+          "title": "Float Policy",
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "exact",
+            "rowsort",
+            "sha256",
+            "expected_error"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "normalization_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalization Profile"
+        },
+        "timestamp_policy": {
+          "default": "rfc3339",
+          "title": "Timestamp Policy",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "ComparisonProfile",
+      "type": "object"
+    },
+    "ExpectedError": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Code"
+        },
+        "message_pattern": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Message Pattern"
+        },
+        "sqlstate": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sqlstate"
+        }
+      },
+      "title": "ExpectedError",
+      "type": "object"
+    },
+    "ExpectedHash": {
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sha256"
+      ],
+      "title": "ExpectedHash",
+      "type": "object"
+    },
+    "ExpectedRows": {
+      "additionalProperties": false,
+      "properties": {
+        "rows": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rows"
+      ],
+      "title": "ExpectedRows",
+      "type": "object"
+    }
+  },
+  "$id": "xgtest://schema/1.1/QueryStep",
+  "additionalProperties": false,
+  "properties": {
+    "comparison": {
+      "$ref": "#/$defs/ComparisonProfile"
+    },
+    "expected": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExpectedRows"
+        },
+        {
+          "$ref": "#/$defs/ExpectedHash"
+        },
+        {
+          "$ref": "#/$defs/ExpectedError"
+        }
+      ],
+      "title": "Expected"
+    },
+    "id": {
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "const": "query",
+      "default": "query",
+      "title": "Kind",
+      "type": "string"
+    },
+    "sql": {
+      "minLength": 1,
+      "title": "Sql",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "sql",
+    "comparison",
+    "expected"
+  ],
+  "title": "QueryStep",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

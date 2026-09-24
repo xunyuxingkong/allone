@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.FILTER_03_IN",
+    "title": "IN predicate",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "filter"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT 2 AS value WHERE 2 IN (1, 2)",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            2
+          ]
+        ]
+      }
+    }
+  ]
+}

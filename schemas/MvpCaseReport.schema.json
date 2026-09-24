@@ -19,7 +19,8 @@
         "FIXTURE_CLEANUP",
         "INFRA_NETWORK",
         "INFRA_TIMEOUT",
-        "INFRA_RESOURCE"
+        "INFRA_RESOURCE",
+        "UNSUPPORTED_TYPE"
       ],
       "title": "FailureType",
       "type": "string"

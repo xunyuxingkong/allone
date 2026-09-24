@@ -1,0 +1,232 @@
+{
+  "$defs": {
+    "CaseExecutionStatus": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR",
+        "INFRA_RECOVERED"
+      ],
+      "title": "CaseExecutionStatus",
+      "type": "string"
+    },
+    "FailureType": {
+      "enum": [
+        "ASSERTION_FAILED",
+        "FIXTURE_SETUP",
+        "FIXTURE_CLEANUP",
+        "INFRA_NETWORK",
+        "INFRA_TIMEOUT",
+        "INFRA_RESOURCE",
+        "UNSUPPORTED_TYPE"
+      ],
+      "title": "FailureType",
+      "type": "string"
+    },
+    "QueryStepReport": {
+      "additionalProperties": false,
+      "properties": {
+        "column_types": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Column Types",
+          "type": "array"
+        },
+        "columns": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "duration_ms": {
+          "minimum": 0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Code"
+        },
+        "error_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Type"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "logical_types": {
+          "default": [],
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Logical Types",
+          "type": "array"
+        },
+        "result_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Sha256"
+        },
+        "row_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Row Count"
+        },
+        "sqlstate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sqlstate"
+        },
+        "status": {
+          "$ref": "#/$defs/StepStatus"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "duration_ms"
+      ],
+      "title": "QueryStepReport",
+      "type": "object"
+    },
+    "StepStatus": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "PASS",
+        "FAIL",
+        "ERROR",
+        "SKIPPED"
+      ],
+      "title": "StepStatus",
+      "type": "string"
+    }
+  },
+  "$id": "xgtest://schema/1.1/QueryCaseReport",
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "title": "Case Id",
+      "type": "string"
+    },
+    "duration_ms": {
+      "minimum": 0,
+      "title": "Duration Ms",
+      "type": "number"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "failure_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FailureType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "status": {
+      "$ref": "#/$defs/CaseExecutionStatus"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/QueryStepReport"
+      },
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "case_id",
+    "status",
+    "duration_ms",
+    "steps"
+  ],
+  "title": "QueryCaseReport",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

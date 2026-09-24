@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.TEMPORAL_02_TIME",
+    "title": "TIME cast",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "temporal"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT CAST('12:34:56' AS TIME) AS value",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            "12:34:56"
+          ]
+        ]
+      }
+    }
+  ]
+}

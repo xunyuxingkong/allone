@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "id": "QUERY.AGGREGATE_01_COUNT",
+    "title": "COUNT over derived rows",
+    "module": "query",
+    "feature": "query",
+    "level": "P1",
+    "status": "active",
+    "timeout": "30s",
+    "isolation": "session",
+    "destructive": false,
+    "tags": [
+      "aggregate"
+    ]
+  },
+  "steps": [
+    {
+      "id": "q1",
+      "kind": "query",
+      "sql": "SELECT COUNT(*) AS value FROM (SELECT 1 AS n UNION ALL SELECT 2 AS n) q",
+      "comparison": {
+        "mode": "exact"
+      },
+      "expected": {
+        "rows": [
+          [
+            2
+          ]
+        ]
+      }
+    }
+  ]
+}

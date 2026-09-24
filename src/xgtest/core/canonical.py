@@ -155,6 +155,11 @@ def _cell_payload(cell: CanonicalCell) -> bytes:
 
 
 def xgc1_encode(header: Mapping[str, Any], rows: Iterable[Iterable[CanonicalCell]]) -> bytes:
+    return b"".join(xgc1_iter_encode(header, rows))
+
+
+def xgc1_iter_encode(header: Mapping[str, Any], rows: Iterable[Iterable[CanonicalCell]]) -> Iterable[bytes]:
+    """Yield the exact XGC1 byte stream incrementally for bounded-memory hashing."""
     required = {"mode", "column_count", "logical_types", "comparison_profile"}
     if set(header) != required:
         raise ValueError("XGC1 header must contain exactly the required fields")
@@ -165,7 +170,7 @@ def xgc1_encode(header: Mapping[str, Any], rows: Iterable[Iterable[CanonicalCell
     if not isinstance(logical_types, list) or len(logical_types) != column_count:
         raise ValueError("XGC1 logical_types must match column_count")
     header_bytes = xgmj1_bytes(header)
-    stream = bytearray(b"XGC1" + struct.pack(">Q", len(header_bytes)) + header_bytes)
+    yield b"XGC1" + struct.pack(">Q", len(header_bytes)) + header_bytes
     for row in rows:
         cells = tuple(row)
         if len(cells) != column_count:
@@ -181,6 +186,4 @@ def xgc1_encode(header: Mapping[str, Any], rows: Iterable[Iterable[CanonicalCell
             frame.extend(bytes([_TYPE_TAGS[cell.logical_type]]))
             frame.extend(struct.pack(">Q", len(payload)))
             frame.extend(payload)
-        stream.extend(struct.pack(">Q", len(frame)))
-        stream.extend(frame)
-    return bytes(stream)
+        yield struct.pack(">Q", len(frame)) + frame
