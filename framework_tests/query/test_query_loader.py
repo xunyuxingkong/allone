@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from xgtest.core.models import ExpectedError, ExpectedHash, ExpectedRows
-from xgtest.query.loader import load_query_case, validate_query_directory
+from xgtest.query.loader import load_query_case, load_query_directory_with_sources, validate_query_directory
 
 
 VALID = """
@@ -75,3 +75,44 @@ def test_directory_validation_counts_cases_and_duplicate_case_ids(tmp_path: Path
     assert result["cases"] == 1
     assert result["invalid"] == 1
     assert "QUERY_CASE_ID_DUPLICATED" in result["errors"][0]
+
+
+def test_source_hash_is_line_ending_independent_and_path_is_relative(tmp_path: Path) -> None:
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    first.mkdir()
+    second.mkdir()
+    (first / "case.yaml").write_bytes(VALID.encode("utf-8"))
+    (second / "case.yaml").write_bytes(VALID.replace("\n", "\r\n").encode("utf-8"))
+
+    first_asset = load_query_directory_with_sources(first)[0]
+    second_asset = load_query_directory_with_sources(second)[0]
+    assert first_asset.source.relative_path == "case.yaml"
+    assert first_asset.source.source_hash == second_asset.source.source_hash
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "DELETE FROM T",
+        "WITH rows AS (SELECT 1) DELETE FROM T",
+        "SELECT 1 INTO T",
+        "SELECT * FROM T FOR UPDATE",
+        "SELECT 1; DELETE FROM T",
+        "/* comment */ UPDATE T SET value = 1",
+    ],
+)
+def test_query_case_rejects_mutating_or_multi_statement_sql(sql: str, tmp_path: Path) -> None:
+    source = tmp_path / "unsafe.yaml"
+    source.write_text(VALID.replace("sql: SELECT 1", f"sql: {sql}"), encoding="utf-8")
+    with pytest.raises(ValueError, match="QUERY_SQL_NOT_READ_ONLY"):
+        load_query_case(source)
+
+
+def test_query_case_ignores_write_keywords_in_literals_and_comments(tmp_path: Path) -> None:
+    source = tmp_path / "safe.yaml"
+    source.write_text(
+        VALID.replace("sql: SELECT 1", "sql: SELECT 'DELETE; UPDATE' AS value -- DROP TABLE T"),
+        encoding="utf-8",
+    )
+    assert load_query_case(source).steps[0].sql.startswith("SELECT")

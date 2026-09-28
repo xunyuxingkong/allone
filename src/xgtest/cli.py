@@ -102,9 +102,19 @@ def _query_run(args: argparse.Namespace) -> int:
         Path(args.cases),
         Path(args.output),
         runtime_profile=profile,
+        mode=args.mode,
     )
     print(json.dumps({"output": args.output, "status": report["status"], "cases": len(report["cases"])}, ensure_ascii=False, sort_keys=True))
     return 0 if report["status"] == "PASS" else 1
+
+
+def _web_serve(args: argparse.Namespace) -> int:
+    try:
+        import uvicorn
+    except ImportError as error:
+        raise RuntimeError("install xgtest[web] to run the Query MVP web API") from error
+    uvicorn.run("xgtest.web.app:app", host=args.host, port=args.port, reload=False)
+    return 0
 
 
 def main() -> None:
@@ -152,6 +162,13 @@ def main() -> None:
     query_run.add_argument("--cases", default=root / "cases" / "query")
     query_run.add_argument("--output", default=Path("artifacts") / "runs" / "query-latest.json")
     query_run.add_argument("--runtime-profile")
+    query_run.add_argument("--mode", choices=("diagnostic", "regression"), default="regression")
     query_run.set_defaults(handler=_query_run)
+    web = commands.add_parser("web")
+    web_commands = web.add_subparsers(dest="web_command", required=True)
+    serve = web_commands.add_parser("serve")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8000)
+    serve.set_defaults(handler=_web_serve)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

@@ -105,6 +105,43 @@ def test_runtime_profile_can_reject_a_declared_type(tmp_path) -> None:
     assert report.failure_type == "UNSUPPORTED_TYPE"
 
 
+@pytest.mark.parametrize(
+    "mapping",
+    [
+        None,
+        {"support_status": "SUPPORTED"},
+        {"support_status": "SUPPORTED", "mapping_fidelity": "EXACT", "canonical_encoding": "VERIFIED"},
+        {
+            "support_status": "SUPPORTED",
+            "mapping_fidelity": "LOSSY",
+            "canonical_encoding": "VERIFIED",
+            "logical_type": "int",
+        },
+    ],
+)
+def test_runtime_profile_requires_complete_verified_type_evidence(tmp_path, mapping) -> None:
+    query = case(tmp_path)
+    type_mapping = {} if mapping is None else {"integer": mapping}
+    profile = {"identity": {"capabilities": {"type_mapping": type_mapping}}}
+    report = QueryRunner(FakeSession(), profile).run_case(query)
+    assert report.status == "ERROR"
+    assert report.failure_type == "UNSUPPORTED_TYPE"
+
+
+def test_runtime_profile_accepts_complete_verified_type_evidence(tmp_path) -> None:
+    query = case(tmp_path)
+    profile = {"identity": {"capabilities": {"type_mapping": {
+        "integer": {
+            "support_status": "SUPPORTED",
+            "mapping_fidelity": "EXACT",
+            "canonical_encoding": "VERIFIED",
+            "logical_type": "int",
+        },
+    }}}}
+    report = QueryRunner(FakeSession(), profile).run_case(query)
+    assert report.status == "PASS"
+
+
 def test_multi_step_case_executes_queries_in_order(tmp_path) -> None:
     source = tmp_path / "multi.yaml"
     source.write_text("""metadata:
@@ -129,7 +166,7 @@ steps:
     assert session.queries == ["SELECT 1", "SELECT 2"]
 
 
-def test_run_query_cases_rolls_back_closes_and_writes_typed_report(tmp_path, monkeypatch) -> None:
+def test_run_query_cases_uses_isolated_case_runner_and_writes_typed_report(tmp_path, monkeypatch) -> None:
     import xgtest.query.runner as runner_module
 
     query_dir = tmp_path / "cases"
@@ -147,44 +184,58 @@ steps:
 """, encoding="utf-8")
     calls = []
 
-    class ManagedSession(FakeSession):
-        def __init__(self, config):
-            super().__init__()
+    def run_isolated(query_case, config, profile):
+        calls.append(query_case.metadata.id)
+        return QueryRunner(FakeSession(), profile).run_case(query_case)
 
-        def open(self):
-            calls.append("open")
-            return self
-
-        def rollback_transaction(self):
-            calls.append("rollback")
-
-        def close(self):
-            calls.append("close")
-
-    monkeypatch.setattr(runner_module, "XuguSession", ManagedSession)
+    monkeypatch.setattr(runner_module, "run_query_case_isolated", run_isolated)
     output = tmp_path / "report.json"
     report = run_query_cases(
         XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password"),
         query_dir,
         output,
+        mode="diagnostic",
     )
-    assert calls == ["open", "rollback", "close"]
+    assert calls == ["QUERY.LIFECYCLE.0001"]
     assert report["status"] == "PASS"
+    assert "git_commit" in report
+    assert report["cases"][0]["source_file"] == "case.yaml"
+    assert len(report["cases"][0]["case_source_hash"]) == 64
     assert report["cases"][0]["steps"][0]["row_count"] == 1
     assert output.is_file()
     assert "password" not in output.read_text(encoding="utf-8")
+
+
+def test_regression_mode_requires_runtime_profile(tmp_path) -> None:
+    source_dir = tmp_path / "cases"
+    source_dir.mkdir()
+    source_dir.joinpath("case.yaml").write_text("""metadata:
+  id: QUERY.PROFILE.REQUIRED
+  feature: query
+steps:
+  - id: q1
+    kind: query
+    sql: SELECT 1
+    comparison: {mode: exact}
+    expected: {rows: [[1]]}
+""", encoding="utf-8")
+    with pytest.raises(ValueError, match="RUNTIME_PROFILE_REQUIRED_FOR_REGRESSION"):
+        run_query_cases(
+            XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password"),
+            source_dir,
+            tmp_path / "report.json",
+        )
 
 
 @pytest.mark.parametrize(
     ("failing_operation", "expected_error"),
     [("rollback", "QUERY_ROLLBACK_FAILED"), ("close", "QUERY_SESSION_CLOSE_FAILED")],
 )
-def test_run_query_cases_records_lifecycle_failures(tmp_path, monkeypatch, failing_operation, expected_error) -> None:
+def test_session_lifecycle_failures_are_reported(tmp_path, failing_operation, expected_error) -> None:
     import xgtest.query.runner as runner_module
 
-    query_dir = tmp_path / "cases"
-    query_dir.mkdir()
-    (query_dir / "case.yaml").write_text("""metadata:
+    source = tmp_path / "case.yaml"
+    source.write_text("""metadata:
   id: QUERY.LIFECYCLE.FAILURE
   feature: query
 steps:
@@ -196,12 +247,6 @@ steps:
 """, encoding="utf-8")
 
     class FailingLifecycleSession(FakeSession):
-        def __init__(self, config):
-            super().__init__()
-
-        def open(self):
-            return self
-
         def rollback_transaction(self):
             if failing_operation == "rollback":
                 raise RuntimeError("rollback failed")
@@ -210,12 +255,11 @@ steps:
             if failing_operation == "close":
                 raise RuntimeError("close failed")
 
-    monkeypatch.setattr(runner_module, "XuguSession", FailingLifecycleSession)
-    report = run_query_cases(
-        XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password"),
-        query_dir,
-        tmp_path / "report.json",
+    report = runner_module._run_case_on_session(
+        load_query_case(source),
+        FailingLifecycleSession(),
+        None,
     )
-    assert report["status"] == "ERROR"
-    assert report["cases"][0]["failure_type"] == "INFRA_RESOURCE"
-    assert report["cases"][0]["error"] == expected_error
+    assert report.status == "ERROR"
+    assert report.failure_type == "INFRA_RESOURCE"
+    assert report.error == expected_error

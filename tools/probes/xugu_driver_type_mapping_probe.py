@@ -7,6 +7,7 @@ project-scoped artifacts are written; connection secrets are never emitted.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import secrets
 from datetime import date, datetime, time
@@ -18,6 +19,7 @@ import xgcondb
 
 from xgtest.adapter.xugu import XuguConnectionConfig, connect, extract_error, map_driver_type
 from xgtest.core.canonical import CanonicalCell, xgc1_encode
+from xgtest.core.contract_set import build_contract_descriptor
 from xgtest.core.logical_types import classify_type_mapping
 
 
@@ -187,10 +189,30 @@ def main() -> None:
         "driver_module": "xgcondb",
         "driver_version": list(xgcondb.version_info),
         "probe_mode": "read_only_expression" if args.read_only else "table_round_trip",
+        "target": {
+            "host_hash": hashlib.sha256(config.host.encode()).hexdigest(),
+            "database_alias": config.database,
+        },
+        "driver": {"module": "xgcondb", "version": list(xgcondb.version_info)},
+        "contract_set_id": build_contract_descriptor(Path(__file__).resolve().parents[2])["contract_set_id"],
         "results": [
             (_probe_read_only if args.read_only else _probe_one)(config, *candidate)
             for candidate in CANDIDATES
         ],
+    }
+    report["capabilities"] = {
+        "type_mapping": {
+            item["name"]: {
+                "mapping_fidelity": item["mapping_fidelity"],
+                "canonical_encoding": item["canonical_encoding"],
+                "support_status": item["support_status"],
+                **(
+                    {"logical_type": item["framework_logical_type"]}
+                    if item.get("framework_logical_type") is not None else {}
+                ),
+            }
+            for item in report["results"]
+        }
     }
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     summary = {

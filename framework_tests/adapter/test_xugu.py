@@ -99,6 +99,66 @@ def test_query_uses_bounded_fetchmany_and_exposes_logical_types(monkeypatch: pyt
     session.close()
 
 
+def test_read_only_session_sets_database_transaction_mode_and_closes_cursor(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    class Cursor:
+        def execute(self, sql: str) -> None:
+            calls.append(sql)
+
+        def close(self) -> None:
+            calls.append("cursor.close")
+
+    class Connection:
+        def cursor(self) -> Cursor:
+            return Cursor()
+
+        def close(self) -> None:
+            calls.append("connection.close")
+
+    monkeypatch.setitem(sys.modules, "xgcondb", SimpleNamespace(Connect=lambda **_: Connection()))
+    session = XuguSession(XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password")).open(read_only=True)
+    session.close()
+
+    assert calls == ["SET TRANS_READONLY TO TRUE", "cursor.close", "connection.close"]
+    assert session.read_only is False
+
+
+def test_writable_xugu_session_cannot_be_used_by_query_runner() -> None:
+    from xgtest.query.runner import QueryRunner
+
+    session = XuguSession(XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password"))
+    with pytest.raises(RuntimeError, match="QUERY_SESSION_NOT_READ_ONLY"):
+        QueryRunner(session)
+
+
+def test_read_only_session_fails_closed_when_database_rejects_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    class Cursor:
+        def execute(self, sql: str) -> None:
+            calls.append(sql)
+            raise RuntimeError("read-only mode unsupported")
+
+        def close(self) -> None:
+            calls.append("cursor.close")
+
+    class Connection:
+        def cursor(self) -> Cursor:
+            return Cursor()
+
+        def close(self) -> None:
+            calls.append("connection.close")
+
+    monkeypatch.setitem(sys.modules, "xgcondb", SimpleNamespace(Connect=lambda **_: Connection()))
+    session = XuguSession(XuguConnectionConfig("host", "1907", "SYSTEM", "user", "password"))
+    with pytest.raises(RuntimeError, match="read-only mode unsupported"):
+        session.open(read_only=True)
+
+    assert session.connection is None
+    assert calls == ["SET TRANS_READONLY TO TRUE", "cursor.close", "connection.close"]
+
+
 def test_query_materialization_limit_closes_cursor(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[str] = []
 

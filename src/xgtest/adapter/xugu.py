@@ -122,9 +122,24 @@ class XuguSession:
     def __init__(self, config: XuguConnectionConfig) -> None:
         self.config = config
         self.connection: Any | None = None
+        self.read_only = False
 
-    def open(self) -> "XuguSession":
+    def open(self, *, read_only: bool = False) -> "XuguSession":
         self.connection = connect(self.config)
+        if read_only:
+            try:
+                cursor = self._connection().cursor()
+                try:
+                    cursor.execute("SET TRANS_READONLY TO TRUE")
+                finally:
+                    cursor.close()
+            except Exception:
+                try:
+                    self.close()
+                except Exception:
+                    pass
+                raise
+            self.read_only = True
         return self
 
     def execute(self, sql: str, parameters: tuple[Any, ...] = ()) -> int:
@@ -247,6 +262,7 @@ class XuguSession:
         if self.connection is not None:
             self.connection.close()
             self.connection = None
+        self.read_only = False
 
     def _connection(self) -> Any:
         if self.connection is None:

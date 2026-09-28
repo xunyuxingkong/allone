@@ -7,6 +7,7 @@
         "PASS",
         "FAIL",
         "ERROR",
+        "TIMEOUT",
         "SKIPPED"
       ],
       "title": "StepStatus",

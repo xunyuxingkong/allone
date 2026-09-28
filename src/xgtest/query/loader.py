@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -14,10 +16,17 @@ from xgtest.core.models import (
     QueryCaseInput,
     QueryStep,
     RawMetadata,
+    SourceInfo,
     decode_expected,
 )
 from xgtest.core.yaml_loader import load_yaml
 from xgtest.generated.registry_enums import CaseAssetStatus, FeatureKey, IsolationScope, Level
+
+
+@dataclass(frozen=True)
+class LoadedQueryAsset:
+    case: QueryCaseInput
+    source: SourceInfo
 
 
 def _source_error(path: Path, error: Exception) -> ValueError:
@@ -106,8 +115,21 @@ def validate_query_directory(directory: Path) -> dict[str, Any]:
 
 
 def load_query_directory(directory: Path) -> tuple[QueryCaseInput, ...]:
+    return tuple(asset.case for asset in load_query_directory_with_sources(directory))
+
+
+def load_query_directory_with_sources(directory: Path) -> tuple[LoadedQueryAsset, ...]:
     result = validate_query_directory(directory)
     if result["status"] != "PASS":
         raise ValueError("\n".join(result["errors"]))
-    paths = sorted((*directory.rglob("*.yaml"), *directory.rglob("*.yml")))
-    return tuple(load_query_case(path) for path in paths)
+    root = directory.resolve()
+    paths = sorted((*root.rglob("*.yaml"), *root.rglob("*.yml")))
+    assets: list[LoadedQueryAsset] = []
+    for path in paths:
+        source_bytes = path.read_bytes().decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+        source = SourceInfo(
+            relative_path=path.relative_to(root).as_posix(),
+            source_hash=hashlib.sha256(source_bytes).hexdigest(),
+        )
+        assets.append(LoadedQueryAsset(case=load_query_case(path), source=source))
+    return tuple(assets)

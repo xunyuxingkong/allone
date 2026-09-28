@@ -25,6 +25,29 @@ def test_profile_rejects_target_or_driver_drift() -> None:
         validate_profile(profile, host="other", database="SYSTEM", driver_version=(2, 3, 9))
 
 
+def test_profile_can_be_bound_to_contract_set() -> None:
+    profile = build_profile({
+        "target": {"host_hash": hashlib.sha256(b"host").hexdigest(), "database_alias": "SYSTEM"},
+        "driver": {"version": [2, 3, 9]},
+        "contract_set_id": "a" * 64,
+    })
+    validate_profile(
+        profile,
+        host="host",
+        database="SYSTEM",
+        driver_version=(2, 3, 9),
+        contract_set_id="a" * 64,
+    )
+    with pytest.raises(ValueError, match="contract set differs"):
+        validate_profile(
+            profile,
+            host="host",
+            database="SYSTEM",
+            driver_version=(2, 3, 9),
+            contract_set_id="b" * 64,
+        )
+
+
 def test_profile_id_excludes_probe_run_context() -> None:
     first = build_profile({
         "target": {"host_hash": "host-a", "database_alias": "SYSTEM", "db_build": "b1"},
@@ -66,3 +89,24 @@ def test_profile_identity_rejects_unregistered_nested_fields() -> None:
     profile["identity"]["driver"]["host"] = "should-not-be-semantic"
     with pytest.raises(ValueError, match="extra"):
         RuntimeProfile.model_validate(profile)
+
+
+def test_logical_type_is_part_of_runtime_mapping_identity() -> None:
+    base = {
+        "target": {"host_hash": "host", "database_alias": "SYSTEM"},
+        "driver": {"version": [2, 3, 9]},
+        "capabilities": {"type_mapping": {"integer": {
+            "logical_type": "int",
+            "mapping_fidelity": "EXACT",
+            "canonical_encoding": "VERIFIED",
+            "support_status": "SUPPORTED",
+        }}},
+    }
+    changed = {
+        **base,
+        "capabilities": {"type_mapping": {"integer": {
+            **base["capabilities"]["type_mapping"]["integer"],
+            "logical_type": "string",
+        }}},
+    }
+    assert build_profile(base)["sql_runtime_profile_id"] != build_profile(changed)["sql_runtime_profile_id"]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Any, Literal
 
@@ -170,6 +171,73 @@ class BootstrapCaseInput(StrictModel):
     steps: tuple[SqlStep, ...] = Field(min_length=1)
 
 
+_QUERY_MUTATION_KEYWORDS = {
+    "ALTER", "CALL", "COMMIT", "CREATE", "DELETE", "DO", "DROP", "EXEC", "EXECUTE",
+    "GRANT", "IMPORT", "INSERT", "LOCK", "LOAD", "MERGE", "NEXTVAL", "REPLACE",
+    "RESET", "REVOKE", "ROLLBACK", "SAVEPOINT", "SET", "SETVAL", "TRUNCATE", "UNLOCK",
+    "UPDATE", "UPSERT", "VACUUM", "INTO",
+}
+
+
+def _query_sql_tokens(sql: str) -> tuple[str, ...]:
+    """Return executable SQL words while ignoring quoted text and comments."""
+    code: list[str] = []
+    index = 0
+    while index < len(sql):
+        char = sql[index]
+        following = sql[index + 1] if index + 1 < len(sql) else ""
+        if char == "-" and following == "-":
+            newline = sql.find("\n", index + 2)
+            index = len(sql) if newline < 0 else newline + 1
+            code.append(" ")
+            continue
+        if char == "/" and following == "*":
+            end = sql.find("*/", index + 2)
+            if end < 0:
+                raise ValueError("QUERY_SQL_NOT_READ_ONLY: unterminated comment")
+            index = end + 2
+            code.append(" ")
+            continue
+        if char in {"'", '"', "`"}:
+            quote = char
+            index += 1
+            while index < len(sql):
+                if sql[index] == quote:
+                    if index + 1 < len(sql) and sql[index + 1] == quote:
+                        index += 2
+                        continue
+                    index += 1
+                    break
+                index += 1
+            else:
+                raise ValueError("QUERY_SQL_NOT_READ_ONLY: unterminated quoted text")
+            code.append(" ")
+            continue
+        if char == "[":
+            end = sql.find("]", index + 1)
+            if end < 0:
+                raise ValueError("QUERY_SQL_NOT_READ_ONLY: unterminated quoted identifier")
+            index = end + 1
+            code.append(" ")
+            continue
+        if char == ";":
+            raise ValueError("QUERY_SQL_NOT_READ_ONLY: multiple statements are not allowed")
+        code.append(char)
+        index += 1
+    return tuple(re.findall(r"[A-Za-z_][A-Za-z0-9_$]*", "".join(code).upper()))
+
+
+def _validate_read_only_query_sql(sql: str) -> str:
+    """Reject obvious writes at the typed boundary; DB privileges remain authoritative."""
+    tokens = _query_sql_tokens(sql)
+    if not tokens or tokens[0] not in {"SELECT", "WITH"}:
+        raise ValueError("QUERY_SQL_NOT_READ_ONLY: only SELECT queries are allowed")
+    mutation = next((token for token in tokens if token in _QUERY_MUTATION_KEYWORDS), None)
+    if mutation is not None:
+        raise ValueError(f"QUERY_SQL_NOT_READ_ONLY: forbidden SQL keyword {mutation}")
+    return sql
+
+
 class QueryStep(SqlStep):
     kind: Literal["query"] = "query"
     comparison: ComparisonProfile
@@ -180,7 +248,7 @@ class QueryStep(SqlStep):
     def sql_must_not_be_blank(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("QUERY_SQL_EMPTY")
-        return value
+        return _validate_read_only_query_sql(value)
 
     @model_validator(mode="after")
     def expected_variant_matches_mode(self) -> "QueryStep":
@@ -345,6 +413,7 @@ class TypeMappingProfile(StrictModel):
     mapping_fidelity: Literal["EXACT", "LOSSY", "AMBIGUOUS", "UNKNOWN"] | None = None
     canonical_encoding: Literal["VERIFIED", "FAILED", "UNKNOWN"] | None = None
     support_status: Literal["SUPPORTED", "UNSUPPORTED"] | None = None
+    logical_type: str | None = None
 
 
 class TransactionSemantics(StrictModel):
@@ -516,11 +585,25 @@ class QueryStepReport(StrictModel):
 
 class QueryCaseReport(StrictModel):
     case_id: str
+    title: str | None = None
+    feature: str | None = None
+    tags: tuple[str, ...] = ()
+    source_file: str | None = None
+    case_source_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     status: CaseExecutionStatus
     failure_type: FailureType | None = None
     duration_ms: float = Field(ge=0)
     steps: tuple[QueryStepReport, ...]
     error: str | None = None
+
+    @field_validator("source_file")
+    @classmethod
+    def source_file_must_be_relative(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        if value.startswith(("/", "\\")) or "\\" in value or ":" in value or ".." in value.split("/"):
+            raise ValueError("source_file must be repository-relative")
+        return value
 
 
 class QueryTargetReport(StrictModel):
@@ -536,6 +619,7 @@ class QueryRunReport(StrictModel):
     started_at: datetime
     finished_at: datetime
     target: QueryTargetReport
+    git_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{40,64}$")
     cases: tuple[QueryCaseReport, ...]
     status: CaseExecutionStatus
 

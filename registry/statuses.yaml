@@ -11,6 +11,7 @@ case_execution:
   - PASS
   - FAIL
   - ERROR
+  - TIMEOUT
   - INFRA_RECOVERED
 attempt:
   - PENDING
@@ -26,4 +27,5 @@ step:
   - PASS
   - FAIL
   - ERROR
+  - TIMEOUT
   - SKIPPED

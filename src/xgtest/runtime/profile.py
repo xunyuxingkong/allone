@@ -32,6 +32,7 @@ _CAPABILITY_KEYS = {"connection", "type_mapping", "transaction_commit_rollback",
 _TYPE_SEMANTIC_KEYS = {
     "status", "operation_status", "mapping_status", "canonical_compatibility",
     "mapping_fidelity", "canonical_encoding", "support_status",
+    "logical_type",
 }
 
 
@@ -168,13 +169,22 @@ def load_profile(path: Path) -> dict[str, Any]:
         raise ValueError(str(error)) from error
 
 
-def validate_profile(profile: dict[str, Any], *, host: str, database: str, driver_version: tuple[Any, ...]) -> None:
+def validate_profile(
+    profile: dict[str, Any],
+    *,
+    host: str,
+    database: str,
+    driver_version: tuple[Any, ...],
+    contract_set_id: str | None = None,
+) -> None:
     target = profile.get("target", {})
     driver = profile.get("driver", {})
     host_hash = hashlib.sha256(host.encode()).hexdigest()
     if target.get("host_hash") != host_hash or target.get("database_alias") != database:
         raise ValueError("RUNTIME_PROFILE_MISMATCH: target identity differs")
     identity = profile.get("identity") if isinstance(profile.get("identity"), dict) else {}
+    if contract_set_id is not None and identity.get("contract_set_id") != contract_set_id:
+        raise ValueError("RUNTIME_PROFILE_MISMATCH: contract set differs")
     identity_driver = identity.get("driver") if isinstance(identity.get("driver"), dict) else {}
     recorded_version = tuple(identity_driver.get("version", driver.get("version", ())))
     if recorded_version and recorded_version != tuple(driver_version):

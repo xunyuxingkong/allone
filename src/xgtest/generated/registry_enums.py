@@ -63,6 +63,7 @@ class CaseExecutionStatus(StrEnum):
     PASS = "PASS"
     FAIL = "FAIL"
     ERROR = "ERROR"
+    TIMEOUT = "TIMEOUT"
     INFRA_RECOVERED = "INFRA_RECOVERED"
 
 class StepStatus(StrEnum):
@@ -71,4 +72,5 @@ class StepStatus(StrEnum):
     PASS = "PASS"
     FAIL = "FAIL"
     ERROR = "ERROR"
+    TIMEOUT = "TIMEOUT"
     SKIPPED = "SKIPPED"

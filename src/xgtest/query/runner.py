@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import os
+import re
+import subprocess
 import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from multiprocessing.connection import Connection
+from typing import Any, Callable, Literal
 
 from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession, extract_error
 from xgtest.core.contract_set import build_contract_descriptor
@@ -32,8 +37,10 @@ from xgtest.runtime.comparator import (
 )
 from xgtest.generated.registry_enums import FailureType
 
-from .loader import load_query_directory
+from .loader import load_query_directory_with_sources
+from .history import QueryRunHistory
 from .result import write_query_report
+from .timeout import QueryTimeoutError, QueryWorkerError, parse_timeout_seconds, supervise_worker
 
 
 MAX_MATERIALIZED_QUERY_ROWS = 10_000
@@ -58,19 +65,40 @@ def _validate_result_types(
             mappings = capabilities.get("type_mapping", {}) if isinstance(capabilities, dict) else {}
             base = str(declared_type).lower().split("(", 1)[0].strip()
             observed = mappings.get(base) if isinstance(mappings, dict) else None
-            if isinstance(observed, dict) and observed.get("support_status") == "UNSUPPORTED":
-                raise UnsupportedQueryTypeError(f"{declared_type}: runtime profile marks this type unsupported")
+            if not isinstance(observed, dict) and isinstance(mappings, dict):
+                observed = mappings.get(expected_logical_type)
+            if (
+                not isinstance(observed, dict)
+                or observed.get("support_status") != "SUPPORTED"
+                or observed.get("mapping_fidelity") != "EXACT"
+                or observed.get("canonical_encoding") != "VERIFIED"
+                or observed.get("logical_type") != expected_logical_type
+            ):
+                raise UnsupportedQueryTypeError(
+                    f"{declared_type}: runtime profile lacks verified exact type-mapping evidence"
+                )
 
 
 class QueryRunner:
-    def __init__(self, session: XuguSession, runtime_profile: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        session: XuguSession,
+        runtime_profile: dict[str, Any] | None = None,
+        *,
+        observer: Callable[[tuple[str, Any]], None] | None = None,
+    ) -> None:
+        if isinstance(session, XuguSession) and not session.read_only:
+            raise RuntimeError("QUERY_SESSION_NOT_READ_ONLY")
         self.session = session
         self.runtime_profile = runtime_profile
+        self.observer = observer
 
-    def run_step(self, step: QueryStep) -> QueryStepReport:
+    def run_step(self, step: QueryStep) -> tuple[QueryStepReport, FailureType | None]:
         started = time.perf_counter()
+        if self.observer is not None:
+            self.observer(("step_started", step.id))
         fields: dict[str, Any] = {"id": step.id, "status": StepStatus.RUNNING}
-        failure_type: str | None = None
+        failure_type: FailureType | None = None
         query_succeeded = False
         try:
             expected = step.expected.model_dump(mode="python")
@@ -100,7 +128,7 @@ class QueryRunner:
                 if isinstance(step.expected, ExpectedError):
                     fields["status"] = StepStatus.FAIL
                     fields["error"] = "EXPECTED_ERROR_NOT_RAISED"
-                    failure_type = "ASSERTION_FAILED"
+                    failure_type = FailureType.ASSERTION_FAILED
                 else:
                     matches = compare_rows(
                         list(result.rows), expected, step.comparison.mode,
@@ -108,17 +136,17 @@ class QueryRunner:
                     )
                     fields["status"] = StepStatus.PASS if matches else StepStatus.FAIL
             if fields["status"] == StepStatus.FAIL and failure_type is None:
-                failure_type = "ASSERTION_FAILED"
+                failure_type = FailureType.ASSERTION_FAILED
         except Exception as error:
             details = extract_error(error)
             if isinstance(step.expected, ExpectedError) and not query_succeeded:
                 matched = compare_error(error, step.expected)
                 fields["status"] = StepStatus.PASS if matched else StepStatus.FAIL
                 if not matched:
-                    failure_type = "ASSERTION_FAILED"
+                    failure_type = FailureType.ASSERTION_FAILED
             else:
                 fields["status"] = StepStatus.ERROR
-                failure_type = "UNSUPPORTED_TYPE" if isinstance(error, UnsupportedQueryTypeError) else "INFRA_RESOURCE"
+                failure_type = FailureType.UNSUPPORTED_TYPE if isinstance(error, UnsupportedQueryTypeError) else FailureType.INFRA_RESOURCE
             fields.update({
                 "error_type": type(error).__name__,
                 "error_code": details["code"],
@@ -126,16 +154,19 @@ class QueryRunner:
                 "error": details["message"],
             })
         fields["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
-        return QueryStepReport.model_validate(fields), failure_type
+        report = QueryStepReport.model_validate(fields)
+        if self.observer is not None:
+            self.observer(("step_completed", report.model_dump(mode="json")))
+        return report, failure_type
 
     def run_case(self, case: QueryCaseInput) -> QueryCaseReport:
         started = time.perf_counter()
         reports: list[QueryStepReport] = []
-        failure_types: list[str] = []
+        failure_types: list[FailureType] = []
         for step in case.steps:
             report, failure_type = self.run_step(step)
             reports.append(report)
-            if failure_type:
+            if failure_type is not None:
                 failure_types.append(failure_type)
         if any(step.status == StepStatus.ERROR for step in reports):
             status = CaseExecutionStatus.ERROR
@@ -144,7 +175,7 @@ class QueryRunner:
         else:
             status = CaseExecutionStatus.PASS
         if status == CaseExecutionStatus.ERROR:
-            failure_type = next((FailureType(value) for value in failure_types if value in {FailureType.UNSUPPORTED_TYPE.value, FailureType.INFRA_RESOURCE.value}), FailureType.INFRA_RESOURCE)
+            failure_type = next((value for value in failure_types if value in {FailureType.UNSUPPORTED_TYPE, FailureType.INFRA_RESOURCE}), FailureType.INFRA_RESOURCE)
         elif status == CaseExecutionStatus.FAIL:
             failure_type = FailureType.ASSERTION_FAILED
         else:
@@ -158,55 +189,175 @@ class QueryRunner:
         )
 
 
+def _case_worker(
+    case_payload: dict[str, Any],
+    config_payload: dict[str, str],
+    runtime_profile: dict[str, Any] | None,
+    channel: Connection,
+) -> None:
+    """Child-process entry point. A terminated worker owns and loses its session."""
+    case = QueryCaseInput.model_validate_json(json.dumps(case_payload))
+    config = XuguConnectionConfig(**config_payload)
+    session: XuguSession | None = None
+    try:
+        session = XuguSession(config).open(read_only=True)
+        report = _run_case_on_session(
+            case,
+            session,
+            runtime_profile,
+            observer=lambda event: channel.send(event),
+        )
+        session = None
+        channel.send(("result", report.model_dump(mode="json")))
+    except Exception as error:
+        details = extract_error(error)
+        channel.send(("fatal", type(error).__name__, details["message"] or "query worker failed"))
+    finally:
+        if session is not None:
+            try:
+                session.close()
+            except Exception:
+                pass
+        channel.close()
+
+
+def _timeout_report(case: QueryCaseInput, timeout: QueryTimeoutError, started: float) -> QueryCaseReport:
+    completed = [QueryStepReport.model_validate_json(json.dumps(value)) for value in timeout.completed_steps]
+    completed_ids = {step.id for step in completed}
+    active_id = timeout.current_step_id
+    now_ms = max(0.0, (time.monotonic() - started) * 1000)
+    reports = list(completed)
+    for step in case.steps:
+        if step.id in completed_ids:
+            continue
+        if step.id == active_id:
+            reports.append(QueryStepReport(
+                id=step.id,
+                status=StepStatus.TIMEOUT,
+                duration_ms=round(now_ms, 3),
+                error_type="QueryTimeoutError",
+                error="QUERY_TIMEOUT",
+            ))
+        else:
+            reports.append(QueryStepReport(id=step.id, status=StepStatus.SKIPPED, duration_ms=0.0))
+    return QueryCaseReport(
+        case_id=case.metadata.id,
+        status=CaseExecutionStatus.TIMEOUT,
+        failure_type=FailureType.INFRA_TIMEOUT,
+        duration_ms=round(now_ms, 3),
+        steps=tuple(reports),
+        error="QUERY_TIMEOUT",
+    )
+
+
+def _run_case_on_session(
+    case: QueryCaseInput,
+    session: XuguSession,
+    runtime_profile: dict[str, Any] | None,
+    *,
+    observer: Callable[[tuple[str, Any]], None] | None = None,
+) -> QueryCaseReport:
+    try:
+        report = QueryRunner(session, runtime_profile, observer=observer).run_case(case)
+    except Exception as error:
+        details = extract_error(error)
+        report = QueryCaseReport(
+            case_id=case.metadata.id,
+            status=CaseExecutionStatus.ERROR,
+            failure_type=FailureType.INFRA_RESOURCE,
+            duration_ms=0.0,
+            steps=(),
+            error=details["message"],
+        )
+    try:
+        session.rollback_transaction()
+    except Exception:
+        report = report.model_copy(update={
+            "status": CaseExecutionStatus.ERROR,
+            "failure_type": FailureType.INFRA_RESOURCE,
+            "error": "QUERY_ROLLBACK_FAILED",
+        })
+    try:
+        session.close()
+    except Exception:
+        report = report.model_copy(update={
+            "status": CaseExecutionStatus.ERROR,
+            "failure_type": FailureType.INFRA_RESOURCE,
+            "error": "QUERY_SESSION_CLOSE_FAILED",
+        })
+    return report
+
+
+def run_query_case_isolated(
+    case: QueryCaseInput,
+    config: XuguConnectionConfig,
+    runtime_profile: dict[str, Any] | None,
+) -> QueryCaseReport:
+    started = time.monotonic()
+    try:
+        payload = supervise_worker(
+            _case_worker,
+            (case.model_dump(mode="json"), config.__dict__, runtime_profile),
+            timeout_seconds=parse_timeout_seconds(case.metadata.timeout),
+        )
+        return QueryCaseReport.model_validate_json(json.dumps(payload))
+    except QueryTimeoutError as timeout:
+        return _timeout_report(case, timeout, started)
+    except QueryWorkerError as error:
+        return QueryCaseReport(
+            case_id=case.metadata.id,
+            status=CaseExecutionStatus.ERROR,
+            failure_type=FailureType.INFRA_RESOURCE,
+            duration_ms=round((time.monotonic() - started) * 1000, 3),
+            steps=(),
+            error=str(error),
+        )
+
+
 def run_query_cases(
     config: XuguConnectionConfig,
     case_dir: Path,
     output: Path,
     *,
     runtime_profile: dict[str, Any] | None = None,
+    mode: Literal["diagnostic", "regression"] = "regression",
 ) -> dict[str, Any]:
-    cases = load_query_directory(case_dir)
+    assets = load_query_directory_with_sources(case_dir)
+    cases = tuple(asset.case for asset in assets)
+    if mode not in {"diagnostic", "regression"}:
+        raise ValueError("QUERY_RUN_MODE_INVALID")
+    if mode == "regression" and runtime_profile is None:
+        raise ValueError("RUNTIME_PROFILE_REQUIRED_FOR_REGRESSION")
+    root = Path(__file__).resolve().parents[3]
+    contract_set_id = str(build_contract_descriptor(root)["contract_set_id"])
     profile_id = runtime_profile.get("sql_runtime_profile_id") if runtime_profile else None
     if runtime_profile is not None:
         import xgcondb
 
         from xgtest.runtime.profile import validate_profile
 
-        validate_profile(runtime_profile, host=config.host, database=config.database, driver_version=tuple(xgcondb.version_info))
-    root = Path(__file__).resolve().parents[3]
-    contract_set_id = str(build_contract_descriptor(root)["contract_set_id"])
+        validate_profile(
+            runtime_profile,
+            host=config.host,
+            database=config.database,
+            driver_version=tuple(xgcondb.version_info),
+            contract_set_id=contract_set_id if mode == "regression" else None,
+        )
     started = datetime.now(UTC)
     case_reports: list[QueryCaseReport] = []
-    for case in cases:
-        session: XuguSession | None = None
-        try:
-            session = XuguSession(config).open()
-            case_reports.append(QueryRunner(session, runtime_profile).run_case(case))
-        except Exception as error:
-            details = extract_error(error)
-            case_reports.append(QueryCaseReport(
-                case_id=case.metadata.id,
-                status=CaseExecutionStatus.ERROR,
-                failure_type="INFRA_RESOURCE",
-                duration_ms=0.0,
-                steps=(),
-                error=f"{type(error).__name__}: {details['message']}",
-            ))
-        finally:
-            if session is not None:
-                try:
-                    session.rollback_transaction()
-                except Exception:
-                    if case_reports and case_reports[-1].case_id == case.metadata.id:
-                        case_reports[-1] = case_reports[-1].model_copy(update={"status": CaseExecutionStatus.ERROR, "failure_type": FailureType.INFRA_RESOURCE, "error": "QUERY_ROLLBACK_FAILED"})
-                try:
-                    session.close()
-                except Exception:
-                    if case_reports and case_reports[-1].case_id == case.metadata.id:
-                        case_reports[-1] = case_reports[-1].model_copy(update={"status": CaseExecutionStatus.ERROR, "failure_type": FailureType.INFRA_RESOURCE, "error": "QUERY_SESSION_CLOSE_FAILED"})
+    for asset in assets:
+        case_report = run_query_case_isolated(asset.case, config, runtime_profile)
+        case_reports.append(case_report.model_copy(update={
+            "title": asset.case.metadata.title,
+            "feature": asset.case.metadata.feature.value,
+            "tags": asset.case.metadata.tags,
+            "source_file": asset.source.relative_path,
+            "case_source_hash": asset.source.source_hash,
+        }))
 
     status = (
-        CaseExecutionStatus.ERROR if any(case.status == CaseExecutionStatus.ERROR for case in case_reports)
+        CaseExecutionStatus.TIMEOUT if any(case.status == CaseExecutionStatus.TIMEOUT for case in case_reports)
+        else CaseExecutionStatus.ERROR if any(case.status == CaseExecutionStatus.ERROR for case in case_reports)
         else CaseExecutionStatus.FAIL if any(case.status == CaseExecutionStatus.FAIL for case in case_reports)
         else CaseExecutionStatus.PASS
     )
@@ -220,7 +371,28 @@ def run_query_cases(
             sql_runtime_profile_id=profile_id,
             contract_set_id=contract_set_id,
         ),
+        git_commit=_git_commit(root),
         cases=tuple(case_reports),
         status=status,
     )
-    return write_query_report(report, output)
+    payload = write_query_report(report, output)
+    QueryRunHistory(Path(output).parent).record(payload)
+    return payload
+
+
+def _git_commit(root: Path) -> str | None:
+    supplied = os.environ.get("XGTEST_GIT_COMMIT", "").strip()
+    if re.fullmatch(r"[0-9a-f]{40,64}", supplied):
+        return supplied
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    commit = result.stdout.strip()
+    return commit if len(commit) in {40, 64} else None

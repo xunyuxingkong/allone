@@ -7,6 +7,7 @@
         "PASS",
         "FAIL",
         "ERROR",
+        "TIMEOUT",
         "INFRA_RECOVERED"
       ],
       "title": "CaseExecutionStatus",
@@ -31,6 +32,19 @@
         "case_id": {
           "title": "Case Id",
           "type": "string"
+        },
+        "case_source_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Case Source Hash"
         },
         "duration_ms": {
           "minimum": 0,
@@ -60,6 +74,30 @@
           ],
           "default": null
         },
+        "feature": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Feature"
+        },
+        "source_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source File"
+        },
         "status": {
           "$ref": "#/$defs/CaseExecutionStatus"
         },
@@ -69,6 +107,26 @@
           },
           "title": "Steps",
           "type": "array"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
         }
       },
       "required": [
@@ -262,6 +320,7 @@
         "PASS",
         "FAIL",
         "ERROR",
+        "TIMEOUT",
         "SKIPPED"
       ],
       "title": "StepStatus",
@@ -282,6 +341,19 @@
       "format": "date-time",
       "title": "Finished At",
       "type": "string"
+    },
+    "git_commit": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{40,64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Git Commit"
     },
     "run_id": {
       "title": "Run Id",
