@@ -1,0 +1,94 @@
+{
+  "case_id": "QUERY.JOIN.51EE043A",
+  "contract_set_id": "20221cd25af4b320342d56c8e060105ca54fd563d0f5dbaed3e5af1d0c890820",
+  "database_version": null,
+  "driver_version": [
+    2,
+    3,
+    9
+  ],
+  "result_hash": "db90323f3b49e97d63f158d14511eaeec3a07d2d8b9621e970ebd4c79b2a4e43",
+  "run1": {
+    "case_id": "QUERY.JOIN.51EE043A",
+    "case_source_hash": null,
+    "duration_ms": 1.754,
+    "error": null,
+    "failure_type": null,
+    "feature": null,
+    "source_file": null,
+    "status": "PASS",
+    "steps": [
+      {
+        "column_types": [
+          "TINYINT",
+          "TINYINT",
+          "VARCHAR"
+        ],
+        "columns": [
+          "LEFT_KEY",
+          "RIGHT_KEY",
+          "LABEL"
+        ],
+        "duration_ms": 1.631,
+        "error": null,
+        "error_code": null,
+        "error_type": null,
+        "id": "q1",
+        "logical_types": [
+          "int",
+          "int",
+          "string"
+        ],
+        "result_sha256": "fe1573450e9d84dc98d88c3d742258ead4246ebcd1acf728063b023c095d1d9d",
+        "row_count": 2,
+        "sqlstate": null,
+        "status": "PASS"
+      }
+    ],
+    "tags": [],
+    "title": null
+  },
+  "run2": {
+    "case_id": "QUERY.JOIN.51EE043A",
+    "case_source_hash": null,
+    "duration_ms": 1.864,
+    "error": null,
+    "failure_type": null,
+    "feature": null,
+    "source_file": null,
+    "status": "PASS",
+    "steps": [
+      {
+        "column_types": [
+          "TINYINT",
+          "TINYINT",
+          "VARCHAR"
+        ],
+        "columns": [
+          "LEFT_KEY",
+          "RIGHT_KEY",
+          "LABEL"
+        ],
+        "duration_ms": 1.747,
+        "error": null,
+        "error_code": null,
+        "error_type": null,
+        "id": "q1",
+        "logical_types": [
+          "int",
+          "int",
+          "string"
+        ],
+        "result_sha256": "fe1573450e9d84dc98d88c3d742258ead4246ebcd1acf728063b023c095d1d9d",
+        "row_count": 2,
+        "sqlstate": null,
+        "status": "PASS"
+      }
+    ],
+    "tags": [],
+    "title": null
+  },
+  "runtime_profile_id": "78a4b7ba045dcb8549b5aaf67642424d2f6dfede549b240a579f7fce6384ecd7",
+  "semantic_hash": "08a29e2235df9bf9a87cb5ef8dc77ca1bbc4c72734480c060d4d98a7b50138cb",
+  "status": "PASS"
+}

@@ -1,0 +1,46 @@
+{
+  "$id": "xgtest://schema/1.1/CoverageClaim",
+  "additionalProperties": false,
+  "properties": {
+    "assertion_refs": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Assertion Refs",
+      "type": "array"
+    },
+    "assignment": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Assignment",
+      "type": "object"
+    },
+    "claim_id": {
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "title": "Claim Id",
+      "type": "string"
+    },
+    "model_id": {
+      "minLength": 1,
+      "title": "Model Id",
+      "type": "string"
+    },
+    "model_version": {
+      "minLength": 1,
+      "title": "Model Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "claim_id",
+    "model_id",
+    "model_version",
+    "assignment",
+    "assertion_refs"
+  ],
+  "title": "CoverageClaim",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

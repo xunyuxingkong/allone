@@ -1,6 +1,6 @@
 # XG DB Test 设计包 v1.1
 
-当前正式设计基线为 **v1.1（2026-09-11）**。保留五平面架构，补齐数据模型、覆盖、执行一致性、隔离、事件恢复和发布门禁契约。当前已落地单机 SQL MVP 执行闭环；分布式调度、Catalog、发布门禁等仍按阶段实施。
+当前正式设计基线为 **v1.1（2026-09-11）**。保留五平面架构，补齐数据模型、覆盖、执行一致性、隔离、事件恢复和发布门禁契约。当前已落地单机 SQL MVP、只读 Web 查询界面/API，以及限定 JOIN 模型的 Query Generation MVP 闭环；真实 Xugu 上 22 条 JOIN 候选已完成双跑，若评审通过并晋升，可覆盖当前 pairwise 缺口；人工评审、晋升和正式回归仍待完成。分布式调度、Catalog、发布门禁等仍按阶段实施。
 
 本轮已纳入优化清单的工程化补充：单一契约生成链、Catalog Verify、Claim 审查指纹、资源冲突矩阵、确定性 Manifest 编码与分阶段合约测试。设计版本仍为 v1.1，未宣称新增框架实现。
 
@@ -9,6 +9,7 @@
 - [总架构](XG_DB_Test_Architecture_Design_v1.md)：完整需求、五平面、模块边界与阶段路线；文件名保留 v1，内容版本为 1.1。
 - [修订与验收索引](01_Architecture_Review_and_Refinement.md)：问题、修改位置、实现前必须完成的验证。
 - [工程实施顺序与阶段验收](13_Engineering_Implementation_Order_Revised.md)：G0A/G0B 冻结、Driver/Adapter 验证、首批样板，以及 Phase 1–6 的工作包与依赖顺序。
+- [Query Generation MVP 使用与边界](Query_Generation_MVP.md)：JOIN Test Model、覆盖缺口、确定性候选生成、校验/试运行/评审/晋升 CLI 工作流。
 - [优化清单与逐项评审](XG_DB_Test_v1.1_可优化项_List.md)：第 9–10 节解释采纳、调整和原建议中的不准确之处。
 - [架构图 SVG](../架构图_v1.svg) / [PNG](../架构图.png)：五平面与可靠执行、质量反馈路径。
 
@@ -60,7 +61,7 @@ Runner 覆盖 YAML 加载、setup/statement/query/cleanup、预期行比较和�
 Manifest 1 固定采用 XGMJ1 身份编码；数据库结果 Canonical 1 采用 XGC1，两者不同。contract_set_id 标识已发布机器契约集合，正式使用后不得原地改语义或测试向量。
 
 [原 Query 方案](XG_Query_Test_Architecture_Design.md)仅作背景资料，不作为当前实施与工期依据。
-没有在本次修订中新增 Web、云调度或自动生成能力范围；现有功能按阶段实施。
+当前用例生成依赖显式的 JOIN Test Model、约束和 all-values/pairwise 覆盖缺口，不扫描数据块内核源码，也不宣称源码分支全覆盖。云调度与更广的功能模型仍按阶段实施。
 
 ## 图源与更新
 

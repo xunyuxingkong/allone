@@ -1,0 +1,23 @@
+{
+  "$id": "xgtest://schema/1.1/CoverageReview",
+  "additionalProperties": false,
+  "properties": {
+    "evidence_ref": {
+      "minLength": 1,
+      "title": "Evidence Ref",
+      "type": "string"
+    },
+    "review_input_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Review Input Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "review_input_hash",
+    "evidence_ref"
+  ],
+  "title": "CoverageReview",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

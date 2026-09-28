@@ -1,0 +1,68 @@
+{
+  "$id": "xgtest://schema/1.1/ValidationEvidence",
+  "additionalProperties": false,
+  "properties": {
+    "review_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Review Hash"
+    },
+    "semantic_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Semantic Hash",
+      "type": "string"
+    },
+    "static_validation_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Static Validation Hash"
+    },
+    "trial_run_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trial Run Hash"
+    },
+    "trial_run_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trial Run Ref"
+    }
+  },
+  "required": [
+    "semantic_hash"
+  ],
+  "title": "ValidationEvidence",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

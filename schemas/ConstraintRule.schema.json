@@ -1,0 +1,52 @@
+{
+  "$id": "xgtest://schema/1.1/ConstraintRule",
+  "additionalProperties": false,
+  "properties": {
+    "exclude": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Exclude"
+    },
+    "if": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "If",
+      "type": "object"
+    },
+    "then": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Then"
+    }
+  },
+  "required": [
+    "if"
+  ],
+  "title": "ConstraintRule",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

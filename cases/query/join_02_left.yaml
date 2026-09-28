@@ -13,6 +13,21 @@
       "join"
     ]
   },
+  "coverage": [
+    {
+      "claim_id": "join_left_equality_int_unmatched_right",
+      "model_id": "query.join",
+      "model_version": "1",
+      "assignment": {
+        "join_type": "left",
+        "predicate": "equality",
+        "datatype": "int",
+        "null_side": "right",
+        "interaction": "none"
+      },
+      "assertion_refs": ["q1"]
+    }
+  ],
   "steps": [
     {
       "id": "q1",

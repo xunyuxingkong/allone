@@ -1,0 +1,59 @@
+metadata:
+  id: QUERY.JOIN.DDDF1979
+  title: Generated JOIN f615a5f4
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_f615a5f486bb
+  model_id: query.join
+  model_version: '1'
+  assignment:
+    datatype: date
+    interaction: subquery
+    join_type: full
+    null_side: right
+    predicate: equality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.join
+  model_version: '1'
+  template_id: query.join.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 92a1d0a776f5babbfc30fce1225e030541f708fdf04e6abfdb487128a04e03cd
+oracle:
+  kind: known_result
+  reference: join-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT a.k AS left_key, b.k AS right_key, b.label FROM (SELECT DATE '2020-01-01'
+    AS k) a FULL OUTER JOIN (SELECT DATE '2020-01-02' AS k, 'right-row' AS label)
+    b ON a.k = b.k WHERE EXISTS (SELECT 1 FROM (SELECT 1 AS marker) q)
+  expected:
+    rows:
+    - - '2020-01-01'
+      - null
+      - null
+    - - null
+      - '2020-01-02'
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: cd04590644ead5ae26bb828bf35a79012132053fa42a93cecbce4748ab7d01ad
+  static_validation_hash: e0fa2e547e8742ac47b72218238aab257af712430d9b3bc4afb088a275f0fe11
+  trial_run_hash: 26260c61836fa153f2f93904a949b04f5f04da1e7df380d75bc35c06a7f6dc41
+  trial_run_ref: QUERY.JOIN.DDDF1979/cd04590644ead5ae26bb828bf35a79012132053fa42a93cecbce4748ab7d01ad.json

@@ -72,6 +72,71 @@
       "title": "ComparisonProfile",
       "type": "object"
     },
+    "CoverageClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "assertion_refs": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Assertion Refs",
+          "type": "array"
+        },
+        "assignment": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Assignment",
+          "type": "object"
+        },
+        "claim_id": {
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "model_id": {
+          "minLength": 1,
+          "title": "Model Id",
+          "type": "string"
+        },
+        "model_version": {
+          "minLength": 1,
+          "title": "Model Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "model_id",
+        "model_version",
+        "assignment",
+        "assertion_refs"
+      ],
+      "title": "CoverageClaim",
+      "type": "object"
+    },
+    "CoverageReview": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ref": {
+          "minLength": 1,
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "review_input_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Review Input Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "review_input_hash",
+        "evidence_ref"
+      ],
+      "title": "CoverageReview",
+      "type": "object"
+    },
     "EffectiveMetadata": {
       "additionalProperties": false,
       "properties": {
@@ -402,6 +467,75 @@
       "title": "FeatureKey",
       "type": "string"
     },
+    "GenerationProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "generator": {
+          "minLength": 1,
+          "title": "Generator",
+          "type": "string"
+        },
+        "generator_version": {
+          "minLength": 1,
+          "title": "Generator Version",
+          "type": "string"
+        },
+        "input_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Input Hash",
+          "type": "string"
+        },
+        "model_id": {
+          "minLength": 1,
+          "title": "Model Id",
+          "type": "string"
+        },
+        "model_version": {
+          "minLength": 1,
+          "title": "Model Version",
+          "type": "string"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seed"
+        },
+        "strategy": {
+          "minLength": 1,
+          "title": "Strategy",
+          "type": "string"
+        },
+        "template_id": {
+          "minLength": 1,
+          "title": "Template Id",
+          "type": "string"
+        },
+        "template_version": {
+          "minLength": 1,
+          "title": "Template Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "generator",
+        "generator_version",
+        "model_id",
+        "model_version",
+        "template_id",
+        "template_version",
+        "strategy",
+        "input_hash"
+      ],
+      "title": "GenerationProvenance",
+      "type": "object"
+    },
     "IsolationScope": {
       "enum": [
         "session",
@@ -422,6 +556,63 @@
       ],
       "title": "Level",
       "type": "string"
+    },
+    "OracleProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evidence Hash"
+        },
+        "kind": {
+          "enum": [
+            "manual",
+            "reference_database",
+            "known_result",
+            "property"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "OracleProvenance",
+      "type": "object"
     },
     "QueryStep": {
       "additionalProperties": false,
@@ -527,13 +718,170 @@
       ],
       "title": "ResourceRequest",
       "type": "object"
+    },
+    "ReviewEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "review_input_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Review Input Hash",
+          "type": "string"
+        },
+        "review_reference": {
+          "minLength": 1,
+          "title": "Review Reference",
+          "type": "string"
+        },
+        "reviewer": {
+          "minLength": 1,
+          "title": "Reviewer",
+          "type": "string"
+        },
+        "semantic_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Semantic Hash",
+          "type": "string"
+        },
+        "trial_run_artifact_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Trial Run Artifact Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "review_input_hash",
+        "semantic_hash",
+        "trial_run_artifact_hash",
+        "reviewer",
+        "review_reference"
+      ],
+      "title": "ReviewEvidence",
+      "type": "object"
+    },
+    "ValidationEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "review_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Hash"
+        },
+        "semantic_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Semantic Hash",
+          "type": "string"
+        },
+        "static_validation_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Static Validation Hash"
+        },
+        "trial_run_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trial Run Hash"
+        },
+        "trial_run_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trial Run Ref"
+        }
+      },
+      "required": [
+        "semantic_hash"
+      ],
+      "title": "ValidationEvidence",
+      "type": "object"
     }
   },
   "$id": "xgtest://schema/1.1/QueryCaseInput",
   "additionalProperties": false,
   "properties": {
+    "coverage": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CoverageClaim"
+      },
+      "title": "Coverage",
+      "type": "array"
+    },
+    "coverage_review": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CoverageReview"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "generation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GenerationProvenance"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "metadata": {
       "$ref": "#/$defs/EffectiveMetadata"
+    },
+    "oracle": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OracleProvenance"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "review_evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "steps": {
       "items": {
@@ -542,6 +890,17 @@
       "minItems": 1,
       "title": "Steps",
       "type": "array"
+    },
+    "validation_evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ValidationEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

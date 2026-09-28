@@ -1,0 +1,100 @@
+{
+  "driver": {
+    "module": "xgcondb",
+    "version": [
+      2,
+      3,
+      9
+    ]
+  },
+  "evidence_sha256": "90250e8c206e89acc9f0f58d21e4d0fe37863ef584c308f19014de107b4bb65f",
+  "identity": {
+    "capabilities": {
+      "cancel_stop_proof": {
+        "driver_has_cancel": false,
+        "status": "UNKNOWN"
+      },
+      "connection": {
+        "status": "VERIFIED"
+      },
+      "reset_probe": {
+        "status": "UNKNOWN"
+      },
+      "sql_error_mapping": {
+        "code": "E5021",
+        "exception_type": "OperationalError",
+        "status": "VERIFIED"
+      },
+      "transaction_commit_rollback": {
+        "autocommit_disabled": true,
+        "commit_visible": true,
+        "rollback_visible": true,
+        "status": "VERIFIED"
+      },
+      "type_mapping": {
+        "date": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "date",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "double": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "float",
+          "mapping_fidelity": "EXACT",
+          "operation_status": "VERIFIED",
+          "status": "VERIFIED",
+          "support_status": "SUPPORTED"
+        },
+        "integer": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "int",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "numeric": {
+          "canonical_compatibility": "FAILED",
+          "canonical_encoding": "FAILED",
+          "logical_type": "decimal",
+          "mapping_fidelity": "LOSSY",
+          "mapping_status": "LOSSY",
+          "operation_status": "VERIFIED",
+          "status": "FAILED",
+          "support_status": "UNSUPPORTED"
+        },
+        "tinyint": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "int",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "varchar": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "string",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        }
+      }
+    },
+    "contract_set_id": "20221cd25af4b320342d56c8e060105ca54fd563d0f5dbaed3e5af1d0c890820",
+    "driver": {
+      "module": "xgcondb",
+      "version": [
+        2,
+        3,
+        9
+      ]
+    },
+    "profile_schema_version": "0.2",
+    "target": {
+      "arch": "x86_64",
+      "os": "Linux"
+    }
+  },
+  "profile_schema_version": "0.2",
+  "sql_runtime_profile_id": "78a4b7ba045dcb8549b5aaf67642424d2f6dfede549b240a579f7fce6384ecd7",
+  "target": {
+    "database_alias": "SYSTEM",
+    "host_hash": "589e9fd1967699e3ed31821c270093155cd076a7344e44c48507c0cb7d6e02d0"
+  }
+}

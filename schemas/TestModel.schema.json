@@ -1,0 +1,174 @@
+{
+  "$defs": {
+    "ConstraintRule": {
+      "additionalProperties": false,
+      "properties": {
+        "exclude": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exclude"
+        },
+        "if": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "If",
+          "type": "object"
+        },
+        "then": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Then"
+        }
+      },
+      "required": [
+        "if"
+      ],
+      "title": "ConstraintRule",
+      "type": "object"
+    },
+    "CoverageStrategy": {
+      "additionalProperties": false,
+      "properties": {
+        "strength": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Strength"
+        },
+        "type": {
+          "enum": [
+            "all_values",
+            "pairwise",
+            "boundary",
+            "negative",
+            "interaction"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "CoverageStrategy",
+      "type": "object"
+    },
+    "Dimension": {
+      "additionalProperties": false,
+      "properties": {
+        "values": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "title": "Dimension",
+      "type": "object"
+    }
+  },
+  "$id": "xgtest://schema/1.1/TestModel",
+  "additionalProperties": false,
+  "properties": {
+    "constraints": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ConstraintRule"
+      },
+      "title": "Constraints",
+      "type": "array"
+    },
+    "coverage": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/$defs/CoverageStrategy"
+        },
+        "type": "array"
+      },
+      "title": "Coverage",
+      "type": "object"
+    },
+    "dimensions": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Dimension"
+      },
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "feature": {
+      "title": "Feature",
+      "type": "string"
+    },
+    "model_id": {
+      "title": "Model Id",
+      "type": "string"
+    },
+    "model_version": {
+      "title": "Model Version",
+      "type": "string"
+    },
+    "module": {
+      "title": "Module",
+      "type": "string"
+    },
+    "subfeature": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subfeature"
+    }
+  },
+  "required": [
+    "model_id",
+    "model_version",
+    "module",
+    "feature",
+    "dimensions",
+    "coverage"
+  ],
+  "title": "TestModel",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

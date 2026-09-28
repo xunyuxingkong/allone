@@ -13,6 +13,21 @@
       "join"
     ]
   },
+  "coverage": [
+    {
+      "claim_id": "join_inner_equality_int",
+      "model_id": "query.join",
+      "model_version": "1",
+      "assignment": {
+        "join_type": "inner",
+        "predicate": "equality",
+        "datatype": "int",
+        "null_side": "none",
+        "interaction": "none"
+      },
+      "assertion_refs": ["q1"]
+    }
+  ],
   "steps": [
     {
       "id": "q1",

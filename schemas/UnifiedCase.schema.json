@@ -79,6 +79,7 @@
           "items": {
             "type": "string"
           },
+          "minItems": 1,
           "title": "Assertion Refs",
           "type": "array"
         },
@@ -95,10 +96,12 @@
           "type": "string"
         },
         "model_id": {
+          "minLength": 1,
           "title": "Model Id",
           "type": "string"
         },
         "model_version": {
+          "minLength": 1,
           "title": "Model Version",
           "type": "string"
         }
@@ -117,6 +120,7 @@
       "additionalProperties": false,
       "properties": {
         "evidence_ref": {
+          "minLength": 1,
           "title": "Evidence Ref",
           "type": "string"
         },

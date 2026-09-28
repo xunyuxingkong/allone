@@ -1,0 +1,59 @@
+{
+  "$id": "xgtest://schema/1.1/OracleProvenance",
+  "additionalProperties": false,
+  "properties": {
+    "evidence_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Hash"
+    },
+    "kind": {
+      "enum": [
+        "manual",
+        "reference_database",
+        "known_result",
+        "property"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "reference": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reference"
+    },
+    "reviewer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reviewer"
+    }
+  },
+  "required": [
+    "kind"
+  ],
+  "title": "OracleProvenance",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

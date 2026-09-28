@@ -17,6 +17,12 @@ from xgtest.core.models import (
     QueryStep,
     RawMetadata,
     SourceInfo,
+    CoverageClaim,
+    GenerationProvenance,
+    OracleProvenance,
+    ValidationEvidence,
+    ReviewEvidence,
+    CoverageReview,
     decode_expected,
 )
 from xgtest.core.yaml_loader import load_yaml
@@ -44,8 +50,9 @@ def load_query_case(path: Path) -> QueryCaseInput:
         raw = load_yaml(path)
         if not isinstance(raw, dict):
             raise ValueError("QUERY_CASE_INVALID: case must be a mapping")
-        if set(raw) != {"metadata", "steps"}:
-            raise ValueError("QUERY_CASE_FIELDS_INVALID: only metadata and steps are allowed")
+        allowed_fields = {"metadata", "steps", "coverage", "generation", "oracle", "validation_evidence", "review_evidence", "coverage_review"}
+        if not {"metadata", "steps"} <= set(raw) or set(raw) - allowed_fields:
+            raise ValueError("QUERY_CASE_FIELDS_INVALID: unsupported or missing case fields")
         metadata_raw = raw.get("metadata")
         if not isinstance(metadata_raw, dict):
             raise ValueError("QUERY_METADATA_INVALID: metadata must be a mapping")
@@ -90,7 +97,32 @@ def load_query_case(path: Path) -> QueryCaseInput:
                 raise ValueError("QUERY_EXPECTED_REQUIRED: expected must be a mapping")
             payload["expected"] = decode_expected(expected)
             steps.append(QueryStep.model_validate(payload))
-        return QueryCaseInput(metadata=metadata, steps=tuple(steps))
+        coverage_raw = raw.get("coverage", [])
+        if not isinstance(coverage_raw, list):
+            raise ValueError("QUERY_COVERAGE_INVALID: coverage must be a list")
+        coverage = tuple(
+            CoverageClaim.model_validate({**claim, "assertion_refs": tuple(claim.get("assertion_refs", ()))})
+            for claim in coverage_raw
+        )
+        step_ids = {step.id for step in steps}
+        for claim in coverage:
+            if not claim.assertion_refs or set(claim.assertion_refs) - step_ids:
+                raise ValueError(f"QUERY_COVERAGE_ASSERTION_REF_INVALID: {claim.claim_id}")
+        generation = GenerationProvenance.model_validate(raw["generation"]) if raw.get("generation") is not None else None
+        oracle = OracleProvenance.model_validate(raw["oracle"]) if raw.get("oracle") is not None else None
+        evidence = ValidationEvidence.model_validate(raw["validation_evidence"]) if raw.get("validation_evidence") is not None else None
+        review_evidence = ReviewEvidence.model_validate(raw["review_evidence"]) if raw.get("review_evidence") is not None else None
+        coverage_review = CoverageReview.model_validate(raw["coverage_review"]) if raw.get("coverage_review") is not None else None
+        return QueryCaseInput(
+            metadata=metadata,
+            steps=tuple(steps),
+            coverage=coverage,
+            generation=generation,
+            oracle=oracle,
+            validation_evidence=evidence,
+            review_evidence=review_evidence,
+            coverage_review=coverage_review,
+        )
     except (ContractError, ValidationError, TypeError, ValueError) as error:
         raise _source_error(path, error) from error
 

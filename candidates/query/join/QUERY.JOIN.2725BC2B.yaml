@@ -1,0 +1,59 @@
+metadata:
+  id: QUERY.JOIN.2725BC2B
+  title: Generated JOIN 069ee150
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_069ee150c9ac
+  model_id: query.join
+  model_version: '1'
+  assignment:
+    datatype: varchar
+    interaction: group_by
+    join_type: full
+    null_side: left
+    predicate: equality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.join
+  model_version: '1'
+  template_id: query.join.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 7d9b3de500365d9342fee7befdfc4e11b38eb5732f904da59757b548b1dd3028
+oracle:
+  kind: known_result
+  reference: join-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT a.k AS left_key, b.k AS right_key, b.label FROM (SELECT 'a' AS k) a
+    FULL OUTER JOIN (SELECT 'b' AS k, 'right-row' AS label) b ON a.k = b.k GROUP BY
+    a.k, b.k, b.label
+  expected:
+    rows:
+    - - a
+      - null
+      - null
+    - - null
+      - b
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 1bc1ae253c0887e7764062656dc747ff8ed9e1455f4b88fa8c1466e3b32759f6
+  static_validation_hash: 83e2f5091bb6436f64b2e848e8f1e5fb7ec37e94c92cf8df7eabeac77639ae89
+  trial_run_hash: e1210b6a35c31146c1c1f74add5e734ddd69f5dbc9533ac2f3ef4cf83d03f539
+  trial_run_ref: QUERY.JOIN.2725BC2B/1bc1ae253c0887e7764062656dc747ff8ed9e1455f4b88fa8c1466e3b32759f6.json

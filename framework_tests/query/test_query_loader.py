@@ -37,6 +37,13 @@ def test_loader_returns_typed_query_case(tmp_path: Path) -> None:
     assert isinstance(case.steps[0].expected, ExpectedRows)
 
 
+def test_query_loader_reads_existing_join_coverage_claims() -> None:
+    root = Path(__file__).resolve().parents[2]
+    case = load_query_case(root / "cases" / "query" / "join_01_inner.yaml")
+    assert case.coverage[0].model_id == "query.join"
+    assert case.coverage[0].assertion_refs == ("q1",)
+
+
 @pytest.mark.parametrize("replacement", [
     "    kind: statement",
     "    sql: ''",

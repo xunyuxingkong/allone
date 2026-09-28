@@ -1,0 +1,41 @@
+{
+  "$id": "xgtest://schema/1.1/ReviewEvidence",
+  "additionalProperties": false,
+  "properties": {
+    "review_input_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Review Input Hash",
+      "type": "string"
+    },
+    "review_reference": {
+      "minLength": 1,
+      "title": "Review Reference",
+      "type": "string"
+    },
+    "reviewer": {
+      "minLength": 1,
+      "title": "Reviewer",
+      "type": "string"
+    },
+    "semantic_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Semantic Hash",
+      "type": "string"
+    },
+    "trial_run_artifact_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Trial Run Artifact Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "review_input_hash",
+    "semantic_hash",
+    "trial_run_artifact_hash",
+    "reviewer",
+    "review_reference"
+  ],
+  "title": "ReviewEvidence",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

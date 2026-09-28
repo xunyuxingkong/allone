@@ -10,7 +10,7 @@ from .canonical import xgmj1_sha256
 
 DESCRIPTOR_VERSION = "1"
 CONTRACT_VERSION = "1.1"
-_SOURCE_DIRS = ("registry", "src/xgtest/core", "src/xgtest/query", "framework_tests/contract")
+_SOURCE_DIRS = ("registry", "src/xgtest/core", "src/xgtest/query", "src/xgtest/design", "src/xgtest/generator", "framework_tests/contract", "framework_tests/design", "framework_tests/generator", "models", "generators")
 _SOURCE_FILES = (
     "src/xgtest/cli.py",
     "src/xgtest/runtime/profile.py",

@@ -1,0 +1,20 @@
+{
+  "$id": "xgtest://schema/1.1/Dimension",
+  "additionalProperties": false,
+  "properties": {
+    "values": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Values",
+      "type": "array"
+    }
+  },
+  "required": [
+    "values"
+  ],
+  "title": "Dimension",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

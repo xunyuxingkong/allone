@@ -1,0 +1,36 @@
+{
+  "$id": "xgtest://schema/1.1/CoverageStrategy",
+  "additionalProperties": false,
+  "properties": {
+    "strength": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Strength"
+    },
+    "type": {
+      "enum": [
+        "all_values",
+        "pairwise",
+        "boundary",
+        "negative",
+        "interaction"
+      ],
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "title": "CoverageStrategy",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

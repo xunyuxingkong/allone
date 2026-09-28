@@ -1,0 +1,111 @@
+{
+  "capabilities": {
+    "basic_type_read": {
+      "column_metadata": "[('ID', 'INTEGER', None, None, 4, 0, None), ('AMOUNT', 'NUMERIC', None, None, 10, 2, None), ('RATIO', 'DOUBLE', None, None, 8, 0, None), ('LABEL', 'VARCHAR', None, None, 32, 0, None)]",
+      "status": "VERIFIED",
+      "values": [
+        {
+          "python_type": "builtins.int",
+          "repr": "1"
+        },
+        {
+          "python_type": "builtins.float",
+          "repr": "1.2"
+        },
+        {
+          "python_type": "builtins.float",
+          "repr": "3.5"
+        },
+        {
+          "python_type": "builtins.str",
+          "repr": "'xgtest'"
+        }
+      ]
+    },
+    "cancel_stop_proof": {
+      "driver_has_cancel": false,
+      "reason": "requires a bounded long-query and server-side stop observation",
+      "status": "UNKNOWN"
+    },
+    "connection": {
+      "status": "VERIFIED"
+    },
+    "reset_probe": {
+      "reason": "requires session-state, lock and temporary-object probes",
+      "status": "UNKNOWN"
+    },
+    "sql_error_mapping": {
+      "exception_type": "OperationalError",
+      "message": "[E5021 L1 C48] 表或视图XGT_CAP_FEDEFAF17C_MISSING不存在",
+      "status": "VERIFIED"
+    },
+    "transaction_commit_rollback": {
+      "autocommit_disabled": true,
+      "commit_visible_count": 1,
+      "rollback_visible_count": 0,
+      "status": "VERIFIED"
+    },
+    "type_mapping": {
+      "bytes": {
+        "reason": "not included in the basic probe",
+        "status": "UNKNOWN"
+      },
+      "date_time": {
+        "reason": "not included in the basic probe",
+        "status": "UNKNOWN"
+      },
+      "decimal": {
+        "canonical_compatibility": "FAILED",
+        "mapping_status": "LOSSY",
+        "observed": {
+          "python_type": "builtins.float",
+          "repr": "1.2"
+        },
+        "operation_status": "VERIFIED",
+        "reason": "exact Decimal comparison requires decimal.Decimal",
+        "scope": "default Driver mapping",
+        "status": "FAILED"
+      },
+      "float": {
+        "observed": {
+          "python_type": "builtins.float",
+          "repr": "3.5"
+        },
+        "status": "VERIFIED"
+      },
+      "int": {
+        "observed": {
+          "python_type": "builtins.int",
+          "repr": "1"
+        },
+        "status": "VERIFIED"
+      },
+      "string": {
+        "observed": {
+          "python_type": "builtins.str",
+          "repr": "'xgtest'"
+        },
+        "status": "VERIFIED"
+      }
+    }
+  },
+  "cleanup": {
+    "status": "VERIFIED"
+  },
+  "driver": {
+    "module": "xgcondb",
+    "version": [
+      2,
+      3,
+      9
+    ]
+  },
+  "finished_at": "2026-09-28T07:26:52.316699+00:00",
+  "probe_version": "1",
+  "started_at": "2026-09-28T07:26:52.246573+00:00",
+  "table": "XGT_CAP_FEDEFAF17C",
+  "target": {
+    "database_alias": "SYSTEM",
+    "host_hash": "589e9fd1967699e3ed31821c270093155cd076a7344e44c48507c0cb7d6e02d0"
+  }
+}

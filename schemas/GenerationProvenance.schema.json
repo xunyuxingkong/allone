@@ -1,0 +1,71 @@
+{
+  "$id": "xgtest://schema/1.1/GenerationProvenance",
+  "additionalProperties": false,
+  "properties": {
+    "generator": {
+      "minLength": 1,
+      "title": "Generator",
+      "type": "string"
+    },
+    "generator_version": {
+      "minLength": 1,
+      "title": "Generator Version",
+      "type": "string"
+    },
+    "input_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Input Hash",
+      "type": "string"
+    },
+    "model_id": {
+      "minLength": 1,
+      "title": "Model Id",
+      "type": "string"
+    },
+    "model_version": {
+      "minLength": 1,
+      "title": "Model Version",
+      "type": "string"
+    },
+    "seed": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Seed"
+    },
+    "strategy": {
+      "minLength": 1,
+      "title": "Strategy",
+      "type": "string"
+    },
+    "template_id": {
+      "minLength": 1,
+      "title": "Template Id",
+      "type": "string"
+    },
+    "template_version": {
+      "minLength": 1,
+      "title": "Template Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "generator",
+    "generator_version",
+    "model_id",
+    "model_version",
+    "template_id",
+    "template_version",
+    "strategy",
+    "input_hash"
+  ],
+  "title": "GenerationProvenance",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

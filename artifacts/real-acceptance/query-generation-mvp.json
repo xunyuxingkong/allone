@@ -1,0 +1,60 @@
+{
+  "candidate_count": 22,
+  "contract_set_id": "20221cd25af4b320342d56c8e060105ca54fd563d0f5dbaed3e5af1d0c890820",
+  "coverage_before": {
+    "covered": 17,
+    "missing": 132,
+    "required": 149
+  },
+  "coverage_if_all_review_candidates_are_promoted": {
+    "covered": 149,
+    "missing": 0,
+    "required": 149
+  },
+  "driver": {
+    "module": "xgcondb",
+    "version": [
+      2,
+      3,
+      9
+    ]
+  },
+  "generator": {
+    "id": "query_template_generator",
+    "version": "1"
+  },
+  "git_commit": "0ef9f0b2a1c7ced1556a0abdd6029df944d6e499",
+  "model": {
+    "id": "query.join",
+    "strategy": "pairwise",
+    "version": "1"
+  },
+  "probe_finished_at_utc": "2026-09-28T07:26:52.316699+00:00",
+  "promoted_count": 0,
+  "runtime_profile_id": "78a4b7ba045dcb8549b5aaf67642424d2f6dfede549b240a579f7fce6384ecd7",
+  "scope": "real_xugu_query_generation_mvp",
+  "status": "TRIALS_PASSED_PENDING_REVIEW_PROMOTION_AND_REGRESSION",
+  "target": {
+    "database_alias": "SYSTEM",
+    "host_hash": "589e9fd1967699e3ed31821c270093155cd076a7344e44c48507c0cb7d6e02d0"
+  },
+  "template": {
+    "id": "query.join.default",
+    "version": "1"
+  },
+  "trial_artifact_counts": {
+    "PASS": 22
+  },
+  "trial_run_count": 44,
+  "verified_capabilities": {
+    "basic_type_read": "VERIFIED",
+    "cancel_stop_proof": "UNKNOWN",
+    "cleanup": "VERIFIED",
+    "connection": "VERIFIED",
+    "numeric_decimal_mapping": "LOSSY",
+    "reset_probe": "UNKNOWN",
+    "sql_error_mapping": "VERIFIED",
+    "transaction_commit_rollback": "VERIFIED"
+  },
+  "working_tree_dirty": true
+}

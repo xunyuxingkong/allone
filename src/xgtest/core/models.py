@@ -263,9 +263,69 @@ class QueryStep(SqlStep):
         return self
 
 
+class CoverageClaim(StrictModel):
+    claim_id: str = Field(pattern=r"^[a-z][a-z0-9_-]*$")
+    model_id: str = Field(min_length=1)
+    model_version: str = Field(min_length=1)
+    assignment: dict[str, str]
+    assertion_refs: tuple[str, ...] = Field(min_length=1)
+
+
+class GenerationProvenance(StrictModel):
+    generator: str = Field(min_length=1)
+    generator_version: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    model_version: str = Field(min_length=1)
+    template_id: str = Field(min_length=1)
+    template_version: str = Field(min_length=1)
+    strategy: str = Field(min_length=1)
+    seed: int | None = None
+    input_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class OracleProvenance(StrictModel):
+    kind: Literal["manual", "reference_database", "known_result", "property"]
+    reference: str | None = None
+    reviewer: str | None = None
+    evidence_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def known_result_requires_reference(self) -> "OracleProvenance":
+        if self.kind == "known_result" and not self.reference:
+            raise ValueError("ORACLE_REFERENCE_REQUIRED")
+        return self
+
+
+class ValidationEvidence(StrictModel):
+    semantic_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    static_validation_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    trial_run_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    trial_run_ref: str | None = None
+    review_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+
+class CoverageReview(StrictModel):
+    review_input_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    evidence_ref: str = Field(min_length=1)
+
+
+class ReviewEvidence(StrictModel):
+    review_input_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    semantic_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    trial_run_artifact_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    reviewer: str = Field(min_length=1)
+    review_reference: str = Field(min_length=1)
+
+
 class QueryCaseInput(StrictModel):
     metadata: EffectiveMetadata
     steps: tuple[QueryStep, ...] = Field(min_length=1)
+    coverage: tuple[CoverageClaim, ...] = ()
+    generation: GenerationProvenance | None = None
+    oracle: OracleProvenance | None = None
+    validation_evidence: ValidationEvidence | None = None
+    review_evidence: ReviewEvidence | None = None
+    coverage_review: CoverageReview | None = None
 
     @model_validator(mode="after")
     def step_ids_are_unique(self) -> "QueryCaseInput":
@@ -273,19 +333,6 @@ class QueryCaseInput(StrictModel):
         if len(ids) != len(set(ids)):
             raise ValueError("QUERY_STEP_ID_DUPLICATED: step IDs must be unique")
         return self
-
-
-class CoverageClaim(StrictModel):
-    claim_id: str = Field(pattern=r"^[a-z][a-z0-9_-]*$")
-    model_id: str
-    model_version: str
-    assignment: dict[str, str]
-    assertion_refs: tuple[str, ...]
-
-
-class CoverageReview(StrictModel):
-    review_input_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
-    evidence_ref: str
 
 
 class UnifiedCase(StrictModel):
@@ -633,6 +680,12 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         BootstrapCaseInput,
         QueryStep,
         QueryCaseInput,
+        CoverageClaim,
+        GenerationProvenance,
+        OracleProvenance,
+        ValidationEvidence,
+        CoverageReview,
+        ReviewEvidence,
         TestPlan,
         Target,
         EnvironmentRequirement,
