@@ -20,8 +20,9 @@ from .design.model import load_test_model
 from .design.coverage import FileCoverageSource, coverage_gap
 from .generator.candidate import generate_candidates, static_validate_candidate
 from .generator.dedup import classify_duplicates
-from .generator.lifecycle import promote_candidate, trial_candidate, validate_candidate_mutation
+from .generator.lifecycle import promote_candidate, record_candidate_mutation_evidence, trial_candidate, validate_candidate_mutation
 from .generator.review import record_review
+from .generator.acceptance import verify_trial_artifact_index
 from .design.model import ConstraintRule, CoverageStrategy, Dimension, TestModel
 from .query.loader import load_query_directory
 
@@ -219,13 +220,23 @@ def _candidate_mutation_validate(args: argparse.Namespace) -> int:
     model = load_test_model(Path(args.model))
     profile = load_profile(Path(args.runtime_profile))
     config = XuguConnectionConfig.from_environment()
-    results = [
-        validate_candidate_mutation(path, model, config, profile)
-        for path in _candidate_paths(Path(args.path))
-    ]
-    applicable = [row for row in results if row["status"] != "NOT_APPLICABLE"]
-    passed = bool(applicable) and all(row["status"] == "KILLED" for row in applicable)
-    print(json.dumps({"candidates": results, "status": "PASS" if passed else "FAIL"}, ensure_ascii=False, sort_keys=True))
+    action_status = {
+        "KILLED": "PASS",
+        "NOT_APPLICABLE": "SKIPPED",
+        "WEAK": "FAIL",
+        "BASELINE_NOT_PASS": "FAIL",
+        "BASELINE_NONDETERMINISTIC": "BLOCKED",
+        "INCONCLUSIVE": "BLOCKED",
+        "MUTATED_NONDETERMINISTIC": "BLOCKED",
+    }
+    results = []
+    for path in _candidate_paths(Path(args.path)):
+        result = validate_candidate_mutation(path, model, config, profile)
+        evidence = record_candidate_mutation_evidence(path, result, Path(args.artifacts), profile)
+        results.append({**result, **evidence, "action_status": action_status[result["status"]]})
+    passed = bool(results) and all(row["action_status"] in {"PASS", "SKIPPED"} for row in results)
+    status = "PASS" if passed else "BLOCKED" if any(row["action_status"] == "BLOCKED" for row in results) else "FAIL"
+    print(json.dumps({"candidates": results, "status": status}, ensure_ascii=False, sort_keys=True))
     return 0 if passed else 1
 
 
@@ -285,6 +296,7 @@ def _candidate_promote(args: argparse.Namespace) -> int:
     destination = promote_candidate(
         matches[0], model, Path(args.cases), Path(args.artifacts),
         expected_runtime_profile_id=profile["sql_runtime_profile_id"],
+        mutation_artifact_root=Path(args.mutation_artifacts),
     )
     active = load_query_directory(Path(args.cases))
     all_claims = [claim for case in active if case.metadata.status.value == "active" for claim in case.coverage]
@@ -307,6 +319,17 @@ def _candidate_promote(args: argparse.Namespace) -> int:
     snapshot_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({"status": "active", "case": str(destination), "coverage_snapshot": str(snapshot_path), "coverage": snapshot}, ensure_ascii=False, sort_keys=True))
     return 0
+
+
+def _acceptance_verify_trial_index(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve()
+    result = verify_trial_artifact_index(
+        root,
+        Path(args.index).resolve(),
+        Path(args.runtime_profile).resolve(),
+    )
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0 if result["status"] == "PASS" else 1
 
 
 def main() -> None:
@@ -409,6 +432,7 @@ def main() -> None:
     candidate_mutation_cmd.add_argument("path")
     candidate_mutation_cmd.add_argument("--model", default=root / "models" / "query" / "join.yaml")
     candidate_mutation_cmd.add_argument("--runtime-profile", required=True)
+    candidate_mutation_cmd.add_argument("--artifacts", default=root / "artifacts" / "mutations")
     candidate_mutation_cmd.set_defaults(handler=_candidate_mutation_validate)
     candidate_list = candidate_commands.add_parser("list")
     candidate_list.add_argument("--path", default=root / "candidates" / "query" / "join")
@@ -428,6 +452,7 @@ def main() -> None:
     candidate_promote.add_argument("--model", default=root / "models" / "query" / "join.yaml")
     candidate_promote.add_argument("--cases", default=root / "cases" / "query")
     candidate_promote.add_argument("--artifacts", default=root / "artifacts" / "trial-runs")
+    candidate_promote.add_argument("--mutation-artifacts", default=root / "artifacts" / "mutations")
     candidate_promote.add_argument("--runtime-profile", required=True)
     candidate_promote.add_argument("--strategy", choices=("all_values", "pairwise"), default="pairwise")
     candidate_promote.add_argument("--snapshot", default=root / "artifacts" / "coverage" / "query.join-pairwise.json")
@@ -437,5 +462,12 @@ def main() -> None:
     candidate_dedup.add_argument("--cases", default=root / "cases" / "query")
     candidate_dedup.add_argument("--model", default=root / "models" / "query" / "join.yaml")
     candidate_dedup.set_defaults(handler=_candidate_dedup)
+    acceptance = commands.add_parser("acceptance")
+    acceptance_commands = acceptance.add_subparsers(dest="acceptance_command", required=True)
+    verify_trial_index = acceptance_commands.add_parser("verify-trial-index")
+    verify_trial_index.add_argument("--root", default=root)
+    verify_trial_index.add_argument("--index", default=root / "acceptance" / "query-generation-mvp" / "trial-run-index.json")
+    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v9.json")
+    verify_trial_index.set_defaults(handler=_acceptance_verify_trial_index)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

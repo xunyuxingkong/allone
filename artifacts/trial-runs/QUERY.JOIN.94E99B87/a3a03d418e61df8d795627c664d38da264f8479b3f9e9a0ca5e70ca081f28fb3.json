@@ -1,17 +1,19 @@
 {
   "case_id": "QUERY.JOIN.94E99B87",
-  "contract_set_id": "3541e2217dabc75ec9e32ad42f6d55b63e935d11dd7b759a6c59f1edf7268db8",
-  "database_version": null,
+  "contract_set_id": "b60dfa9c8aaacbb0f435053efaff95501e3ed2078773fbcc47d2f87d00244d6c",
+  "database_build_time": "2026-05-18 12:11:00",
+  "database_product": "Xugu",
+  "database_version": "BETA-11679_11665",
   "driver_version": [
     2,
     3,
     9
   ],
-  "result_hash": "b28f3924bd3f4416385b18749f3170838f68ade7cd5be9f74ceaa4a54fc76c95",
+  "result_hash": "ba6ae345ed355574b7e60c541cddbe57429786eaf4b96a2d4b1fa6118b56128f",
   "run1": {
     "case_id": "QUERY.JOIN.94E99B87",
     "case_source_hash": null,
-    "duration_ms": 4.157,
+    "duration_ms": 2.389,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -29,7 +31,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 3.847,
+        "duration_ms": 2.157,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -38,6 +40,13 @@
           "int",
           "int",
           "string"
+        ],
+        "result_rows": [
+          [
+            2,
+            2,
+            "right-row"
+          ]
         ],
         "result_sha256": "59690110a8d3d523267e9b8ce76f18f2cd0afe640ff830756ae9493288ef10e8",
         "row_count": 1,
@@ -51,7 +60,7 @@
   "run2": {
     "case_id": "QUERY.JOIN.94E99B87",
     "case_source_hash": null,
-    "duration_ms": 4.833,
+    "duration_ms": 1.786,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -69,7 +78,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 4.274,
+        "duration_ms": 1.647,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -78,6 +87,13 @@
           "int",
           "int",
           "string"
+        ],
+        "result_rows": [
+          [
+            2,
+            2,
+            "right-row"
+          ]
         ],
         "result_sha256": "59690110a8d3d523267e9b8ce76f18f2cd0afe640ff830756ae9493288ef10e8",
         "row_count": 1,
@@ -88,7 +104,7 @@
     "tags": [],
     "title": null
   },
-  "runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
+  "runtime_profile_id": "45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079",
   "semantic_hash": "a3a03d418e61df8d795627c664d38da264f8479b3f9e9a0ca5e70ca081f28fb3",
   "status": "PASS"
 }

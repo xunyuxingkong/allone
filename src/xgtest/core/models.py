@@ -305,6 +305,26 @@ class ValidationEvidence(StrictModel):
     review_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
 
+class MutationCheck(StrictModel):
+    mutation_id: str = Field(min_length=1)
+    status: Literal[
+        "KILLED", "NOT_APPLICABLE", "WEAK", "BASELINE_NOT_PASS",
+        "BASELINE_NONDETERMINISTIC", "INCONCLUSIVE", "MUTATED_NONDETERMINISTIC",
+    ]
+    original_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    mutated_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+
+class MutationEvidence(StrictModel):
+    policy_version: Literal["1"]
+    semantic_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    contract_set_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    runtime_profile_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    artifact_ref: str = Field(min_length=1)
+    artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    checks: tuple[MutationCheck, ...] = Field(min_length=1)
+
+
 class CoverageReview(StrictModel):
     review_input_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     evidence_ref: str = Field(min_length=1)
@@ -325,6 +345,7 @@ class QueryCaseInput(StrictModel):
     generation: GenerationProvenance | None = None
     oracle: OracleProvenance | None = None
     validation_evidence: ValidationEvidence | None = None
+    mutation_evidence: MutationEvidence | None = None
     review_evidence: ReviewEvidence | None = None
     coverage_review: CoverageReview | None = None
 
@@ -686,6 +707,8 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         GenerationProvenance,
         OracleProvenance,
         ValidationEvidence,
+        MutationCheck,
+        MutationEvidence,
         CoverageReview,
         ReviewEvidence,
         TestPlan,

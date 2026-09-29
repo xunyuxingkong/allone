@@ -1,17 +1,19 @@
 {
   "case_id": "QUERY.JOIN.D398430A",
-  "contract_set_id": "3541e2217dabc75ec9e32ad42f6d55b63e935d11dd7b759a6c59f1edf7268db8",
-  "database_version": null,
+  "contract_set_id": "b60dfa9c8aaacbb0f435053efaff95501e3ed2078773fbcc47d2f87d00244d6c",
+  "database_build_time": "2026-05-18 12:11:00",
+  "database_product": "Xugu",
+  "database_version": "BETA-11679_11665",
   "driver_version": [
     2,
     3,
     9
   ],
-  "result_hash": "30343a98de18336215f4a3982fdf0af18bc2fd5ae08eb6e4ab0fd9d9b28ba0ec",
+  "result_hash": "e39519db11069bb3af5a546896063340dfe6f789b58d6f3722ac04674310b037",
   "run1": {
     "case_id": "QUERY.JOIN.D398430A",
     "case_source_hash": null,
-    "duration_ms": 11.366,
+    "duration_ms": 1.796,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -29,7 +31,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 10.926,
+        "duration_ms": 1.664,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -38,6 +40,13 @@
           "string",
           "string",
           "string"
+        ],
+        "result_rows": [
+          [
+            "b",
+            "c",
+            "right-row"
+          ]
         ],
         "result_sha256": "19345c9415754d05aa3e047534f4b2225b35ad56673a21cdcd2ea8e7cb082e60",
         "row_count": 1,
@@ -51,7 +60,7 @@
   "run2": {
     "case_id": "QUERY.JOIN.D398430A",
     "case_source_hash": null,
-    "duration_ms": 4.261,
+    "duration_ms": 2.393,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -69,7 +78,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 3.849,
+        "duration_ms": 2.162,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -78,6 +87,13 @@
           "string",
           "string",
           "string"
+        ],
+        "result_rows": [
+          [
+            "b",
+            "c",
+            "right-row"
+          ]
         ],
         "result_sha256": "19345c9415754d05aa3e047534f4b2225b35ad56673a21cdcd2ea8e7cb082e60",
         "row_count": 1,
@@ -88,7 +104,7 @@
     "tags": [],
     "title": null
   },
-  "runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
+  "runtime_profile_id": "45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079",
   "semantic_hash": "fa2876661895b33f08fffbfb00a47f59a30ccd85662db2272e2385b4a0e6100d",
   "status": "PASS"
 }

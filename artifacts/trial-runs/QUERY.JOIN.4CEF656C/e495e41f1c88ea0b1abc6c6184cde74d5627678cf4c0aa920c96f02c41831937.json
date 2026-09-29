@@ -1,17 +1,19 @@
 {
   "case_id": "QUERY.JOIN.4CEF656C",
-  "contract_set_id": "3541e2217dabc75ec9e32ad42f6d55b63e935d11dd7b759a6c59f1edf7268db8",
-  "database_version": null,
+  "contract_set_id": "b60dfa9c8aaacbb0f435053efaff95501e3ed2078773fbcc47d2f87d00244d6c",
+  "database_build_time": "2026-05-18 12:11:00",
+  "database_product": "Xugu",
+  "database_version": "BETA-11679_11665",
   "driver_version": [
     2,
     3,
     9
   ],
-  "result_hash": "136a4ff398b39cc123401aa903210b310e237e670d30f45e3cf4fef26f3dbf0a",
+  "result_hash": "c3861cd1e613a82e8dc3b24424dcbbcd3034f1c2edaa4b563f0189a60bdb1ae5",
   "run1": {
     "case_id": "QUERY.JOIN.4CEF656C",
     "case_source_hash": null,
-    "duration_ms": 9.033,
+    "duration_ms": 8.02,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -29,7 +31,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 8.754,
+        "duration_ms": 7.793,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -38,6 +40,38 @@
           "int",
           "int",
           "string"
+        ],
+        "result_rows": [
+          [
+            2,
+            3,
+            "right-row"
+          ],
+          [
+            2,
+            4,
+            "right-row"
+          ],
+          [
+            3,
+            3,
+            "right-row"
+          ],
+          [
+            3,
+            4,
+            "right-row"
+          ],
+          [
+            5,
+            null,
+            null
+          ],
+          [
+            null,
+            1,
+            "right-row"
+          ]
         ],
         "result_sha256": "e23195ab3e4b2f2a3128d4fd7ae1e79fc592e1bf0520788baba78c7e27f1138d",
         "row_count": 6,
@@ -51,7 +85,7 @@
   "run2": {
     "case_id": "QUERY.JOIN.4CEF656C",
     "case_source_hash": null,
-    "duration_ms": 7.995,
+    "duration_ms": 7.849,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -69,7 +103,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 7.765,
+        "duration_ms": 7.694,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -78,6 +112,38 @@
           "int",
           "int",
           "string"
+        ],
+        "result_rows": [
+          [
+            2,
+            3,
+            "right-row"
+          ],
+          [
+            2,
+            4,
+            "right-row"
+          ],
+          [
+            3,
+            3,
+            "right-row"
+          ],
+          [
+            3,
+            4,
+            "right-row"
+          ],
+          [
+            5,
+            null,
+            null
+          ],
+          [
+            null,
+            1,
+            "right-row"
+          ]
         ],
         "result_sha256": "e23195ab3e4b2f2a3128d4fd7ae1e79fc592e1bf0520788baba78c7e27f1138d",
         "row_count": 6,
@@ -88,7 +154,7 @@
     "tags": [],
     "title": null
   },
-  "runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
+  "runtime_profile_id": "45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079",
   "semantic_hash": "e495e41f1c88ea0b1abc6c6184cde74d5627678cf4c0aa920c96f02c41831937",
   "status": "PASS"
 }

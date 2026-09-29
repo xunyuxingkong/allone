@@ -59,5 +59,15 @@ validation_evidence:
   semantic_hash: dbb34671c8e1047bb16446f08fe01416800963990a9a58bb7d847f92d65f777c
   static_validation_hash: 87f9f207efb66a91121e03facba52c01943b727b3117f85c0547fdc889eeb516
   trial_run_hash: 1d8ff37f12a4dfebd9896a87d6ff87ce8c7c35277952b21a914344608c6f5571
-  trial_artifact_sha256: 0755ea22df2be0cb031dd62c57bfac3ef0d78aad908fcc6f57963d23d9c5dcad
+  trial_artifact_sha256: c86805e5981ae91a242fbbae27bd90c9930acfbc243011e343d5e9c56ea5eb1e
   trial_run_ref: QUERY.JOIN.9AD85025/dbb34671c8e1047bb16446f08fe01416800963990a9a58bb7d847f92d65f777c.json
+mutation_evidence:
+  policy_version: '1'
+  semantic_hash: dbb34671c8e1047bb16446f08fe01416800963990a9a58bb7d847f92d65f777c
+  contract_set_id: b60dfa9c8aaacbb0f435053efaff95501e3ed2078773fbcc47d2f87d00244d6c
+  runtime_profile_id: 45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079
+  artifact_ref: QUERY.JOIN.9AD85025/dbb34671c8e1047bb16446f08fe01416800963990a9a58bb7d847f92d65f777c.json
+  artifact_sha256: db9ea8142b31c61d04f1f57b6214648ec49a07da7ecc4c8e6e66efd3082bcf38
+  checks:
+  - mutation_id: replace_le_with_lt
+    status: NOT_APPLICABLE

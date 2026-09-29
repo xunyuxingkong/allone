@@ -21,6 +21,7 @@ from xgtest.core.models import (
     GenerationProvenance,
     OracleProvenance,
     ValidationEvidence,
+    MutationEvidence,
     ReviewEvidence,
     CoverageReview,
     decode_expected,
@@ -50,7 +51,7 @@ def load_query_case(path: Path) -> QueryCaseInput:
         raw = load_yaml(path)
         if not isinstance(raw, dict):
             raise ValueError("QUERY_CASE_INVALID: case must be a mapping")
-        allowed_fields = {"metadata", "steps", "coverage", "generation", "oracle", "validation_evidence", "review_evidence", "coverage_review"}
+        allowed_fields = {"metadata", "steps", "coverage", "generation", "oracle", "validation_evidence", "mutation_evidence", "review_evidence", "coverage_review"}
         if not {"metadata", "steps"} <= set(raw) or set(raw) - allowed_fields:
             raise ValueError("QUERY_CASE_FIELDS_INVALID: unsupported or missing case fields")
         metadata_raw = raw.get("metadata")
@@ -111,6 +112,8 @@ def load_query_case(path: Path) -> QueryCaseInput:
         generation = GenerationProvenance.model_validate(raw["generation"]) if raw.get("generation") is not None else None
         oracle = OracleProvenance.model_validate(raw["oracle"]) if raw.get("oracle") is not None else None
         evidence = ValidationEvidence.model_validate(raw["validation_evidence"]) if raw.get("validation_evidence") is not None else None
+        mutation_raw = raw.get("mutation_evidence")
+        mutation_evidence = MutationEvidence.model_validate({**mutation_raw, "checks": tuple(mutation_raw.get("checks", ()))}) if mutation_raw is not None else None
         review_evidence = ReviewEvidence.model_validate(raw["review_evidence"]) if raw.get("review_evidence") is not None else None
         coverage_review = CoverageReview.model_validate(raw["coverage_review"]) if raw.get("coverage_review") is not None else None
         return QueryCaseInput(
@@ -120,6 +123,7 @@ def load_query_case(path: Path) -> QueryCaseInput:
             generation=generation,
             oracle=oracle,
             validation_evidence=evidence,
+            mutation_evidence=mutation_evidence,
             review_evidence=review_evidence,
             coverage_review=coverage_review,
         )

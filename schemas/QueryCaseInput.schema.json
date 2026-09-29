@@ -557,6 +557,115 @@
       "title": "Level",
       "type": "string"
     },
+    "MutationCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "mutated_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mutated Hash"
+        },
+        "mutation_id": {
+          "minLength": 1,
+          "title": "Mutation Id",
+          "type": "string"
+        },
+        "original_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original Hash"
+        },
+        "status": {
+          "enum": [
+            "KILLED",
+            "NOT_APPLICABLE",
+            "WEAK",
+            "BASELINE_NOT_PASS",
+            "BASELINE_NONDETERMINISTIC",
+            "INCONCLUSIVE",
+            "MUTATED_NONDETERMINISTIC"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mutation_id",
+        "status"
+      ],
+      "title": "MutationCheck",
+      "type": "object"
+    },
+    "MutationEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_ref": {
+          "minLength": 1,
+          "title": "Artifact Ref",
+          "type": "string"
+        },
+        "artifact_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Artifact Sha256",
+          "type": "string"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/MutationCheck"
+          },
+          "minItems": 1,
+          "title": "Checks",
+          "type": "array"
+        },
+        "contract_set_id": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Contract Set Id",
+          "type": "string"
+        },
+        "policy_version": {
+          "const": "1",
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "runtime_profile_id": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Runtime Profile Id",
+          "type": "string"
+        },
+        "semantic_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Semantic Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_version",
+        "semantic_hash",
+        "contract_set_id",
+        "runtime_profile_id",
+        "artifact_ref",
+        "artifact_sha256",
+        "checks"
+      ],
+      "title": "MutationEvidence",
+      "type": "object"
+    },
     "OracleProvenance": {
       "additionalProperties": false,
       "properties": {
@@ -873,6 +982,17 @@
     },
     "metadata": {
       "$ref": "#/$defs/EffectiveMetadata"
+    },
+    "mutation_evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MutationEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "oracle": {
       "anyOf": [

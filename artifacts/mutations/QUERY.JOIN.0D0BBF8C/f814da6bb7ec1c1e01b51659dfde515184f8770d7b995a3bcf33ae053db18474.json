@@ -1,0 +1,15 @@
+{
+  "case_id": "QUERY.JOIN.0D0BBF8C",
+  "checks": [
+    {
+      "mutated_hash": null,
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": null,
+      "status": "NOT_APPLICABLE"
+    }
+  ],
+  "contract_set_id": "b60dfa9c8aaacbb0f435053efaff95501e3ed2078773fbcc47d2f87d00244d6c",
+  "policy_version": "1",
+  "runtime_profile_id": "45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079",
+  "semantic_hash": "f814da6bb7ec1c1e01b51659dfde515184f8770d7b995a3bcf33ae053db18474"
+}

@@ -1,0 +1,15 @@
+{
+  "case_id": "QUERY.JOIN.DF308258",
+  "checks": [
+    {
+      "mutated_hash": "f3e74fd8f0b26c9d2456076551ea402c9e48293d26fc42f5d7751600d92279bc",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "26ff092343f7f1ecd4d048cd52102274699ea6be6ca3da72565c8eeb28d1a221",
+      "status": "KILLED"
+    }
+  ],
+  "contract_set_id": "b60dfa9c8aaacbb0f435053efaff95501e3ed2078773fbcc47d2f87d00244d6c",
+  "policy_version": "1",
+  "runtime_profile_id": "45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079",
+  "semantic_hash": "bb9aa409099fbfe1385aea887ffabdcc9290a28a1f2faeebb72d5d95647ef891"
+}

@@ -1,0 +1,16 @@
+{
+  "captured_at": "2026-09-29T07:30:07.127805+00:00",
+  "column_types": [
+    "VARCHAR"
+  ],
+  "columns": [
+    "BUILD_TIME"
+  ],
+  "query": "SHOW build_time;",
+  "read_only": true,
+  "rows": [
+    [
+      "2026-05-18 12:11:00 BETA-11679_11665"
+    ]
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "$id": "xgtest://schema/1.1/MutationCheck",
+  "additionalProperties": false,
+  "properties": {
+    "mutated_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mutated Hash"
+    },
+    "mutation_id": {
+      "minLength": 1,
+      "title": "Mutation Id",
+      "type": "string"
+    },
+    "original_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Original Hash"
+    },
+    "status": {
+      "enum": [
+        "KILLED",
+        "NOT_APPLICABLE",
+        "WEAK",
+        "BASELINE_NOT_PASS",
+        "BASELINE_NONDETERMINISTIC",
+        "INCONCLUSIVE",
+        "MUTATED_NONDETERMINISTIC"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "mutation_id",
+    "status"
+  ],
+  "title": "MutationCheck",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

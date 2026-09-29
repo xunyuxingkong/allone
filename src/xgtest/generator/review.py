@@ -22,6 +22,7 @@ def current_review_input_hash(case: Any, semantic: str) -> str:
         "semantic_hash": semantic,
         "trial_run_hash": case.validation_evidence.trial_run_hash,
         "trial_artifact_sha256": case.validation_evidence.trial_artifact_sha256,
+        "mutation_evidence": case.mutation_evidence.model_dump(mode="json", exclude_none=True) if case.mutation_evidence else None,
         "coverage": [claim.model_dump(mode="json") for claim in case.coverage],
     })
 
@@ -40,6 +41,8 @@ def record_review(
         raise ValueError("CANDIDATE_STATUS_INVALID: review evidence expects review status")
     if case.oracle is None or case.validation_evidence is None or case.validation_evidence.trial_run_hash is None or case.validation_evidence.trial_artifact_sha256 is None:
         raise ValueError("CANDIDATE_TRIAL_EVIDENCE_REQUIRED")
+    if case.mutation_evidence is None:
+        raise ValueError("CANDIDATE_MUTATION_EVIDENCE_REQUIRED")
     if len(case.coverage) != 1 or case.coverage[0].model_id != model.model_id or case.coverage[0].model_version != model.model_version:
         raise ValueError("CANDIDATE_COVERAGE_MODEL_MISMATCH")
     validate_assignment(model, case.coverage[0].assignment)

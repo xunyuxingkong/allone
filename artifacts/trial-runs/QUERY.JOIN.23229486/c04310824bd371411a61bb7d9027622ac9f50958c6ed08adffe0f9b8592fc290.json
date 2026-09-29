@@ -1,17 +1,19 @@
 {
   "case_id": "QUERY.JOIN.23229486",
-  "contract_set_id": "3541e2217dabc75ec9e32ad42f6d55b63e935d11dd7b759a6c59f1edf7268db8",
-  "database_version": null,
+  "contract_set_id": "b60dfa9c8aaacbb0f435053efaff95501e3ed2078773fbcc47d2f87d00244d6c",
+  "database_build_time": "2026-05-18 12:11:00",
+  "database_product": "Xugu",
+  "database_version": "BETA-11679_11665",
   "driver_version": [
     2,
     3,
     9
   ],
-  "result_hash": "62c45c07885ab5fc5c97ad40e1e002369371999bd53e72a00cbb8511adff5521",
+  "result_hash": "218cdc3720450a4a1cfc1625893f747108d00bd8f093f52ba576551e15c0284a",
   "run1": {
     "case_id": "QUERY.JOIN.23229486",
     "case_source_hash": null,
-    "duration_ms": 2.278,
+    "duration_ms": 2.94,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -29,7 +31,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 2.06,
+        "duration_ms": 2.669,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -38,6 +40,18 @@
           "date",
           "date",
           "string"
+        ],
+        "result_rows": [
+          [
+            null,
+            "2020-01-03",
+            "right-row"
+          ],
+          [
+            "2020-01-02",
+            null,
+            null
+          ]
         ],
         "result_sha256": "85021a44882416f150e91e407ef23f58b0fab01fbf3186c35d011f18d8fbb5d5",
         "row_count": 2,
@@ -51,7 +65,7 @@
   "run2": {
     "case_id": "QUERY.JOIN.23229486",
     "case_source_hash": null,
-    "duration_ms": 2.185,
+    "duration_ms": 2.534,
     "error": null,
     "failure_type": null,
     "feature": null,
@@ -69,7 +83,7 @@
           "RIGHT_KEY",
           "LABEL"
         ],
-        "duration_ms": 2.042,
+        "duration_ms": 2.4,
         "error": null,
         "error_code": null,
         "error_type": null,
@@ -78,6 +92,18 @@
           "date",
           "date",
           "string"
+        ],
+        "result_rows": [
+          [
+            null,
+            "2020-01-03",
+            "right-row"
+          ],
+          [
+            "2020-01-02",
+            null,
+            null
+          ]
         ],
         "result_sha256": "85021a44882416f150e91e407ef23f58b0fab01fbf3186c35d011f18d8fbb5d5",
         "row_count": 2,
@@ -88,7 +114,7 @@
     "tags": [],
     "title": null
   },
-  "runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
+  "runtime_profile_id": "45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079",
   "semantic_hash": "c04310824bd371411a61bb7d9027622ac9f50958c6ed08adffe0f9b8592fc290",
   "status": "PASS"
 }
