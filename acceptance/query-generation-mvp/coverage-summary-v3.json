@@ -1,0 +1,14 @@
+{
+  "active_covered": 17,
+  "active_missing": 120,
+  "candidate_status": "review",
+  "model_id": "query.join",
+  "model_version": "2",
+  "provisional_covered_if_promoted": 137,
+  "provisional_missing_if_promoted": 0,
+  "required": 137,
+  "review_candidate_count": 21,
+  "strategy": "pairwise",
+  "template_version": "3",
+  "trial_status": "PASS"
+}

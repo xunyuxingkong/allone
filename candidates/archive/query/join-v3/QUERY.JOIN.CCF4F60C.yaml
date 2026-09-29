@@ -1,0 +1,64 @@
+metadata:
+  id: QUERY.JOIN.CCF4F60C
+  title: Generated JOIN c9664ed6
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_c9664ed6bf4a
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: date
+    interaction: subquery
+    join_type: full
+    null_side: right
+    predicate: equality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '3'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '3'
+  strategy: pairwise
+  seed: null
+  input_hash: 142b95a55e134beec4786c4b39a160eacb597938d129f69a73fb096058a09576
+oracle:
+  kind: known_result
+  reference: join-template-v3
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT DATE '2020-01-02' AS k UNION ALL SELECT DATE '2020-01-01'
+    AS k) a FULL OUTER JOIN (SELECT DATE '2020-01-02' AS k, 'right-row' AS label)
+    b ON a.k = b.k UNION ALL SELECT DATE '2020-01-02' AS left_key, DATE '2020-01-02'
+    AS right_key, 'drop-row' AS label) q WHERE EXISTS (SELECT 1 FROM (SELECT 1 AS
+    marker) probe WHERE probe.marker = 1 AND (q.label = 'right-row' OR q.label IS
+    NULL))
+  expected:
+    rows:
+    - - '2020-01-02'
+      - '2020-01-02'
+      - right-row
+    - - '2020-01-01'
+      - null
+      - null
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 44ebdd12e1c98736279efa4aa505a314374a807859f9c10dd589e3826b718e67
+  static_validation_hash: ce94dbbcaa6c4c8ec4efe9d5cce1d5ce679b5107fb2626e8d16aa3610e78a013
+  trial_run_hash: 269f72288e6fd5abe85d7b597b10ab95f274962882924c4bb906fb311a96a552
+  trial_artifact_sha256: 1bbb6706c4f2b43c21a0ba35284ce5e0cffdee8c9abb1fa62f0d2157f42e75f9
+  trial_run_ref: QUERY.JOIN.CCF4F60C/44ebdd12e1c98736279efa4aa505a314374a807859f9c10dd589e3826b718e67.json

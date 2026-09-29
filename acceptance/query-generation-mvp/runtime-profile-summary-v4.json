@@ -1,0 +1,36 @@
+{
+  "capability_evidence_reused_from": "artifacts/capabilities/runtime-profile-evidence-v3.json",
+  "capability_probe_cleanup": "VERIFIED",
+  "contract_set_id": "3541e2217dabc75ec9e32ad42f6d55b63e935d11dd7b759a6c59f1edf7268db8",
+  "integer_cast_probe_sha256": "a987b266b440e751df7ad7951cfaeab0256a77b55ec25adaa68ba9e46c8a49c0",
+  "integer_type_system_probe_sha256": "1e30a3ecbe165579cc9e5350e015d61b8fb9ba50b233c438ddac8907c7ce255f",
+  "previous_v3_runtime_profile_id": "310d95205a3b6c68c014e5b19e25a70879bc60ab0411c0ecc2d0d5b17da998fb",
+  "profile_evidence_sha256": "86aae099738ce2c45a777bdaa64821bf5e9d4a3cc938771097d4d2fbd45f097c",
+  "runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
+  "type_mapping_supported": [
+    "bigint",
+    "blob",
+    "boolean",
+    "char",
+    "date",
+    "double",
+    "float",
+    "int",
+    "integer",
+    "smallint",
+    "text",
+    "time",
+    "varchar"
+  ],
+  "type_mapping_unsupported": [
+    "binary",
+    "datetime",
+    "decimal",
+    "number",
+    "numeric",
+    "raw",
+    "timestamp",
+    "timestamp_tz",
+    "varbinary"
+  ]
+}

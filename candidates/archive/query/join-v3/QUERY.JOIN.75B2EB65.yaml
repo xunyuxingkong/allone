@@ -1,0 +1,58 @@
+metadata:
+  id: QUERY.JOIN.75B2EB65
+  title: Generated JOIN 2060313a
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_2060313a3679
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: int
+    interaction: where
+    join_type: right
+    null_side: left
+    predicate: inequality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '3'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '3'
+  strategy: pairwise
+  seed: null
+  input_hash: 78937e490980bb746cc83213d172ead534989e20e38ed1b0bffb59312b5227ea
+oracle:
+  kind: known_result
+  reference: join-template-v3
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT 2 AS k) a RIGHT JOIN (SELECT 2 AS k, 'right-row'
+    AS label) b ON a.k <> b.k UNION ALL SELECT 2 AS left_key, 2 AS right_key, 'drop-row'
+    AS label) q WHERE q.label = 'right-row' OR q.label IS NULL
+  expected:
+    rows:
+    - - null
+      - 2
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 76c33857bf716f93152baec15e277ce8476956974548acc548d0a43c6cb40977
+  static_validation_hash: 15de1589d418af591e4707eaf8c6c62a62527bbd4e07c05fbb1347ec993db9ad
+  trial_run_hash: 28a803b61f0b58ca6505d172bc4c8f6f5f15d8d76511e0a47b4023daa1550d90
+  trial_artifact_sha256: 5253b4e1479934ffca93b9499f9e50f2d5ec92ab9419f5d77f5d4005dc570327
+  trial_run_ref: QUERY.JOIN.75B2EB65/76c33857bf716f93152baec15e277ce8476956974548acc548d0a43c6cb40977.json

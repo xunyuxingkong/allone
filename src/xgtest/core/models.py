@@ -624,6 +624,7 @@ class QueryStepReport(StrictModel):
     column_types: tuple[str | None, ...] = ()
     logical_types: tuple[str | None, ...] = ()
     row_count: int | None = Field(default=None, ge=0)
+    result_rows: tuple[tuple[Any, ...], ...] | None = None
     result_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     error_type: str | None = None
     error_code: str | None = None

@@ -1,0 +1,127 @@
+{
+  "candidates": [
+    {
+      "case_id": "QUERY.JOIN.0D0BBF8C",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.203908E1",
+      "mutated_hash": "e4f8c61a1a16e109f4b99bb5c9c1284c6cd3a01ed7ae60ac75946f41be225a30",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "0de0b754580553ac81a11d0182873859a1f5fdfe2bddb31de8d9202e9af7203f",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.23229486",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.244FDDA1",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.26B774DD",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.274C0E9A",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.2833D345",
+      "mutated_hash": "b2675c72bc0597ad81fff3ae97471caa195ca6fb46998904f2d24e2f69da991e",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "183d9e609bd25998e68e374d4c36f832c1db0d43dfa1a86b4c5423d17eaa1f70",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.3B332CE4",
+      "mutated_hash": "55c2553291ddb4b28ea72342be3e3de7433e1fb75417630aa932fa6801caaf1f",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "ff0c0198be0825f1dd12f30a0ce6b3791fa436ef1797e9730ddafe6035741aa0",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.4CEF656C",
+      "mutated_hash": "27b1863259f40e791721f7bbee3e3eef850c54b575ba4507c9d628de7c706809",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "06ff660d3aefdec1aff569c0e54a1aa89e61f67e51bcf08cab2c5e186e7b022b",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.593A35D9",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.5C2BA314",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.5F6BFA55",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.66220C62",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.79CE12B8",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.94E99B87",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.9AD85025",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.CD4C9BF1",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.D398430A",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.D9F1ECD9",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.DF308258",
+      "mutated_hash": "c7d105234a459d4f7aa267e7a2d7b3f2f22a436b0a15daac5039e085f2c0fc29",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "19506ea11d3010f07f332b974b15e7925db43a170eb1c8db669decd359bcddc6",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.E3E11FE7",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    }
+  ],
+  "contract_set_id": "3541e2217dabc75ec9e32ad42f6d55b63e935d11dd7b759a6c59f1edf7268db8",
+  "killed_count": 5,
+  "not_applicable_count": 16,
+  "raw_result_ref": "artifacts/wsl-runtime/mutation-v4.json",
+  "raw_result_sha256": "1c733a9491d8d959b01f571f76d89453caf7f3385529833b419c5854d6a2b45a",
+  "runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
+  "status": "PASS",
+  "template_version": "4"
+}

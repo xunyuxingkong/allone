@@ -37,7 +37,16 @@ def _trial_projection(report: dict[str, Any]) -> dict[str, Any]:
         "case_id": report["case_id"],
         "status": report["status"],
         "steps": [
-            {"id": step["id"], "status": step["status"], "row_count": step.get("row_count"), "result_sha256": step.get("result_sha256")}
+            {
+                "id": step["id"],
+                "status": step["status"],
+                "columns": step.get("columns", []),
+                "column_types": step.get("column_types", []),
+                "logical_types": step.get("logical_types", []),
+                "row_count": step.get("row_count"),
+                "result_rows": step.get("result_rows"),
+                "result_sha256": step.get("result_sha256"),
+            }
             for step in report["steps"]
         ],
     }
@@ -90,29 +99,35 @@ def trial_candidate(
     semantic = semantic_hash(payload)
     if case.validation_evidence.semantic_hash != semantic:
         raise ValueError("CANDIDATE_SEMANTIC_HASH_STALE")
-    reports = [run(case, config, runtime_profile), run(case, config, runtime_profile)]
+    if runner is None:
+        reports = [
+            run(case, config, runtime_profile, capture_result_rows=True),
+            run(case, config, runtime_profile, capture_result_rows=True),
+        ]
+    else:
+        reports = [run(case, config, runtime_profile), run(case, config, runtime_profile)]
     if any(report.status != CaseExecutionStatus.PASS for report in reports):
         raise ValueError("CANDIDATE_TRIAL_FAILED")
-    projected = [
-        {
-            "case_id": report.case_id,
-            "status": report.status.value,
-            "steps": [
-                {"id": step.id, "status": step.status.value, "row_count": step.row_count, "result_sha256": step.result_sha256}
-                for step in report.steps
-            ],
-        }
+    if runner is None and any(
+        step.result_rows is None or step.row_count != len(step.result_rows)
         for report in reports
-    ]
+        for step in report.steps
+    ):
+        raise ValueError("CANDIDATE_TRIAL_RAW_ROWS_MISSING")
+    projected = [_trial_projection(report.model_dump(mode="json")) for report in reports]
     if projected[0] != projected[1]:
         raise ValueError("CANDIDATE_TRIAL_NONDETERMINISTIC")
     artifact_hash = xgmj1_sha256(projected)
+    profile_identity = (runtime_profile or {}).get("identity", {})
+    profile_target = profile_identity.get("target", {}) if isinstance(profile_identity, dict) else {}
     artifact = {
         "case_id": case.metadata.id,
         "semantic_hash": semantic,
         "runtime_profile_id": runtime_profile.get("sql_runtime_profile_id") if runtime_profile else None,
         "contract_set_id": build_contract_descriptor(Path(__file__).resolve().parents[3])["contract_set_id"],
-        "database_version": (runtime_profile or {}).get("target", {}).get("database_version"),
+        "database_product": profile_target.get("database_product"),
+        "database_version": profile_target.get("database_version"),
+        "database_build_time": profile_target.get("db_build"),
         "driver_version": (runtime_profile or {}).get("driver", {}).get("version"),
         "run1": reports[0].model_dump(mode="json"),
         "run2": reports[1].model_dump(mode="json"),
@@ -131,6 +146,80 @@ def trial_candidate(
     evidence["trial_run_ref"] = artifact_path.relative_to(artifact_root).as_posix()
     _write_payload(path, payload)
     return {"case_id": case.metadata.id, "status": "review", "artifact": str(artifact_path), "trial_run_hash": artifact_hash, "trial_artifact_sha256": artifact_sha256}
+
+
+def validate_candidate_mutation(
+    path: Path,
+    model: TestModel,
+    config: Any,
+    runtime_profile: dict[str, Any],
+    *,
+    runner: Any = None,
+) -> dict[str, Any]:
+    """Check that replacing <= with < changes a static-validated JOIN result."""
+    from xgtest.core.models import CaseExecutionStatus, QueryCaseInput
+    from xgtest.query.runner import run_query_case_isolated
+
+    from xgtest.generator.candidate import static_validate_candidate
+
+    if runner is None:
+        if not runtime_profile:
+            raise ValueError("RUNTIME_PROFILE_REQUIRED_FOR_MUTATION_VALIDATION")
+        import xgcondb
+
+        from xgtest.runtime.profile import validate_profile
+
+        validate_profile(
+            runtime_profile,
+            host=config.host,
+            database=config.database,
+            driver_version=tuple(xgcondb.version_info),
+            contract_set_id=str(build_contract_descriptor(Path(__file__).resolve().parents[3])["contract_set_id"]),
+        )
+
+    case = load_query_case(path)
+    if case.metadata.status.value != "draft":
+        raise ValueError("CANDIDATE_STATUS_INVALID: mutation validation expects draft status")
+    if not any(claim.assignment.get("predicate") == "less_equal" for claim in case.coverage):
+        return {"case_id": case.metadata.id, "mutation_id": "replace_le_with_lt", "status": "NOT_APPLICABLE"}
+    static_validate_candidate(path, model)
+    case = load_query_case(path)
+    payload = case.model_dump(mode="python")
+    occurrences = 0
+    for step in payload["steps"]:
+        count = step["sql"].count("a.k <= b.k")
+        occurrences += count
+        step["sql"] = step["sql"].replace("a.k <= b.k", "a.k < b.k")
+    if occurrences == 0:
+        raise ValueError("CANDIDATE_MUTATION_TARGET_MISSING")
+    mutated_case = QueryCaseInput.model_validate(payload)
+    run = runner or run_query_case_isolated
+    original_reports = [run(case, config, runtime_profile), run(case, config, runtime_profile)]
+    if any(report.status != CaseExecutionStatus.PASS for report in original_reports):
+        return {"case_id": case.metadata.id, "mutation_id": "replace_le_with_lt", "status": "BASELINE_NOT_PASS"}
+    original = [_trial_projection(report.model_dump(mode="json")) for report in original_reports]
+    if original[0] != original[1]:
+        return {"case_id": case.metadata.id, "mutation_id": "replace_le_with_lt", "status": "BASELINE_NONDETERMINISTIC"}
+    mutated_reports = [run(mutated_case, config, runtime_profile), run(mutated_case, config, runtime_profile)]
+    if any(report.status in {CaseExecutionStatus.ERROR, CaseExecutionStatus.TIMEOUT} for report in mutated_reports):
+        return {
+            "case_id": case.metadata.id,
+            "mutation_id": "replace_le_with_lt",
+            "status": "INCONCLUSIVE",
+            "original_hash": xgmj1_sha256(original[0]),
+        }
+    mutated = [_trial_projection(report.model_dump(mode="json")) for report in mutated_reports]
+    if mutated[0] != mutated[1]:
+        return {"case_id": case.metadata.id, "mutation_id": "replace_le_with_lt", "status": "MUTATED_NONDETERMINISTIC"}
+    original_hash = xgmj1_sha256(original[0])
+    mutated_hash = xgmj1_sha256(mutated[0])
+    return {
+        "case_id": case.metadata.id,
+        "mutation_id": "replace_le_with_lt",
+        "status": "KILLED" if original_hash != mutated_hash or mutated_reports[0].status != CaseExecutionStatus.PASS else "WEAK",
+        "original_hash": original_hash,
+        "mutated_hash": mutated_hash,
+    }
 
 
 def promote_candidate(

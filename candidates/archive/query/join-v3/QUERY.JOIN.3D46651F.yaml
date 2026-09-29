@@ -1,0 +1,82 @@
+metadata:
+  id: QUERY.JOIN.3D46651F
+  title: Generated JOIN f158265a
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_f158265aaeaa
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: date
+    interaction: where
+    join_type: inner
+    null_side: none
+    predicate: less_equal
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '3'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '3'
+  strategy: pairwise
+  seed: null
+  input_hash: 0adeeb83b54dc42d23cfdaa1ad55dad43226bd3c02c11d62b9a2f485e3ff64e4
+oracle:
+  kind: known_result
+  reference: join-template-v3
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT DATE '2020-01-01' AS k UNION ALL SELECT DATE '2020-01-02'
+    AS k UNION ALL SELECT DATE '2020-01-04' AS k) a JOIN (SELECT DATE '2020-01-02'
+    AS k, 'right-row' AS label UNION ALL SELECT DATE '2020-01-04' AS k, 'right-row'
+    AS label UNION ALL SELECT DATE '2020-01-05' AS k, 'right-row' AS label) b ON a.k
+    <= b.k UNION ALL SELECT DATE '2020-01-02' AS left_key, DATE '2020-01-02' AS right_key,
+    'drop-row' AS label) q WHERE q.label = 'right-row' OR q.label IS NULL
+  expected:
+    rows:
+    - - '2020-01-01'
+      - '2020-01-02'
+      - right-row
+    - - '2020-01-01'
+      - '2020-01-04'
+      - right-row
+    - - '2020-01-01'
+      - '2020-01-05'
+      - right-row
+    - - '2020-01-02'
+      - '2020-01-02'
+      - right-row
+    - - '2020-01-02'
+      - '2020-01-04'
+      - right-row
+    - - '2020-01-02'
+      - '2020-01-05'
+      - right-row
+    - - '2020-01-04'
+      - '2020-01-04'
+      - right-row
+    - - '2020-01-04'
+      - '2020-01-05'
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: bb9aa409099fbfe1385aea887ffabdcc9290a28a1f2faeebb72d5d95647ef891
+  static_validation_hash: 39e4d3d995307c2cd3dc00150d642f94a6fcbec0c307a8fe31b13468b0ebf11b
+  trial_run_hash: 7c898c768f64c2d497f60bcddb15c2d9aef6274365fd6dc5a926aa8256521ec3
+  trial_artifact_sha256: 665f10315257f301335e14a9bafd0ac4a3a0627fb9f01881c0fcf67c54e15fae
+  trial_run_ref: QUERY.JOIN.3D46651F/bb9aa409099fbfe1385aea887ffabdcc9290a28a1f2faeebb72d5d95647ef891.json

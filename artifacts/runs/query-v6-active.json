@@ -1,0 +1,1131 @@
+{
+  "cases": [
+    {
+      "case_id": "QUERY.AGGREGATE_01_COUNT",
+      "case_source_hash": "5f90ad178ce4db07563cc6c257808312f7c3e644074f2c110cf0c58c24422abc",
+      "duration_ms": 2.423,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "aggregate_01_count.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "BIGINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.293,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "b68f26285d48033f8bbe13b55f26ff62fffd54836bfa09ec0982a17a0881a91f",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "aggregate"
+      ],
+      "title": "COUNT over derived rows"
+    },
+    {
+      "case_id": "QUERY.AGGREGATE_02_MIN",
+      "case_source_hash": "ea14666caf9d0b309f08baf2c3fb13018e2bda9c3550da1457ee854fa5b1e531",
+      "duration_ms": 3.041,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "aggregate_02_min.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.876,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "541d8d3f68b2ab9f3a27664f72afe9cb90aec0cd0e111bbeb93e9d62c6fc72d7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "aggregate"
+      ],
+      "title": "MIN over derived rows"
+    },
+    {
+      "case_id": "QUERY.BASIC_01_CONSTANT",
+      "case_source_hash": "7abceeb44c93d79c6fae6adc827f55d042912dfdec4a012772b62fb47524cc31",
+      "duration_ms": 2.489,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "basic_01_constant.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.346,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "541d8d3f68b2ab9f3a27664f72afe9cb90aec0cd0e111bbeb93e9d62c6fc72d7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "basic"
+      ],
+      "title": "SELECT constant"
+    },
+    {
+      "case_id": "QUERY.BASIC_02_ALIAS",
+      "case_source_hash": "8881a97904168e2ae2e07505de430854e77a1c6ec60a0d18b0f37d76dff972a0",
+      "duration_ms": 3.148,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "basic_02_alias.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "ANSWER"
+          ],
+          "duration_ms": 2.955,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "fddc62089839d3eee6fa09ea8b79c120ca513816c122dffd6064cf9facb480a3",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "basic"
+      ],
+      "title": "Select with alias"
+    },
+    {
+      "case_id": "QUERY.BASIC_03_ARITHMETIC",
+      "case_source_hash": "186bcf3c112d5c62900c40b09e3fbb1ca0afcfa30a28167b37365ff97989667e",
+      "duration_ms": 2.927,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "basic_03_arithmetic.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "BIGINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.706,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "f445ab26886f7244fedcf0bb915f5ae1638b2040d47db72c49aa4188ce8bf4e9",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "basic"
+      ],
+      "title": "Integer arithmetic"
+    },
+    {
+      "case_id": "QUERY.BASIC_04_NULL",
+      "case_source_hash": "68aabe105782e87576b0ebec91f854767adbe3ec07327ed2eed9e5809dec0c67",
+      "duration_ms": 7.26,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "basic_04_null.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "INTEGER"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 6.921,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "83cdc79d4daa1e3c2288c80fbdd3dd4f03e94544dc1817ad618536153a6399dc",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "basic",
+        "null"
+      ],
+      "title": "Typed NULL"
+    },
+    {
+      "case_id": "QUERY.BASIC_05_CASE",
+      "case_source_hash": "e2f464689eb8f23746a0bd4b03c08436523056fdfd8da1d6b0da24f8e3de48eb",
+      "duration_ms": 3.161,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "basic_05_case.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.902,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "541d8d3f68b2ab9f3a27664f72afe9cb90aec0cd0e111bbeb93e9d62c6fc72d7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "basic"
+      ],
+      "title": "CASE expression"
+    },
+    {
+      "case_id": "QUERY.ERROR_01_MISSING_TABLE",
+      "case_source_hash": "7bc89a9d3e7701f6df30dee60e0c2d2f8bb0501c54ad8075047c3766e6efc3a0",
+      "duration_ms": 3.637,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "error_01_missing_table.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [],
+          "columns": [],
+          "duration_ms": 3.545,
+          "error": "[E5021 L1 C48] 表或视图XGT_QUERY_MVP_MISSING_TABLE不存在",
+          "error_code": "E5021",
+          "error_type": "OperationalError",
+          "id": "q1",
+          "logical_types": [],
+          "result_rows": null,
+          "result_sha256": null,
+          "row_count": null,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "error"
+      ],
+      "title": "Expected missing table error"
+    },
+    {
+      "case_id": "QUERY.FILTER_01_WHERE",
+      "case_source_hash": "b4642c49235c5ce2193a264b8c732ee8888df479066a640ba244f9a77d9a6e43",
+      "duration_ms": 2.971,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "filter_01_where.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.816,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "541d8d3f68b2ab9f3a27664f72afe9cb90aec0cd0e111bbeb93e9d62c6fc72d7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "filter"
+      ],
+      "title": "WHERE predicate"
+    },
+    {
+      "case_id": "QUERY.FILTER_02_BETWEEN",
+      "case_source_hash": "298b674e98d04ed63798821e53919f319627d1714573dc7beb65eec2e4d5c794",
+      "duration_ms": 2.574,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "filter_02_between.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.441,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "b68f26285d48033f8bbe13b55f26ff62fffd54836bfa09ec0982a17a0881a91f",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "filter"
+      ],
+      "title": "BETWEEN predicate"
+    },
+    {
+      "case_id": "QUERY.FILTER_03_IN",
+      "case_source_hash": "7f4d934b51f8c6bc8c2d0c3f24c90f5297bb6446f3a5cf7bc63516192152e84b",
+      "duration_ms": 2.568,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "filter_03_in.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.437,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "b68f26285d48033f8bbe13b55f26ff62fffd54836bfa09ec0982a17a0881a91f",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "filter"
+      ],
+      "title": "IN predicate"
+    },
+    {
+      "case_id": "QUERY.FILTER_04_LIKE",
+      "case_source_hash": "566978f4b27a16822ed2e44cd0fd38c61c70893bb8e813ae87cd03445067d5d7",
+      "duration_ms": 2.837,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "filter_04_like.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "VARCHAR"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.677,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "d9841b9f9919668c5541b1e1464afdf73fe2dacfcf893f030a1d697d06343ab8",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "filter"
+      ],
+      "title": "LIKE predicate"
+    },
+    {
+      "case_id": "QUERY.FILTER_05_IS_NULL",
+      "case_source_hash": "5fc1840a387d10c8654a3f9fb39bac3dc0fbddaa881f0398df174508f04586ae",
+      "duration_ms": 3.518,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "filter_05_is_null.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 3.323,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "541d8d3f68b2ab9f3a27664f72afe9cb90aec0cd0e111bbeb93e9d62c6fc72d7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "filter",
+        "null"
+      ],
+      "title": "IS NULL predicate"
+    },
+    {
+      "case_id": "QUERY.JOIN_01_INNER",
+      "case_source_hash": "5997af06093f66f18d3382c349172a16ac7408d94dc0fc50a0a03498a18b8c34",
+      "duration_ms": 2.802,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "join_01_inner.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT",
+            "VARCHAR"
+          ],
+          "columns": [
+            "N",
+            "LABEL"
+          ],
+          "duration_ms": 2.66,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int",
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "af6ff4645ab60040e6dd46878a966f7637a70c9bae6f1f8697d3eb26d10b5e3c",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "join"
+      ],
+      "title": "INNER JOIN derived rows"
+    },
+    {
+      "case_id": "QUERY.JOIN_02_LEFT",
+      "case_source_hash": "f0ffa7046b8fac7b9cec022cd3b4787ca743d4318f81c5f4103df0ce611a4b4e",
+      "duration_ms": 2.716,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "join_02_left.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT",
+            "TINYINT",
+            "VARCHAR"
+          ],
+          "columns": [
+            "N",
+            "N",
+            "LABEL"
+          ],
+          "duration_ms": 2.582,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int",
+            "int",
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "4db40e73b32c64389e6779c4409bd3d954e5519e48b697a2e6e23e9bfb4e8b11",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "join"
+      ],
+      "title": "LEFT JOIN derived rows"
+    },
+    {
+      "case_id": "QUERY.ORDERING_01_DISTINCT",
+      "case_source_hash": "96cf1afb06021598f82ca14886c6f27c013e1e61fb64e53bc50e205960fd5ac2",
+      "duration_ms": 2.757,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "ordering_01_distinct.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.559,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "541d8d3f68b2ab9f3a27664f72afe9cb90aec0cd0e111bbeb93e9d62c6fc72d7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "ordering"
+      ],
+      "title": "DISTINCT rows"
+    },
+    {
+      "case_id": "QUERY.ORDERING_02_ORDER",
+      "case_source_hash": "41da33ebc541576533ca44766b2ab159ef6b1d3b2d54562c4718ec35bee20f4d",
+      "duration_ms": 2.767,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "ordering_02_order.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.638,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "7dafc06b8e3a31b2150260aa0fa868028ae38d4c83055a596828a2a9cd141a4c",
+          "row_count": 2,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "ordering"
+      ],
+      "title": "ORDER BY rows"
+    },
+    {
+      "case_id": "QUERY.SET_01_UNION",
+      "case_source_hash": "47908a45b0d89566f822926061015d16b6cf5a6164e1f647ee304d5e1f55f8cf",
+      "duration_ms": 4.618,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "set_01_union.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 4.446,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "7dafc06b8e3a31b2150260aa0fa868028ae38d4c83055a596828a2a9cd141a4c",
+          "row_count": 2,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "set"
+      ],
+      "title": "UNION distinct"
+    },
+    {
+      "case_id": "QUERY.SET_02_UNION_ALL",
+      "case_source_hash": "9ed4e969c29c75b6497e81923cf84f7ce6916d1342e69ac5b8d21b6d51867bfa",
+      "duration_ms": 2.409,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "set_02_union_all.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.277,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "750432afda2bd9bc04328e3cffb98a2b7d74e8262d3a68488f94cd25db72a63d",
+          "row_count": 2,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "set"
+      ],
+      "title": "UNION ALL row sort"
+    },
+    {
+      "case_id": "QUERY.STRING_01_UPPER",
+      "case_source_hash": "e9384ffe33b5cfe69842140ba0bd5c4cd30bd46953d5e5c17b204caf655bac2c",
+      "duration_ms": 2.574,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "string_01_upper.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "VARCHAR"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.381,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "d44a8ad12bc8847537dffcef7b603c7833be1ae53d3a46fceb7a070bb424acf6",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "string"
+      ],
+      "title": "UPPER function"
+    },
+    {
+      "case_id": "QUERY.STRING_02_LOWER",
+      "case_source_hash": "d46aee9dc75b80fa566244a505adca87bdaae0b318a72a5341b659c9b5a2f7c5",
+      "duration_ms": 2.97,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "string_02_lower.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "VARCHAR"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.825,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "d9841b9f9919668c5541b1e1464afdf73fe2dacfcf893f030a1d697d06343ab8",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "string"
+      ],
+      "title": "LOWER function"
+    },
+    {
+      "case_id": "QUERY.STRING_03_LENGTH",
+      "case_source_hash": "14e930bf64477faeb622d3a7a974035b6fa6680c0b55cebd3cae2e8fb48ff379",
+      "duration_ms": 2.293,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "string_03_length.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "INTEGER"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.176,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "2762c6dffc97db18e8a86eb192614584408c6a7ceecccd0a8f0e79d54438d688",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "string"
+      ],
+      "title": "LENGTH function"
+    },
+    {
+      "case_id": "QUERY.STRING_04_CONCAT",
+      "case_source_hash": "8b5febc91749e90ddbfd8cb250c4e2c56ced67bcb1a1feef1580c41bd1bc2bdd",
+      "duration_ms": 2.776,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "string_04_concat.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "VARCHAR"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.628,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "d9841b9f9919668c5541b1e1464afdf73fe2dacfcf893f030a1d697d06343ab8",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "string"
+      ],
+      "title": "CONCAT function"
+    },
+    {
+      "case_id": "QUERY.STRING_05_UNICODE",
+      "case_source_hash": "3006ec832717efc83c2193323af9d90d928ed5eb1d47ad91427e7cb0b359b9d6",
+      "duration_ms": 3.469,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "string_05_unicode.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "VARCHAR"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 3.227,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "a783ef4e269393b5e219fe0356e37932d06dec586f3cd31c58a9afaa2b20e8e5",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "string"
+      ],
+      "title": "Unicode literal"
+    },
+    {
+      "case_id": "QUERY.STRING_06_QUOTE",
+      "case_source_hash": "5862bedb054e46e5735ce3cef48758945b46ec51d7c9c4572232891785b87732",
+      "duration_ms": 3.083,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "string_06_quote.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "VARCHAR"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.899,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "string"
+          ],
+          "result_rows": null,
+          "result_sha256": "29bd24279a3e645f8de4f3d784ef1434349f545651f711c381777db587c85926",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "string"
+      ],
+      "title": "Escaped quote literal"
+    },
+    {
+      "case_id": "QUERY.SUBQUERY_01_SCALAR",
+      "case_source_hash": "2703bc4a5188676cf1333a93b3ee107d576f4322060b9e8004e3bf9754de1623",
+      "duration_ms": 2.55,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "subquery_01_scalar.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.414,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "b68f26285d48033f8bbe13b55f26ff62fffd54836bfa09ec0982a17a0881a91f",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "subquery"
+      ],
+      "title": "Scalar subquery"
+    },
+    {
+      "case_id": "QUERY.SUBQUERY_02_IN",
+      "case_source_hash": "7ae4cbacd220e9fb017305f7417a22964f35e537de7531e58e82be4ad6e4b41f",
+      "duration_ms": 2.78,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "subquery_02_in.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.648,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "541d8d3f68b2ab9f3a27664f72afe9cb90aec0cd0e111bbeb93e9d62c6fc72d7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "subquery"
+      ],
+      "title": "IN subquery"
+    },
+    {
+      "case_id": "QUERY.SUBQUERY_03_DERIVED",
+      "case_source_hash": "d09f01c35b211a94eb0decef4d24227fc390ddf57a93a2ba1471530e2c576e1d",
+      "duration_ms": 2.555,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "subquery_03_derived.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TINYINT"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.39,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "int"
+          ],
+          "result_rows": null,
+          "result_sha256": "1e218a8d3479415a2cc40d91ede4176fc8e70126df0dde1fbc77f2b305220ad7",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "subquery"
+      ],
+      "title": "Derived table"
+    },
+    {
+      "case_id": "QUERY.TEMPORAL_01_DATE",
+      "case_source_hash": "a9fd4e412695feb8e4993e0d25963bf4a030cc1f838096f04dc1c8189e05a84e",
+      "duration_ms": 2.872,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "temporal_01_date.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "DATE"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.732,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "date"
+          ],
+          "result_rows": null,
+          "result_sha256": "b7113df1eac90b4435b8dc87c189418acb012d28ccb8d2da51363372dca7ad14",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "temporal"
+      ],
+      "title": "DATE cast"
+    },
+    {
+      "case_id": "QUERY.TEMPORAL_02_TIME",
+      "case_source_hash": "ad2ea5cb20e2e3c0167562f49ddfdf83a3525600835de3ed40ce8e86f9dec0e8",
+      "duration_ms": 2.786,
+      "error": null,
+      "failure_type": null,
+      "feature": "query",
+      "source_file": "temporal_02_time.yaml",
+      "status": "PASS",
+      "steps": [
+        {
+          "column_types": [
+            "TIME"
+          ],
+          "columns": [
+            "VALUE"
+          ],
+          "duration_ms": 2.648,
+          "error": null,
+          "error_code": null,
+          "error_type": null,
+          "id": "q1",
+          "logical_types": [
+            "time"
+          ],
+          "result_rows": null,
+          "result_sha256": "05c7875d400c8fefa593a7aec945cc9083d1d9c5c3496dbd5544798e01854445",
+          "row_count": 1,
+          "sqlstate": null,
+          "status": "PASS"
+        }
+      ],
+      "tags": [
+        "temporal"
+      ],
+      "title": "TIME cast"
+    }
+  ],
+  "finished_at": "2026-09-29T06:31:37.513894Z",
+  "git_commit": "350659ab6ccd9f3525557342612fc9835bd57c61",
+  "run_id": "f31e1e083647463f903f82dda2910a6e",
+  "schema_version": "1",
+  "started_at": "2026-09-29T06:31:11.998657Z",
+  "status": "PASS",
+  "target": {
+    "contract_set_id": "c1fb2d3586a70dd627f8da950dbe900847837f48cb33ece865c0aa0ae85e911a",
+    "database_alias": "SYSTEM",
+    "host_hash": "589e9fd1967699e3ed31821c270093155cd076a7344e44c48507c0cb7d6e02d0",
+    "sql_runtime_profile_id": "5ea8f183395d637fd37366173abe1722b5f6a9744f3ce5c895115dbafd068fd0"
+  }
+}

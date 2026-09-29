@@ -1,0 +1,56 @@
+metadata:
+  id: QUERY.JOIN.5022BD6B
+  title: Generated JOIN 2e35d11b
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_2e35d11b2229
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: int
+    interaction: none
+    join_type: cross
+    null_side: none
+    predicate: none
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '3'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '3'
+  strategy: pairwise
+  seed: null
+  input_hash: 531b8579211710c2445662e1b737f2127681dc41bf75cdfc23eac0b8c0d5fe7c
+oracle:
+  kind: known_result
+  reference: join-template-v3
+steps:
+- id: q1
+  kind: query
+  sql: SELECT a.k AS left_key, b.k AS right_key, b.label FROM (SELECT 2 AS k) a CROSS
+    JOIN (SELECT 2 AS k, 'right-row' AS label) b
+  expected:
+    rows:
+    - - 2
+      - 2
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 612e8dc8735b681b4a0b636a2feb0cd6a004e2e58d3e5ab37f2e8d268707d36c
+  static_validation_hash: fbe7d0a8e0af775c65207636ed21d10722f9b9bf037b11b69dc7bcd07df3fbea
+  trial_run_hash: f3a143b1a4e0275dce399dcffdc3304af4c4acd39539fac052e426906a83a469
+  trial_artifact_sha256: 9d43ffcd25fc8a5e8893c667f955ccfca2a3b295213dfa2762493665531cdacb
+  trial_run_ref: QUERY.JOIN.5022BD6B/612e8dc8735b681b4a0b636a2feb0cd6a004e2e58d3e5ab37f2e8d268707d36c.json

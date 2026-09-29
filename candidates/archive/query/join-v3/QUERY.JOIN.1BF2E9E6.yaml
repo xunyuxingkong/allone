@@ -1,0 +1,60 @@
+metadata:
+  id: QUERY.JOIN.1BF2E9E6
+  title: Generated JOIN 2c10a204
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_2c10a204e525
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: date
+    interaction: subquery
+    join_type: inner
+    null_side: none
+    predicate: equality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '3'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '3'
+  strategy: pairwise
+  seed: null
+  input_hash: 471b5efa0e8146d790fb5ab413708e23174d2266d7b2b401cbb135ea8b08e8f9
+oracle:
+  kind: known_result
+  reference: join-template-v3
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT DATE '2020-01-02' AS k) a JOIN (SELECT DATE '2020-01-02'
+    AS k, 'right-row' AS label) b ON a.k = b.k UNION ALL SELECT DATE '2020-01-02'
+    AS left_key, DATE '2020-01-02' AS right_key, 'drop-row' AS label) q WHERE EXISTS
+    (SELECT 1 FROM (SELECT 1 AS marker) probe WHERE probe.marker = 1 AND (q.label
+    = 'right-row' OR q.label IS NULL))
+  expected:
+    rows:
+    - - '2020-01-02'
+      - '2020-01-02'
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 39eb61ce6891b0d631ab86fdd6e5b14e04a0ba72bf81852c733931a373a5dfa3
+  static_validation_hash: 15e7edb40307c0b6f28166741fd4b83e01ae45ade7e72ebf4e797f0c254629bb
+  trial_run_hash: 89bceec91d67e91926b7d7b6e8049ee95439d02d54705ddcbe19ccee34e16369
+  trial_artifact_sha256: 748839f1e5f7a890701645ac495bb47168ae2f207780bbb0c0fcc6fc7c6121e8
+  trial_run_ref: QUERY.JOIN.1BF2E9E6/39eb61ce6891b0d631ab86fdd6e5b14e04a0ba72bf81852c733931a373a5dfa3.json

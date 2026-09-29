@@ -32,7 +32,7 @@
     {
       "id": "q1",
       "kind": "query",
-      "sql": "SELECT a.n, b.label FROM (SELECT 1 AS n) a LEFT JOIN (SELECT 2 AS n, 'other' AS label) b ON a.n = b.n",
+      "sql": "SELECT a.n, b.n, b.label FROM (SELECT 1 AS n) a LEFT JOIN (SELECT 2 AS n, 'other' AS label) b ON a.n = b.n",
       "comparison": {
         "mode": "exact"
       },
@@ -40,6 +40,7 @@
         "rows": [
           [
             1,
+            null,
             null
           ]
         ]

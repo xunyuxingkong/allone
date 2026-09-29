@@ -1,0 +1,127 @@
+{
+  "candidate_count": 21,
+  "candidates": [
+    {
+      "case_id": "QUERY.JOIN.0D0BBF8C",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.203908E1",
+      "mutated_hash": "f40ce91a1779916bfd50d2e6930d9e6562285661b3c156e4e867a4c5280bc257",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "a4efdc2143ade9cd6211f40c4bc9b9caf631003df65f3222b9ca870af3791fd3",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.23229486",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.244FDDA1",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.26B774DD",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.274C0E9A",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.2833D345",
+      "mutated_hash": "6a6d92471abde0b3a042a371fe27468dbf1c854fd467a478242355f3de59648b",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "2fa2484c4c86bd7edc7a726d6f0645df347b12a47344bca8a83cca8ef729e8a1",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.3B332CE4",
+      "mutated_hash": "d5b2d8dbb7388f3832a99bea936c874deeebb74b276e578e43dbee15e536221a",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "6c3c44b3d9b02d0d3498d32bc025aaf2ac648acbc86ee2b64b23695cd5a61e52",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.4CEF656C",
+      "mutated_hash": "af09057a610bf42197e64190eb81d7bfd3d3e1ba939b2eb7ff82e2ec3a40daa5",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "243450d3bca533d8207f9a1f85b6a4c5a5ed740ff1865cd5148d001dee8e75dd",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.593A35D9",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.5C2BA314",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.5F6BFA55",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.66220C62",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.79CE12B8",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.94E99B87",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.9AD85025",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.CD4C9BF1",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.D398430A",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.D9F1ECD9",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "QUERY.JOIN.DF308258",
+      "mutated_hash": "f3e74fd8f0b26c9d2456076551ea402c9e48293d26fc42f5d7751600d92279bc",
+      "mutation_id": "replace_le_with_lt",
+      "original_hash": "26ff092343f7f1ecd4d048cd52102274699ea6be6ca3da72565c8eeb28d1a221",
+      "status": "KILLED"
+    },
+    {
+      "case_id": "QUERY.JOIN.E3E11FE7",
+      "mutation_id": "replace_le_with_lt",
+      "status": "NOT_APPLICABLE"
+    }
+  ],
+  "contract_set_id": "c1fb2d3586a70dd627f8da950dbe900847837f48cb33ece865c0aa0ae85e911a",
+  "runtime_profile_id": "5ea8f183395d637fd37366173abe1722b5f6a9744f3ce5c895115dbafd068fd0",
+  "status": "PASS",
+  "status_counts": {
+    "KILLED": 5,
+    "NOT_APPLICABLE": 16
+  }
+}

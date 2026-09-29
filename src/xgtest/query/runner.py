@@ -86,12 +86,14 @@ class QueryRunner:
         runtime_profile: dict[str, Any] | None = None,
         *,
         observer: Callable[[tuple[str, Any]], None] | None = None,
+        capture_result_rows: bool = False,
     ) -> None:
         if isinstance(session, XuguSession) and not session.read_only:
             raise RuntimeError("QUERY_SESSION_NOT_READ_ONLY")
         self.session = session
         self.runtime_profile = runtime_profile
         self.observer = observer
+        self.capture_result_rows = capture_result_rows
 
     def run_step(self, step: QueryStep) -> tuple[QueryStepReport, FailureType | None]:
         started = time.perf_counter()
@@ -108,15 +110,20 @@ class QueryRunner:
                 fields.update({"columns": stream.columns, "column_types": stream.column_types, "logical_types": stream.logical_types})
                 _validate_result_types(stream.column_types, stream.logical_types, self.runtime_profile)
                 row_count = 0
+                captured_rows: list[tuple[Any, ...]] = []
 
                 def counted_rows():
                     nonlocal row_count
                     for row in stream.rows:
                         row_count += 1
+                        if self.capture_result_rows:
+                            captured_rows.append(tuple(row))
                         yield row
 
                 digest = rows_sha256_stream(counted_rows(), stream.column_types, len(stream.columns))
                 fields.update({"row_count": row_count, "result_sha256": digest})
+                if self.capture_result_rows:
+                    fields["result_rows"] = tuple(captured_rows)
                 fields["status"] = StepStatus.PASS if digest == expected["sha256"] else StepStatus.FAIL
             else:
                 result = self.session.query(step.sql, max_rows=MAX_MATERIALIZED_QUERY_ROWS)
@@ -125,6 +132,8 @@ class QueryRunner:
                 _validate_result_types(result.column_types, result.logical_types, self.runtime_profile)
                 fields["row_count"] = len(result.rows)
                 fields["result_sha256"] = rows_sha256(list(result.rows), result.column_types, len(result.columns))
+                if self.capture_result_rows:
+                    fields["result_rows"] = tuple(tuple(row) for row in result.rows)
                 if isinstance(step.expected, ExpectedError):
                     fields["status"] = StepStatus.FAIL
                     fields["error"] = "EXPECTED_ERROR_NOT_RAISED"
@@ -193,6 +202,7 @@ def _case_worker(
     case_payload: dict[str, Any],
     config_payload: dict[str, str],
     runtime_profile: dict[str, Any] | None,
+    capture_result_rows: bool,
     channel: Connection,
 ) -> None:
     """Child-process entry point. A terminated worker owns and loses its session."""
@@ -206,6 +216,7 @@ def _case_worker(
             session,
             runtime_profile,
             observer=lambda event: channel.send(event),
+            capture_result_rows=capture_result_rows,
         )
         session = None
         channel.send(("result", report.model_dump(mode="json")))
@@ -256,9 +267,15 @@ def _run_case_on_session(
     runtime_profile: dict[str, Any] | None,
     *,
     observer: Callable[[tuple[str, Any]], None] | None = None,
+    capture_result_rows: bool = False,
 ) -> QueryCaseReport:
     try:
-        report = QueryRunner(session, runtime_profile, observer=observer).run_case(case)
+        report = QueryRunner(
+            session,
+            runtime_profile,
+            observer=observer,
+            capture_result_rows=capture_result_rows,
+        ).run_case(case)
     except Exception as error:
         details = extract_error(error)
         report = QueryCaseReport(
@@ -292,12 +309,14 @@ def run_query_case_isolated(
     case: QueryCaseInput,
     config: XuguConnectionConfig,
     runtime_profile: dict[str, Any] | None,
+    *,
+    capture_result_rows: bool = False,
 ) -> QueryCaseReport:
     started = time.monotonic()
     try:
         payload = supervise_worker(
             _case_worker,
-            (case.model_dump(mode="json"), config.__dict__, runtime_profile),
+            (case.model_dump(mode="json"), config.__dict__, runtime_profile, capture_result_rows),
             timeout_seconds=parse_timeout_seconds(case.metadata.timeout),
         )
         return QueryCaseReport.model_validate_json(json.dumps(payload))

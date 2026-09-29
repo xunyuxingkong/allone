@@ -112,6 +112,22 @@
           "title": "Logical Types",
           "type": "array"
         },
+        "result_rows": {
+          "anyOf": [
+            {
+              "items": {
+                "items": {},
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Rows"
+        },
         "result_sha256": {
           "anyOf": [
             {

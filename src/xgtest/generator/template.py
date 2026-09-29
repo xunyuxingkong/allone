@@ -10,7 +10,7 @@ from xgtest.design.model import TestModel
 
 
 TEMPLATE_ID = "query.join.default"
-TEMPLATE_VERSION = "2"
+TEMPLATE_VERSION = "4"
 
 # Ordered values let every supported datatype express matching and unmatched rows.
 _MATCH = {"none": (2, 2), "equality": (2, 2), "inequality": (2, 3), "less_equal": (2, 3)}
@@ -23,7 +23,7 @@ def _value(datatype: str, rank: int) -> Any:
     if datatype == "int":
         return rank
     if datatype == "varchar":
-        return "abcd"[rank - 1]
+        return "abcdef"[rank - 1]
     if datatype == "date":
         return f"2020-01-{rank:02d}"
     raise ValueError(f"JOIN_TEMPLATE_DATATYPE_UNSUPPORTED: {datatype}")
@@ -32,7 +32,7 @@ def _value(datatype: str, rank: int) -> Any:
 def _literal(datatype: str, rank: int) -> str:
     value = _value(datatype, rank)
     if datatype == "int":
-        return str(value)
+        return f"CAST({value} AS INTEGER)"
     if datatype == "date":
         return f"DATE '{value}'"
     return f"'{value}'"
@@ -57,6 +57,16 @@ def _matches(predicate: str, left: int, right: int) -> bool:
 
 
 def _source_rows(join_type: str, predicate: str, null_side: str) -> tuple[list[int], list[int]]:
+    if predicate == "less_equal":
+        # Include a < b, a = b and a > b in the fixture. For outer-join
+        # assignments, keep the requested NULL-extension side observable.
+        if null_side == "both":
+            return [2, 3, 5], [3, 4, 1]
+        if null_side == "left":
+            return [2, 3, 4], [3, 4, 1]
+        if null_side == "right":
+            return [1, 2, 5], [2, 4]
+        return [1, 2, 4], [2, 4, 5]
     if null_side == "none":
         left, right = _MATCH[predicate]
         return [left], [right]

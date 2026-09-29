@@ -1,0 +1,59 @@
+metadata:
+  id: QUERY.JOIN.CD4C9BF1
+  title: Generated JOIN 70a3df30
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_70a3df30f6b2
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: varchar
+    interaction: subquery
+    join_type: left
+    null_side: none
+    predicate: inequality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '4'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '4'
+  strategy: pairwise
+  seed: null
+  input_hash: dccf0decdc910db38c7d382df7e0f7f7aa3ad7183e58a48b59323307152ae813
+oracle:
+  kind: known_result
+  reference: join-template-v4
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT 'b' AS k) a LEFT JOIN (SELECT 'c' AS k, 'right-row'
+    AS label) b ON a.k <> b.k UNION ALL SELECT 'b' AS left_key, 'b' AS right_key,
+    'drop-row' AS label) q WHERE EXISTS (SELECT 1 FROM (SELECT 1 AS marker) probe
+    WHERE probe.marker = 1 AND (q.label = 'right-row' OR q.label IS NULL))
+  expected:
+    rows:
+    - - b
+      - c
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: d8c717c40a940b2566e069c89c010366c65b3faffe9e567bc5d02b694f578045
+  static_validation_hash: f20373dfc03a09dc5b50e5b62c1ceafd4a83619ba4412c3ef9e3e750e9df58d6
+  trial_run_hash: 7492bdf2b00e4fcbc88617b5c1b6d454030d16ed2ca8780af5b8de1c6fcd33f4
+  trial_artifact_sha256: 826b077021c7d5f6da9d8a73db0c2544b2712fbc96b4e5bfa4868beac066917e
+  trial_run_ref: QUERY.JOIN.CD4C9BF1/d8c717c40a940b2566e069c89c010366c65b3faffe9e567bc5d02b694f578045.json

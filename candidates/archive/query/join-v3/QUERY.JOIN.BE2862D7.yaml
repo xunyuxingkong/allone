@@ -1,0 +1,73 @@
+metadata:
+  id: QUERY.JOIN.BE2862D7
+  title: Generated JOIN d29b7d9c
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_d29b7d9cb12f
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: date
+    interaction: where
+    join_type: left
+    null_side: right
+    predicate: less_equal
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '3'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '3'
+  strategy: pairwise
+  seed: null
+  input_hash: 51bdb34e94f95242af95366ab6810eafa2a7e1e4224d3e44bf23b26be96b115c
+oracle:
+  kind: known_result
+  reference: join-template-v3
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT DATE '2020-01-01' AS k UNION ALL SELECT DATE '2020-01-02'
+    AS k UNION ALL SELECT DATE '2020-01-05' AS k) a LEFT JOIN (SELECT DATE '2020-01-02'
+    AS k, 'right-row' AS label UNION ALL SELECT DATE '2020-01-04' AS k, 'right-row'
+    AS label) b ON a.k <= b.k UNION ALL SELECT DATE '2020-01-02' AS left_key, DATE
+    '2020-01-02' AS right_key, 'drop-row' AS label) q WHERE q.label = 'right-row'
+    OR q.label IS NULL
+  expected:
+    rows:
+    - - '2020-01-01'
+      - '2020-01-02'
+      - right-row
+    - - '2020-01-01'
+      - '2020-01-04'
+      - right-row
+    - - '2020-01-02'
+      - '2020-01-02'
+      - right-row
+    - - '2020-01-02'
+      - '2020-01-04'
+      - right-row
+    - - '2020-01-05'
+      - null
+      - null
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: d2ed335dcbe37652cef47b1abf78eec09771a65d159e338b373d9cc81b65d459
+  static_validation_hash: 278d199fa7186e63c0c377edf1fd2f0ffcebe16461f50985008fbf9419bbb472
+  trial_run_hash: 9f7a8a044fa775287394feb79d1c7a4e9671f5a9df9db7350997388f1c37ece1
+  trial_artifact_sha256: 90949c8c5be779b81076663667ec650daab02695fb808af06c52e6cd60f12e12
+  trial_run_ref: QUERY.JOIN.BE2862D7/d2ed335dcbe37652cef47b1abf78eec09771a65d159e338b373d9cc81b65d459.json

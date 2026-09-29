@@ -1,0 +1,23 @@
+{
+  "ai_technical_review_pass_count": 21,
+  "ai_technical_review_ref": "审核意见/XG_DB_Test_JOIN_v3_AI_Technical_Review.md",
+  "ai_technical_review_rework_count": 0,
+  "ai_technical_review_status": "PASS_WITH_REVIEW_NOTES",
+  "candidate_review_status": "PENDING_HUMAN_REVIEW",
+  "contract_set_id": "00cc4ed20a97e6f84a24137744534d414870cb4bad905dc118af472d10ce8adb",
+  "current_active_pairwise_missing": 120,
+  "current_regression_artifact_sha256": "f4618de41d2e637956d57839878afd5c2b7d5a6003e622cd8f0f37effb73f0a1",
+  "current_regression_case_count": 30,
+  "current_regression_status": "PASS",
+  "model_version": "2",
+  "mutation_killed": 5,
+  "post_promotion_regression_status": "PENDING",
+  "previous_v2_runtime_profile_id": "474c848b8b28264c73838e337dcad3a056ad8df295504e976dc4ccc7fd237bac",
+  "promotion_status": "PENDING",
+  "real_xugu_double_trial_pass": 21,
+  "reason": "21 v3 candidates passed static validation, mutation validation, double trial and AI technical review; independent human review, promotion and post-promotion regression remain pending.",
+  "runtime_profile_id": "310d95205a3b6c68c014e5b19e25a70879bc60ab0411c0ecc2d0d5b17da998fb",
+  "static_validated_candidates": 21,
+  "status": "HOLD",
+  "template_version": "3"
+}

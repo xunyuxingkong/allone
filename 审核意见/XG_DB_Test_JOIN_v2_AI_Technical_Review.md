@@ -13,27 +13,27 @@
 
 | 候选 | 维度：JOIN / predicate / datatype / null_side / interaction | 独有 pairwise 要求数 | 技术结论 |
 |---|---|---:|---|
-| [QUERY.JOIN.1587A38D](../candidates/query/join/QUERY.JOIN.1587A38D.yaml) | right / less_equal / varchar / left / none | 8 | 暂缓：缺等值边界 |
-| [QUERY.JOIN.4C8C237C](../candidates/query/join/QUERY.JOIN.4C8C237C.yaml) | left / less_equal / date / right / where | 4 | 暂缓：缺等值边界 |
-| [QUERY.JOIN.6D14282A](../candidates/query/join/QUERY.JOIN.6D14282A.yaml) | left / equality / date / none / group_by | 1 | 技术通过 |
-| [QUERY.JOIN.6DDD8395](../candidates/query/join/QUERY.JOIN.6DDD8395.yaml) | cross / none / int / none / none | 4 | 技术通过 |
-| [QUERY.JOIN.73205D44](../candidates/query/join/QUERY.JOIN.73205D44.yaml) | full / less_equal / int / left / group_by | 4 | 暂缓：缺等值边界 |
-| [QUERY.JOIN.7483C7E8](../candidates/query/join/QUERY.JOIN.7483C7E8.yaml) | full / equality / date / both / group_by | 1 | 技术通过 |
-| [QUERY.JOIN.844DC9C3](../candidates/query/join/QUERY.JOIN.844DC9C3.yaml) | full / equality / date / right / subquery | 1 | 技术通过 |
-| [QUERY.JOIN.90375A83](../candidates/query/join/QUERY.JOIN.90375A83.yaml) | right / equality / date / none / group_by | 2 | 技术通过 |
-| [QUERY.JOIN.92E8C7B5](../candidates/query/join/QUERY.JOIN.92E8C7B5.yaml) | full / inequality / varchar / right / group_by | 3 | 技术通过 |
-| [QUERY.JOIN.95FF02CF](../candidates/query/join/QUERY.JOIN.95FF02CF.yaml) | full / equality / date / none / group_by | 1 | 技术通过 |
-| [QUERY.JOIN.98AAF359](../candidates/query/join/QUERY.JOIN.98AAF359.yaml) | inner / inequality / varchar / none / group_by | 3 | 技术通过 |
-| [QUERY.JOIN.9C7749FA](../candidates/query/join/QUERY.JOIN.9C7749FA.yaml) | inner / less_equal / date / none / where | 3 | 暂缓：缺等值边界 |
-| [QUERY.JOIN.9D3FFA5C](../candidates/query/join/QUERY.JOIN.9D3FFA5C.yaml) | cross / none / varchar / none / where | 4 | 技术通过 |
-| [QUERY.JOIN.A8062588](../candidates/query/join/QUERY.JOIN.A8062588.yaml) | left / inequality / varchar / none / subquery | 5 | 技术通过 |
-| [QUERY.JOIN.ACD09E7C](../candidates/query/join/QUERY.JOIN.ACD09E7C.yaml) | full / equality / varchar / both / where | 5 | 技术通过 |
-| [QUERY.JOIN.B5FB1A92](../candidates/query/join/QUERY.JOIN.B5FB1A92.yaml) | cross / none / date / none / group_by | 4 | 技术通过 |
-| [QUERY.JOIN.D231B777](../candidates/query/join/QUERY.JOIN.D231B777.yaml) | full / inequality / date / both / none | 6 | 技术通过 |
-| [QUERY.JOIN.EC3FEEF0](../candidates/query/join/QUERY.JOIN.EC3FEEF0.yaml) | inner / equality / date / none / subquery | 1 | 技术通过 |
-| [QUERY.JOIN.ED774CF9](../candidates/query/join/QUERY.JOIN.ED774CF9.yaml) | full / less_equal / int / both / subquery | 5 | 暂缓：缺等值边界 |
-| [QUERY.JOIN.F1D5075C](../candidates/query/join/QUERY.JOIN.F1D5075C.yaml) | right / equality / date / left / subquery | 4 | 技术通过 |
-| [QUERY.JOIN.F6A1656D](../candidates/query/join/QUERY.JOIN.F6A1656D.yaml) | right / inequality / int / left / where | 8 | 技术通过 |
+| [QUERY.JOIN.1587A38D](../candidates/archive/query/join-v2/QUERY.JOIN.1587A38D.yaml) | right / less_equal / varchar / left / none | 8 | 暂缓：缺等值边界 |
+| [QUERY.JOIN.4C8C237C](../candidates/archive/query/join-v2/QUERY.JOIN.4C8C237C.yaml) | left / less_equal / date / right / where | 4 | 暂缓：缺等值边界 |
+| [QUERY.JOIN.6D14282A](../candidates/archive/query/join-v2/QUERY.JOIN.6D14282A.yaml) | left / equality / date / none / group_by | 1 | 技术通过 |
+| [QUERY.JOIN.6DDD8395](../candidates/archive/query/join-v2/QUERY.JOIN.6DDD8395.yaml) | cross / none / int / none / none | 4 | 技术通过 |
+| [QUERY.JOIN.73205D44](../candidates/archive/query/join-v2/QUERY.JOIN.73205D44.yaml) | full / less_equal / int / left / group_by | 4 | 暂缓：缺等值边界 |
+| [QUERY.JOIN.7483C7E8](../candidates/archive/query/join-v2/QUERY.JOIN.7483C7E8.yaml) | full / equality / date / both / group_by | 1 | 技术通过 |
+| [QUERY.JOIN.844DC9C3](../candidates/archive/query/join-v2/QUERY.JOIN.844DC9C3.yaml) | full / equality / date / right / subquery | 1 | 技术通过 |
+| [QUERY.JOIN.90375A83](../candidates/archive/query/join-v2/QUERY.JOIN.90375A83.yaml) | right / equality / date / none / group_by | 2 | 技术通过 |
+| [QUERY.JOIN.92E8C7B5](../candidates/archive/query/join-v2/QUERY.JOIN.92E8C7B5.yaml) | full / inequality / varchar / right / group_by | 3 | 技术通过 |
+| [QUERY.JOIN.95FF02CF](../candidates/archive/query/join-v2/QUERY.JOIN.95FF02CF.yaml) | full / equality / date / none / group_by | 1 | 技术通过 |
+| [QUERY.JOIN.98AAF359](../candidates/archive/query/join-v2/QUERY.JOIN.98AAF359.yaml) | inner / inequality / varchar / none / group_by | 3 | 技术通过 |
+| [QUERY.JOIN.9C7749FA](../candidates/archive/query/join-v2/QUERY.JOIN.9C7749FA.yaml) | inner / less_equal / date / none / where | 3 | 暂缓：缺等值边界 |
+| [QUERY.JOIN.9D3FFA5C](../candidates/archive/query/join-v2/QUERY.JOIN.9D3FFA5C.yaml) | cross / none / varchar / none / where | 4 | 技术通过 |
+| [QUERY.JOIN.A8062588](../candidates/archive/query/join-v2/QUERY.JOIN.A8062588.yaml) | left / inequality / varchar / none / subquery | 5 | 技术通过 |
+| [QUERY.JOIN.ACD09E7C](../candidates/archive/query/join-v2/QUERY.JOIN.ACD09E7C.yaml) | full / equality / varchar / both / where | 5 | 技术通过 |
+| [QUERY.JOIN.B5FB1A92](../candidates/archive/query/join-v2/QUERY.JOIN.B5FB1A92.yaml) | cross / none / date / none / group_by | 4 | 技术通过 |
+| [QUERY.JOIN.D231B777](../candidates/archive/query/join-v2/QUERY.JOIN.D231B777.yaml) | full / inequality / date / both / none | 6 | 技术通过 |
+| [QUERY.JOIN.EC3FEEF0](../candidates/archive/query/join-v2/QUERY.JOIN.EC3FEEF0.yaml) | inner / equality / date / none / subquery | 1 | 技术通过 |
+| [QUERY.JOIN.ED774CF9](../candidates/archive/query/join-v2/QUERY.JOIN.ED774CF9.yaml) | full / less_equal / int / both / subquery | 5 | 暂缓：缺等值边界 |
+| [QUERY.JOIN.F1D5075C](../candidates/archive/query/join-v2/QUERY.JOIN.F1D5075C.yaml) | right / equality / date / left / subquery | 4 | 技术通过 |
+| [QUERY.JOIN.F6A1656D](../candidates/archive/query/join-v2/QUERY.JOIN.F6A1656D.yaml) | right / inequality / int / left / where | 8 | 技术通过 |
 
 ## 明确需修复
 
@@ -57,4 +57,4 @@
 
 ## 门禁状态
 
-当前 21 条仍处于 `review` 生命周期状态，表示双跑后等待评审，不表示人工签署。建议先修复 5 条边界用例，并解决上述口径问题，再记录真实评审引用与晋级。
+本报告针对已归档的 JOIN v2 候选及其历史 Trial Artifact。v3 模板已补充 `less_equal` 等值边界，v2 候选不能代表 v3 验收；v3 候选需重新静态验证、Mutation Validation、当前 Contract/Profile 下真实双跑，再进入独立人工评审。

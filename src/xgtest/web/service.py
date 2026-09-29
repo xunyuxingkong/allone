@@ -88,7 +88,16 @@ class QueryReadService:
                     "case_id": report["case_id"],
                     "status": report["status"],
                     "steps": [
-                        {"id": step["id"], "status": step["status"], "row_count": step.get("row_count"), "result_sha256": step.get("result_sha256")}
+                        {
+                            "id": step["id"],
+                            "status": step["status"],
+                            "columns": step.get("columns", []),
+                            "column_types": step.get("column_types", []),
+                            "logical_types": step.get("logical_types", []),
+                            "row_count": step.get("row_count"),
+                            "result_rows": step.get("result_rows"),
+                            "result_sha256": step.get("result_sha256"),
+                        }
                         for step in report["steps"]
                     ],
                 }

@@ -20,7 +20,7 @@ from .design.model import load_test_model
 from .design.coverage import FileCoverageSource, coverage_gap
 from .generator.candidate import generate_candidates, static_validate_candidate
 from .generator.dedup import classify_duplicates
-from .generator.lifecycle import promote_candidate, trial_candidate
+from .generator.lifecycle import promote_candidate, trial_candidate, validate_candidate_mutation
 from .generator.review import record_review
 from .design.model import ConstraintRule, CoverageStrategy, Dimension, TestModel
 from .query.loader import load_query_directory
@@ -215,6 +215,20 @@ def _candidate_trial(args: argparse.Namespace) -> int:
     return 0
 
 
+def _candidate_mutation_validate(args: argparse.Namespace) -> int:
+    model = load_test_model(Path(args.model))
+    profile = load_profile(Path(args.runtime_profile))
+    config = XuguConnectionConfig.from_environment()
+    results = [
+        validate_candidate_mutation(path, model, config, profile)
+        for path in _candidate_paths(Path(args.path))
+    ]
+    applicable = [row for row in results if row["status"] != "NOT_APPLICABLE"]
+    passed = bool(applicable) and all(row["status"] == "KILLED" for row in applicable)
+    print(json.dumps({"candidates": results, "status": "PASS" if passed else "FAIL"}, ensure_ascii=False, sort_keys=True))
+    return 0 if passed else 1
+
+
 def _candidate_list(args: argparse.Namespace) -> int:
     from .query.loader import load_query_case
 
@@ -391,6 +405,11 @@ def main() -> None:
     candidate_trial_cmd.add_argument("--artifacts", default=root / "artifacts" / "trial-runs")
     candidate_trial_cmd.add_argument("--runtime-profile", required=True)
     candidate_trial_cmd.set_defaults(handler=_candidate_trial)
+    candidate_mutation_cmd = candidate_commands.add_parser("mutation-validate")
+    candidate_mutation_cmd.add_argument("path")
+    candidate_mutation_cmd.add_argument("--model", default=root / "models" / "query" / "join.yaml")
+    candidate_mutation_cmd.add_argument("--runtime-profile", required=True)
+    candidate_mutation_cmd.set_defaults(handler=_candidate_mutation_validate)
     candidate_list = candidate_commands.add_parser("list")
     candidate_list.add_argument("--path", default=root / "candidates" / "query" / "join")
     candidate_list.add_argument("--status", choices=("generated", "draft", "review", "active"))

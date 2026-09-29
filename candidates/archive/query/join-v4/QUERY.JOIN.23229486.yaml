@@ -1,0 +1,63 @@
+metadata:
+  id: QUERY.JOIN.23229486
+  title: Generated JOIN 24d97a23
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_24d97a23298d
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: date
+    interaction: group_by
+    join_type: full
+    null_side: both
+    predicate: equality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '4'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '4'
+  strategy: pairwise
+  seed: null
+  input_hash: 0d098c204a622053c4e5535cda633289be65d1a554c9325311948f8682a69ba9
+oracle:
+  kind: known_result
+  reference: join-template-v4
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT DATE '2020-01-02' AS k) a FULL OUTER JOIN (SELECT
+    DATE '2020-01-03' AS k, 'right-row' AS label) b ON a.k = b.k UNION ALL SELECT
+    a.k AS left_key, b.k AS right_key, b.label FROM (SELECT DATE '2020-01-02' AS k)
+    a FULL OUTER JOIN (SELECT DATE '2020-01-03' AS k, 'right-row' AS label) b ON a.k
+    = b.k) q GROUP BY q.left_key, q.right_key, q.label
+  expected:
+    rows:
+    - - '2020-01-02'
+      - null
+      - null
+    - - null
+      - '2020-01-03'
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: c04310824bd371411a61bb7d9027622ac9f50958c6ed08adffe0f9b8592fc290
+  static_validation_hash: b9593ba1b40013643051bd9767b9edd8303e723384c4d7e6c37ef47a38b94b91
+  trial_run_hash: 62c45c07885ab5fc5c97ad40e1e002369371999bd53e72a00cbb8511adff5521
+  trial_artifact_sha256: dc4a819a7b8a49c1bc5c728f0fe086c1ad2f2583373d88dbe15a23b8012e8e54
+  trial_run_ref: QUERY.JOIN.23229486/c04310824bd371411a61bb7d9027622ac9f50958c6ed08adffe0f9b8592fc290.json

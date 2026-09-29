@@ -1,8 +1,19 @@
 {
+  "capability_evidence_reused_from": "artifacts/capabilities/runtime-profile-evidence-v5.json",
   "capability_probe_cleanup": "VERIFIED",
-  "contract_set_id": "ff9fad1b73c500e67e782c180ef5190102605a48bb1e29cdd7e6df953040b596",
-  "profile_evidence_sha256": "6ac667d4d305d1586851cf2c98c8b55c25dbb6a80889082877aaedeab1f28965",
-  "runtime_profile_id": "474c848b8b28264c73838e337dcad3a056ad8df295504e976dc4ccc7fd237bac",
+  "contract_set_id": "c1fb2d3586a70dd627f8da950dbe900847837f48cb33ece865c0aa0ae85e911a",
+  "database_build_probe_ref": "artifacts/capabilities/xugu-show-build-time-v1.json",
+  "database_build_probe_sha256": "03c09d30160fc61fb37a01188cc04d8a6744c0565a8aa8dcab7d58e41461efcd",
+  "database_build_time": "2026-05-18 12:11:00",
+  "database_product": "Xugu",
+  "database_version": "BETA-11679_11665",
+  "integer_cast_probe_sha256": "a987b266b440e751df7ad7951cfaeab0256a77b55ec25adaa68ba9e46c8a49c0",
+  "integer_type_system_probe_sha256": "1e30a3ecbe165579cc9e5350e015d61b8fb9ba50b233c438ddac8907c7ce255f",
+  "previous_v3_runtime_profile_id": "310d95205a3b6c68c014e5b19e25a70879bc60ab0411c0ecc2d0d5b17da998fb",
+  "previous_v4_runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
+  "previous_v5_runtime_profile_id": "9161277ed4161237ff1804e505bad5071c9a73eca884ec92d88d55976f6afc54",
+  "profile_evidence_sha256": "b1fb93dc2c8255eadc41e4d474475b2ac382b2b88270b0e38c614d6d3e371521",
+  "runtime_profile_id": "5ea8f183395d637fd37366173abe1722b5f6a9744f3ce5c895115dbafd068fd0",
   "type_mapping_supported": [
     "bigint",
     "blob",
@@ -16,7 +27,6 @@
     "smallint",
     "text",
     "time",
-    "tinyint",
     "varchar"
   ],
   "type_mapping_unsupported": [

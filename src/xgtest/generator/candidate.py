@@ -16,7 +16,7 @@ from xgtest.query.loader import load_query_case
 
 
 GENERATOR_ID = "query_template_generator"
-GENERATOR_VERSION = "2"
+GENERATOR_VERSION = "4"
 
 
 def case_payload(model: TestModel, assignment: dict[str, str], strategy: str) -> dict[str, Any]:
@@ -60,7 +60,7 @@ def case_payload(model: TestModel, assignment: dict[str, str], strategy: str) ->
             "seed": None,
             "input_hash": input_hash,
         },
-        "oracle": {"kind": "known_result", "reference": "join-template-v2"},
+        "oracle": {"kind": "known_result", "reference": f"join-template-v{TEMPLATE_VERSION}"},
         "steps": [{
             "id": "q1",
             "kind": "query",
@@ -143,7 +143,7 @@ def static_validate_candidate(path: Path, model: TestModel) -> dict[str, Any]:
         or case.generation.template_version != TEMPLATE_VERSION
     ):
         raise ValueError("CANDIDATE_PROVENANCE_MISMATCH")
-    if case.oracle.kind != "known_result" or case.oracle.reference != "join-template-v2":
+    if case.oracle.kind != "known_result" or case.oracle.reference != f"join-template-v{TEMPLATE_VERSION}":
         raise ValueError("CANDIDATE_ORACLE_PROVENANCE_INVALID")
     if case.generation.model_id != model.model_id or case.generation.model_version != model.model_version:
         raise ValueError("CANDIDATE_MODEL_MISMATCH")

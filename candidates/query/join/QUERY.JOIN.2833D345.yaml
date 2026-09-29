@@ -1,0 +1,80 @@
+metadata:
+  id: QUERY.JOIN.2833D345
+  title: Generated JOIN 67bec63c
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_67bec63c1bde
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: int
+    interaction: group_by
+    join_type: full
+    null_side: left
+    predicate: less_equal
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '4'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '4'
+  strategy: pairwise
+  seed: null
+  input_hash: 188f69ae4e6f0fff050bfe6a796f04930a556e62013f83d32df6b110a1ffd565
+oracle:
+  kind: known_result
+  reference: join-template-v4
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT CAST(2 AS INTEGER) AS k UNION ALL SELECT CAST(3
+    AS INTEGER) AS k UNION ALL SELECT CAST(4 AS INTEGER) AS k) a FULL OUTER JOIN (SELECT
+    CAST(3 AS INTEGER) AS k, 'right-row' AS label UNION ALL SELECT CAST(4 AS INTEGER)
+    AS k, 'right-row' AS label UNION ALL SELECT CAST(1 AS INTEGER) AS k, 'right-row'
+    AS label) b ON a.k <= b.k UNION ALL SELECT a.k AS left_key, b.k AS right_key,
+    b.label FROM (SELECT CAST(2 AS INTEGER) AS k UNION ALL SELECT CAST(3 AS INTEGER)
+    AS k UNION ALL SELECT CAST(4 AS INTEGER) AS k) a FULL OUTER JOIN (SELECT CAST(3
+    AS INTEGER) AS k, 'right-row' AS label UNION ALL SELECT CAST(4 AS INTEGER) AS
+    k, 'right-row' AS label UNION ALL SELECT CAST(1 AS INTEGER) AS k, 'right-row'
+    AS label) b ON a.k <= b.k) q GROUP BY q.left_key, q.right_key, q.label
+  expected:
+    rows:
+    - - 2
+      - 3
+      - right-row
+    - - 2
+      - 4
+      - right-row
+    - - 3
+      - 3
+      - right-row
+    - - 3
+      - 4
+      - right-row
+    - - 4
+      - 4
+      - right-row
+    - - null
+      - 1
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 37f88e8085aef968a3a6c6b6314e2faba3352890a26a8c15212175b20b0c6a98
+  static_validation_hash: ae190a2fd71ed9a15b247a0698bde69a7e4711c29a48b12ed151f14f403dba21
+  trial_run_hash: 7a5860c0c31464c4ba25f1fa8204ddff10d03c2a828ff03ba896adf01f09b249
+  trial_artifact_sha256: a99e2c1fee4da725c7707b0a51c5d2cdd17f10c38258ed3634e7596396aaa396
+  trial_run_ref: QUERY.JOIN.2833D345/37f88e8085aef968a3a6c6b6314e2faba3352890a26a8c15212175b20b0c6a98.json
