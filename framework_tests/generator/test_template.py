@@ -19,7 +19,7 @@ def test_same_assignment_renders_identical_case_payload() -> None:
     second = case_payload(model, assignment, "pairwise")
     assert first == second
     assert first["metadata"]["status"] == "generated"
-    assert first["steps"][0]["expected"] == {"rows": [[1, None, None]]}
+    assert first["steps"][0]["expected"] == {"rows": [[2, None, None]]}
 
 
 def test_template_descriptor_matches_implementation_identity() -> None:

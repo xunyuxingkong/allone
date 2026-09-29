@@ -1,0 +1,33 @@
+{
+  "capability_probe_cleanup": "VERIFIED",
+  "contract_set_id": "ff9fad1b73c500e67e782c180ef5190102605a48bb1e29cdd7e6df953040b596",
+  "profile_evidence_sha256": "6ac667d4d305d1586851cf2c98c8b55c25dbb6a80889082877aaedeab1f28965",
+  "runtime_profile_id": "474c848b8b28264c73838e337dcad3a056ad8df295504e976dc4ccc7fd237bac",
+  "type_mapping_supported": [
+    "bigint",
+    "blob",
+    "boolean",
+    "char",
+    "date",
+    "double",
+    "float",
+    "int",
+    "integer",
+    "smallint",
+    "text",
+    "time",
+    "tinyint",
+    "varchar"
+  ],
+  "type_mapping_unsupported": [
+    "binary",
+    "datetime",
+    "decimal",
+    "number",
+    "numeric",
+    "raw",
+    "timestamp",
+    "timestamp_tz",
+    "varbinary"
+  ]
+}

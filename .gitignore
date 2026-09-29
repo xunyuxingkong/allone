@@ -12,3 +12,5 @@ tools/python-*/
 .diagram-preview-profile/
 /webui/node_modules/
 /webui/dist/
+.vite/
+*.tsbuildinfo

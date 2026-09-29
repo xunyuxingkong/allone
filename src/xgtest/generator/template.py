@@ -10,26 +10,73 @@ from xgtest.design.model import TestModel
 
 
 TEMPLATE_ID = "query.join.default"
-TEMPLATE_VERSION = "1"
+TEMPLATE_VERSION = "2"
+
+# Ordered values let every supported datatype express matching and unmatched rows.
+_MATCH = {"none": (2, 2), "equality": (2, 2), "inequality": (2, 3), "less_equal": (2, 3)}
+_UNMATCHED = {"equality": (2, 3), "inequality": (2, 2), "less_equal": (3, 2)}
+_EXTRA_RIGHT = {"equality": 1, "inequality": 2, "less_equal": 1}
+_EXTRA_LEFT = {"equality": 1, "inequality": 3, "less_equal": 4}
 
 
-def _typed_pair(datatype: str, predicate: str, null_side: str) -> tuple[str, str, Any, Any]:
+def _value(datatype: str, rank: int) -> Any:
     if datatype == "int":
-        left, right = (1, 1) if null_side == "none" and predicate in {"none", "equality"} else (1, 2)
-        if null_side != "none":
-            left, right = ((2, 1) if predicate == "range" else (1, 1) if predicate == "inequality" else (1, 2))
-        return f"{left}", f"{right}", left, right
+        return rank
     if datatype == "varchar":
-        left, right = ("a", "a") if null_side == "none" and predicate in {"none", "equality"} else ("a", "b")
-        if null_side != "none":
-            left, right = (("b", "a") if predicate == "range" else ("a", "a") if predicate == "inequality" else ("a", "b"))
-        return f"'{left}'", f"'{right}'", left, right
+        return "abcd"[rank - 1]
     if datatype == "date":
-        left, right = ("2020-01-01", "2020-01-01") if null_side == "none" and predicate in {"none", "equality"} else ("2020-01-01", "2020-01-02")
-        if null_side != "none":
-            left, right = (("2020-01-02", "2020-01-01") if predicate == "range" else ("2020-01-01", "2020-01-01") if predicate == "inequality" else ("2020-01-01", "2020-01-02"))
-        return f"DATE '{left}'", f"DATE '{right}'", left, right
+        return f"2020-01-{rank:02d}"
     raise ValueError(f"JOIN_TEMPLATE_DATATYPE_UNSUPPORTED: {datatype}")
+
+
+def _literal(datatype: str, rank: int) -> str:
+    value = _value(datatype, rank)
+    if datatype == "int":
+        return str(value)
+    if datatype == "date":
+        return f"DATE '{value}'"
+    return f"'{value}'"
+
+
+def _relation(datatype: str, ranks: list[int], *, right: bool) -> str:
+    selects = [
+        f"SELECT {_literal(datatype, rank)} AS k" + (", 'right-row' AS label" if right else "")
+        for rank in ranks
+    ]
+    return "(" + " UNION ALL ".join(selects) + ")"
+
+
+def _matches(predicate: str, left: int, right: int) -> bool:
+    if predicate == "none":
+        return True
+    if predicate == "equality":
+        return left == right
+    if predicate == "inequality":
+        return left != right
+    return left <= right
+
+
+def _source_rows(join_type: str, predicate: str, null_side: str) -> tuple[list[int], list[int]]:
+    if null_side == "none":
+        left, right = _MATCH[predicate]
+        return [left], [right]
+    if null_side == "both" or join_type in {"left", "right"}:
+        left, right = _UNMATCHED[predicate]
+        return [left], [right]
+    left, right = _MATCH[predicate]
+    if null_side == "left":
+        return [left], [right, _EXTRA_RIGHT[predicate]]
+    return [left, _EXTRA_LEFT[predicate]], [right]
+
+
+def _expected_rows(datatype: str, join_type: str, predicate: str, left: list[int], right: list[int]) -> list[list[Any]]:
+    matched = [(i, j) for i, a in enumerate(left) for j, b in enumerate(right) if _matches(predicate, a, b)]
+    rows: list[list[Any]] = [[_value(datatype, left[i]), _value(datatype, right[j]), "right-row"] for i, j in matched]
+    if join_type in {"left", "full"}:
+        rows.extend([_value(datatype, a), None, None] for i, a in enumerate(left) if not any(pair[0] == i for pair in matched))
+    if join_type in {"right", "full"}:
+        rows.extend([None, _value(datatype, b), "right-row"] for j, b in enumerate(right) if not any(pair[1] == j for pair in matched))
+    return rows
 
 
 def render_join(model: TestModel, assignment: dict[str, str]) -> dict[str, Any]:
@@ -39,50 +86,40 @@ def render_join(model: TestModel, assignment: dict[str, str]) -> dict[str, Any]:
     datatype = assignment["datatype"]
     null_side = assignment["null_side"]
     interaction = assignment["interaction"]
-    left_expr, right_expr, left_value, right_value = _typed_pair(datatype, predicate, null_side)
-    left_literal = f"SELECT {left_expr} AS k"
-    right_literal = f"SELECT {right_expr} AS k, 'right-row' AS label"
-    if predicate == "none":
-        on_clause = "1 = 1"
-    elif predicate == "equality":
-        on_clause = "a.k = b.k"
-    elif predicate == "inequality":
-        on_clause = "a.k <> b.k"
-    else:
-        on_clause = "a.k <= b.k"
-    join_sql = {
-        "inner": "JOIN",
-        "left": "LEFT JOIN",
-        "right": "RIGHT JOIN",
-        "full": "FULL OUTER JOIN",
-    }.get(join_type)
-    if join_type == "cross":
-        from_sql = f"({left_literal}) a CROSS JOIN ({right_literal}) b"
-    else:
-        from_sql = f"({left_literal}) a {join_sql} ({right_literal}) b ON {on_clause}"
-    sql = f"SELECT a.k AS left_key, b.k AS right_key, b.label FROM {from_sql}"
-    if interaction == "where":
-        sql += " WHERE a.k IS NOT NULL OR b.k IS NOT NULL"
-    elif interaction == "subquery":
-        sql += " WHERE EXISTS (SELECT 1 FROM (SELECT 1 AS marker) q)"
-    elif interaction == "group_by":
-        sql += " GROUP BY a.k, b.k, b.label"
+    left, right = _source_rows(join_type, predicate, null_side)
+    left_relation = _relation(datatype, left, right=False)
+    right_relation = _relation(datatype, right, right=True)
+    on_clause = {
+        "equality": "a.k = b.k",
+        "inequality": "a.k <> b.k",
+        "less_equal": "a.k <= b.k",
+    }.get(predicate)
+    join_sql = {"inner": "JOIN", "left": "LEFT JOIN", "right": "RIGHT JOIN", "full": "FULL OUTER JOIN", "cross": "CROSS JOIN"}[join_type]
+    base_sql = f"SELECT a.k AS left_key, b.k AS right_key, b.label FROM {left_relation} a {join_sql} {right_relation} b"
+    if on_clause is not None:
+        base_sql += f" ON {on_clause}"
 
-    matched = predicate == "none" or (
-        left_value == right_value if predicate == "equality"
-        else left_value != right_value if predicate == "inequality"
-        else left_value <= right_value
-    )
-    if matched:
-        rows = [[left_value, right_value, "right-row"]]
-    elif join_type == "inner" or join_type == "cross":
-        rows = []
-    elif join_type == "left":
-        rows = [[left_value, None, None]]
-    elif join_type == "right":
-        rows = [[None, right_value, "right-row"]]
+    if interaction == "none":
+        sql = base_sql
+    elif interaction == "group_by":
+        sql = (
+            "SELECT q.left_key, q.right_key, q.label FROM "
+            f"({base_sql} UNION ALL {base_sql}) q "
+            "GROUP BY q.left_key, q.right_key, q.label"
+        )
     else:
-        rows = [[left_value, None, None], [None, right_value, "right-row"]]
+        noise = f"SELECT {_literal(datatype, 2)} AS left_key, {_literal(datatype, 2)} AS right_key, 'drop-row' AS label"
+        source = f"({base_sql} UNION ALL {noise}) q"
+        if interaction == "where":
+            condition = "q.label = 'right-row' OR q.label IS NULL"
+        else:
+            condition = (
+                "EXISTS (SELECT 1 FROM (SELECT 1 AS marker) probe "
+                "WHERE probe.marker = 1 AND (q.label = 'right-row' OR q.label IS NULL))"
+            )
+        sql = f"SELECT q.left_key, q.right_key, q.label FROM {source} WHERE {condition}"
+
+    rows = _expected_rows(datatype, join_type, predicate, left, right)
     return {"sql": sql, "expected": {"rows": rows}, "comparison": {"mode": "rowsort"}}
 
 
@@ -92,4 +129,3 @@ def semantic_hash(case_payload: dict[str, Any]) -> str:
         for step in case_payload["steps"]
     ]
     return xgmj1_sha256(step_projection)
-

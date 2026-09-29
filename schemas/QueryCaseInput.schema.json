@@ -742,16 +742,16 @@
           "title": "Semantic Hash",
           "type": "string"
         },
-        "trial_run_artifact_hash": {
+        "trial_artifact_sha256": {
           "pattern": "^[0-9a-f]{64}$",
-          "title": "Trial Run Artifact Hash",
+          "title": "Trial Artifact Sha256",
           "type": "string"
         }
       },
       "required": [
         "review_input_hash",
         "semantic_hash",
-        "trial_run_artifact_hash",
+        "trial_artifact_sha256",
         "reviewer",
         "review_reference"
       ],
@@ -791,6 +791,19 @@
           ],
           "default": null,
           "title": "Static Validation Hash"
+        },
+        "trial_artifact_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trial Artifact Sha256"
         },
         "trial_run_hash": {
           "anyOf": [

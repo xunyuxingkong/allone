@@ -16,6 +16,9 @@ from xgtest.core.models import (
 from xgtest.query.history import QueryRunHistory
 from xgtest.query.loader import load_query_directory_with_sources
 from xgtest.runtime.profile import build_profile
+from xgtest.design.model import load_test_model
+from xgtest.generator.candidate import generate_candidates, static_validate_candidate
+from xgtest.query.loader import load_query_directory
 from xgtest.web.app import create_app
 from xgtest.web.service import QueryReadService
 
@@ -139,3 +142,30 @@ steps:
     detail = detail_response.json()
     assert detail["source_available"] is False
     assert detail["case_definition"] is None
+
+
+def test_generation_read_api_exposes_coverage_and_candidate_without_mutation(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[2]
+    cases_dir = root / "cases" / "query"
+    model = load_test_model(root / "models" / "query" / "join.yaml")
+    candidate = generate_candidates(model, "pairwise", load_query_directory(cases_dir), tmp_path / "candidates", limit=1)[0]
+    static_validate_candidate(candidate, model)
+    before = candidate.read_bytes()
+    service = QueryReadService(tmp_path / "runs", cases_dir, project_root=root, candidates_dir=candidate.parent)
+    app = create_app(service)
+
+    coverage = api_get(app, "/api/coverage").json()
+    assert coverage["model_version"] == "2"
+    assert coverage["active_missing"] > 0
+    assert coverage["provisional_covered"] == coverage["active_covered"]
+    assert api_get(app, "/api/coverage", {"strategy": "unknown"}).status_code == 400
+
+    listing = api_get(app, "/api/candidates", {"status": "draft"}).json()
+    assert listing["total"] == 1
+    case_id = listing["items"][0]["case_id"]
+    detail = api_get(app, f"/api/candidates/{case_id}").json()
+    assert detail["steps"][0]["sql"].startswith("SELECT")
+    assert detail["review_recorded"] is False
+    assert api_get(app, "/api/candidates/QUERY.JOIN.MISSING").status_code == 404
+    assert api_get(app, "/api/candidates/invalid").status_code == 400
+    assert candidate.read_bytes() == before

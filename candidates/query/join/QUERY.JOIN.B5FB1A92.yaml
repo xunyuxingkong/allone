@@ -1,0 +1,60 @@
+metadata:
+  id: QUERY.JOIN.B5FB1A92
+  title: Generated JOIN 0524ab2f
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_0524ab2fb551
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: date
+    interaction: group_by
+    join_type: cross
+    null_side: none
+    predicate: none
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '2'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '2'
+  strategy: pairwise
+  seed: null
+  input_hash: 588d1246d783289ef73c25904f325da52b8309f6f0200bb0ffd48c161c6c7daa
+oracle:
+  kind: known_result
+  reference: join-template-v2
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT DATE '2020-01-02' AS k) a CROSS JOIN (SELECT DATE
+    '2020-01-02' AS k, 'right-row' AS label) b UNION ALL SELECT a.k AS left_key, b.k
+    AS right_key, b.label FROM (SELECT DATE '2020-01-02' AS k) a CROSS JOIN (SELECT
+    DATE '2020-01-02' AS k, 'right-row' AS label) b) q GROUP BY q.left_key, q.right_key,
+    q.label
+  expected:
+    rows:
+    - - '2020-01-02'
+      - '2020-01-02'
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: f814da6bb7ec1c1e01b51659dfde515184f8770d7b995a3bcf33ae053db18474
+  static_validation_hash: 78e289443cc2b08d35ab5bb58dac8adb83c8c10e58cdbd273cd4d1d0e56058ba
+  trial_run_hash: 6bb13ec184b6a756ebd651868e7dd0468ae742edd40107eb8f5749337a6f0104
+  trial_artifact_sha256: 11f7242e46b57d8485b3d4a3f336a91772925a7473ca75b878ba7d2f2a07cd78
+  trial_run_ref: QUERY.JOIN.B5FB1A92/f814da6bb7ec1c1e01b51659dfde515184f8770d7b995a3bcf33ae053db18474.json

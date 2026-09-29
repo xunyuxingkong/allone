@@ -27,10 +27,12 @@ After Git review has happened, record the external review references and promote
 
 ```powershell
 xgtest candidate review QUERY.JOIN.<signature> --reviewer <name> --reference <PR-or-review-reference> --coverage-reference <coverage-review-reference>
-xgtest candidate promote QUERY.JOIN.<signature> --artifacts artifacts/trial-runs
+xgtest candidate promote QUERY.JOIN.<signature> --artifacts artifacts/trial-runs --runtime-profile artifacts/runtime-profile.json
 ```
 
-Promotion verifies the static, trial, Oracle, human review, coverage review, and semantic-hash evidence, writes an active case into `cases/query/`, and refreshes a coverage snapshot under `artifacts/coverage/`.
+Promotion verifies the static, trial, Oracle, human review, coverage review, semantic hash, full trial artifact SHA-256, current Contract Set, and expected Runtime Profile. It writes an active case into `cases/query/` and refreshes a coverage snapshot under `artifacts/coverage/`. The version 2 JOIN semantics are defined in [Query_Generation_JOIN_Model_v2.md](Query_Generation_JOIN_Model_v2.md). Current acceptance summaries are under `acceptance/query-generation-mvp/`.
+
+The Web UI has read-only `/coverage`, `/candidates`, and `/candidates/:caseId` pages backed by `/api/coverage` and `/api/candidates`. Coverage distinguishes active claims from provisional coverage if the review candidates are promoted, and shows a server-computed dimension matrix, model constraints, and candidate links for each active gap. Candidate detail shows the pairwise requirements it would add relative to the active set. Candidate pages check the local trial artifact hash and its current Contract/Profile before labeling evidence verified. Review evidence and promotion remain CLI-gated after human review.
 
 ## Scope and acceptance
 

@@ -1,0 +1,59 @@
+metadata:
+  id: QUERY.JOIN.98AAF359
+  title: Generated JOIN 1ecb50c2
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_1ecb50c27586
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: varchar
+    interaction: group_by
+    join_type: inner
+    null_side: none
+    predicate: inequality
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '2'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '2'
+  strategy: pairwise
+  seed: null
+  input_hash: 81ee277fbcee50986df6793e041c7c1d0495b1d69f469f01f972607aeb6f72cd
+oracle:
+  kind: known_result
+  reference: join-template-v2
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT 'b' AS k) a JOIN (SELECT 'c' AS k, 'right-row'
+    AS label) b ON a.k <> b.k UNION ALL SELECT a.k AS left_key, b.k AS right_key,
+    b.label FROM (SELECT 'b' AS k) a JOIN (SELECT 'c' AS k, 'right-row' AS label)
+    b ON a.k <> b.k) q GROUP BY q.left_key, q.right_key, q.label
+  expected:
+    rows:
+    - - b
+      - c
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: fa2876661895b33f08fffbfb00a47f59a30ccd85662db2272e2385b4a0e6100d
+  static_validation_hash: 579824f435ec08f3fe180c52add5af5f654c6d70d9ded76bf4884e2ee0435d27
+  trial_run_hash: a97bb7adfeea68b63abc6a045f9affa57ec331ee88cf98c70157b38573298df0
+  trial_artifact_sha256: 645afa00fedf67b1a20acab05c3856a22a0f031d70383d02c662a02ddf1ecd5c
+  trial_run_ref: QUERY.JOIN.98AAF359/fa2876661895b33f08fffbfb00a47f59a30ccd85662db2272e2385b4a0e6100d.json

@@ -36,7 +36,7 @@
     },
     "sql_error_mapping": {
       "exception_type": "OperationalError",
-      "message": "[E5021 L1 C48] 表或视图XGT_CAP_FEDEFAF17C_MISSING不存在",
+      "message": "[E5021 L1 C48] 表或视图XGT_CAP_1E207B78B6_MISSING不存在",
       "status": "VERIFIED"
     },
     "transaction_commit_rollback": {
@@ -46,18 +46,70 @@
       "status": "VERIFIED"
     },
     "type_mapping": {
+      "bigint": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "int",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
+      "binary": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "bytes",
+        "mapping_fidelity": "EXACT",
+        "support_status": "UNSUPPORTED"
+      },
+      "blob": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "bytes",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
+      "boolean": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "bool",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
+      "char": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "string",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
       "date": {
         "canonical_encoding": "VERIFIED",
         "logical_type": "date",
         "mapping_fidelity": "EXACT",
         "support_status": "SUPPORTED"
       },
+      "datetime": {
+        "canonical_encoding": "FAILED",
+        "logical_type": "timestamp",
+        "mapping_fidelity": "AMBIGUOUS",
+        "support_status": "UNSUPPORTED"
+      },
+      "decimal": {
+        "canonical_encoding": "FAILED",
+        "logical_type": "decimal",
+        "mapping_fidelity": "LOSSY",
+        "support_status": "UNSUPPORTED"
+      },
       "double": {
         "canonical_encoding": "VERIFIED",
         "logical_type": "float",
         "mapping_fidelity": "EXACT",
-        "operation_status": "VERIFIED",
-        "status": "VERIFIED",
+        "support_status": "SUPPORTED"
+      },
+      "float": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "float",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
+      "int": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "int",
+        "mapping_fidelity": "EXACT",
         "support_status": "SUPPORTED"
       },
       "integer": {
@@ -66,14 +118,52 @@
         "mapping_fidelity": "EXACT",
         "support_status": "SUPPORTED"
       },
-      "numeric": {
-        "canonical_compatibility": "FAILED",
+      "number": {
         "canonical_encoding": "FAILED",
         "logical_type": "decimal",
         "mapping_fidelity": "LOSSY",
-        "mapping_status": "LOSSY",
-        "operation_status": "VERIFIED",
-        "status": "FAILED",
+        "support_status": "UNSUPPORTED"
+      },
+      "numeric": {
+        "canonical_encoding": "FAILED",
+        "logical_type": "decimal",
+        "mapping_fidelity": "LOSSY",
+        "support_status": "UNSUPPORTED"
+      },
+      "raw": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "bytes",
+        "mapping_fidelity": "EXACT",
+        "support_status": "UNSUPPORTED"
+      },
+      "smallint": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "int",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
+      "text": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "string",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
+      "time": {
+        "canonical_encoding": "VERIFIED",
+        "logical_type": "time",
+        "mapping_fidelity": "EXACT",
+        "support_status": "SUPPORTED"
+      },
+      "timestamp": {
+        "canonical_encoding": "FAILED",
+        "logical_type": "timestamp",
+        "mapping_fidelity": "AMBIGUOUS",
+        "support_status": "UNSUPPORTED"
+      },
+      "timestamp_tz": {
+        "canonical_encoding": "FAILED",
+        "logical_type": "timestamp",
+        "mapping_fidelity": "AMBIGUOUS",
         "support_status": "UNSUPPORTED"
       },
       "tinyint": {
@@ -81,6 +171,11 @@
         "logical_type": "int",
         "mapping_fidelity": "EXACT",
         "support_status": "SUPPORTED"
+      },
+      "varbinary": {
+        "canonical_encoding": "UNKNOWN",
+        "mapping_fidelity": "UNKNOWN",
+        "support_status": "UNSUPPORTED"
       },
       "varchar": {
         "canonical_encoding": "VERIFIED",
@@ -93,7 +188,7 @@
   "cleanup": {
     "status": "VERIFIED"
   },
-  "contract_set_id": "20221cd25af4b320342d56c8e060105ca54fd563d0f5dbaed3e5af1d0c890820",
+  "contract_set_id": "ff9fad1b73c500e67e782c180ef5190102605a48bb1e29cdd7e6df953040b596",
   "driver": {
     "module": "xgcondb",
     "version": [
@@ -102,14 +197,15 @@
       9
     ]
   },
-  "finished_at": "2026-09-28T07:26:52.316699+00:00",
+  "finished_at": "2026-09-28T08:54:59.407916+00:00",
   "probe_version": "1",
-  "started_at": "2026-09-28T07:26:52.246573+00:00",
-  "table": "XGT_CAP_FEDEFAF17C",
+  "started_at": "2026-09-28T08:54:59.338915+00:00",
+  "table": "XGT_CAP_1E207B78B6",
   "target": {
     "arch": "x86_64",
     "database_alias": "SYSTEM",
     "host_hash": "589e9fd1967699e3ed31821c270093155cd076a7344e44c48507c0cb7d6e02d0",
     "os": "Linux"
-  }
+  },
+  "type_mapping_probe_ref": "artifacts/capabilities/xugu_driver_type_mapping_v1.json"
 }

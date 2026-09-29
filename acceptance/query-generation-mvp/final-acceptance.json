@@ -1,0 +1,20 @@
+{
+  "ai_technical_review_pass_count": 16,
+  "ai_technical_review_ref": "审核意见/XG_DB_Test_JOIN_v2_AI_Technical_Review.md",
+  "ai_technical_review_rework_count": 5,
+  "ai_technical_review_status": "HOLD",
+  "candidate_review_status": "PENDING",
+  "contract_set_id": "ff9fad1b73c500e67e782c180ef5190102605a48bb1e29cdd7e6df953040b596",
+  "current_active_pairwise_missing": 120,
+  "current_regression_case_count": 30,
+  "current_regression_status": "PASS",
+  "model_version": "2",
+  "post_promotion_regression_status": "PENDING",
+  "promotion_status": "PENDING",
+  "real_xugu_double_trial_pass": 21,
+  "reason": "AI technical review found five less_equal candidates without an equality-boundary observation; repair and renewed trials are required before human review and promotion.",
+  "runtime_profile_id": "474c848b8b28264c73838e337dcad3a056ad8df295504e976dc4ccc7fd237bac",
+  "static_validated_candidates": 21,
+  "status": "HOLD",
+  "template_version": "2"
+}

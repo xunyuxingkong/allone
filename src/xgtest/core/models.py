@@ -300,6 +300,7 @@ class ValidationEvidence(StrictModel):
     semantic_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     static_validation_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     trial_run_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    trial_artifact_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     trial_run_ref: str | None = None
     review_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
@@ -312,7 +313,7 @@ class CoverageReview(StrictModel):
 class ReviewEvidence(StrictModel):
     review_input_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     semantic_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
-    trial_run_artifact_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    trial_artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     reviewer: str = Field(min_length=1)
     review_reference: str = Field(min_length=1)
 

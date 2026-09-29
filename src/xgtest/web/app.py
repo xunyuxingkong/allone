@@ -98,6 +98,30 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
     def types(current: QueryReadService = Depends(get_service)) -> dict:
         return current.type_support()
 
+    @app.get("/api/coverage")
+    def coverage(current: QueryReadService = Depends(get_service), strategy: str = "pairwise") -> dict:
+        try:
+            return current.coverage(strategy)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.get("/api/candidates")
+    def list_candidates(current: QueryReadService = Depends(get_service), status: str | None = None) -> dict:
+        try:
+            return current.list_candidates(status)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.get("/api/candidates/{case_id}")
+    def get_candidate(case_id: str, current: QueryReadService = Depends(get_service)) -> dict:
+        try:
+            result = current.get_candidate(case_id)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        if result is None:
+            raise HTTPException(status_code=404, detail="CANDIDATE_NOT_FOUND")
+        return result
+
     return app
 
 

@@ -261,10 +261,17 @@ def _candidate_review(args: argparse.Namespace) -> int:
 
 def _candidate_promote(args: argparse.Namespace) -> int:
     model = load_test_model(Path(args.model))
+    profile = load_profile(Path(args.runtime_profile))
+    current_contract_set_id = build_contract_descriptor(_project_root())["contract_set_id"]
+    if profile["identity"].get("contract_set_id") != current_contract_set_id:
+        raise ValueError("RUNTIME_PROFILE_MISMATCH: contract set differs")
     matches = list(Path(args.path).rglob(f"{args.case_id}.yaml"))
     if len(matches) != 1:
         raise ValueError(f"CANDIDATE_ID_MATCH_COUNT: {args.case_id}: {len(matches)}")
-    destination = promote_candidate(matches[0], model, Path(args.cases), Path(args.artifacts))
+    destination = promote_candidate(
+        matches[0], model, Path(args.cases), Path(args.artifacts),
+        expected_runtime_profile_id=profile["sql_runtime_profile_id"],
+    )
     active = load_query_directory(Path(args.cases))
     all_claims = [claim for case in active if case.metadata.status.value == "active" for claim in case.coverage]
     strategy_snapshots = {}
@@ -402,6 +409,7 @@ def main() -> None:
     candidate_promote.add_argument("--model", default=root / "models" / "query" / "join.yaml")
     candidate_promote.add_argument("--cases", default=root / "cases" / "query")
     candidate_promote.add_argument("--artifacts", default=root / "artifacts" / "trial-runs")
+    candidate_promote.add_argument("--runtime-profile", required=True)
     candidate_promote.add_argument("--strategy", choices=("all_values", "pairwise"), default="pairwise")
     candidate_promote.add_argument("--snapshot", default=root / "artifacts" / "coverage" / "query.join-pairwise.json")
     candidate_promote.set_defaults(handler=_candidate_promote)

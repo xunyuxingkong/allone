@@ -16,7 +16,7 @@ from xgtest.query.loader import load_query_case
 
 
 GENERATOR_ID = "query_template_generator"
-GENERATOR_VERSION = "1"
+GENERATOR_VERSION = "2"
 
 
 def case_payload(model: TestModel, assignment: dict[str, str], strategy: str) -> dict[str, Any]:
@@ -60,7 +60,7 @@ def case_payload(model: TestModel, assignment: dict[str, str], strategy: str) ->
             "seed": None,
             "input_hash": input_hash,
         },
-        "oracle": {"kind": "known_result", "reference": "join-template-v1"},
+        "oracle": {"kind": "known_result", "reference": "join-template-v2"},
         "steps": [{
             "id": "q1",
             "kind": "query",
@@ -143,7 +143,7 @@ def static_validate_candidate(path: Path, model: TestModel) -> dict[str, Any]:
         or case.generation.template_version != TEMPLATE_VERSION
     ):
         raise ValueError("CANDIDATE_PROVENANCE_MISMATCH")
-    if case.oracle.kind != "known_result" or case.oracle.reference != "join-template-v1":
+    if case.oracle.kind != "known_result" or case.oracle.reference != "join-template-v2":
         raise ValueError("CANDIDATE_ORACLE_PROVENANCE_INVALID")
     if case.generation.model_id != model.model_id or case.generation.model_version != model.model_version:
         raise ValueError("CANDIDATE_MODEL_MISMATCH")
@@ -159,6 +159,9 @@ def static_validate_candidate(path: Path, model: TestModel) -> dict[str, Any]:
     if case.metadata.id != expected_id:
         raise ValueError("CANDIDATE_ID_MISMATCH")
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    expected_step = {"id": "q1", "kind": "query", **render_join(model, claim.assignment)}
+    if payload.get("steps") != [expected_step]:
+        raise ValueError("CANDIDATE_COVERAGE_SQL_EXPECTED_MISMATCH")
     expected_input_hash = xgmj1_sha256({
         "model_hash": model_signature(model),
         "template_id": TEMPLATE_ID,

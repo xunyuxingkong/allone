@@ -20,3 +20,17 @@ jobs:
       - run: xgtest registry generate-enums
       - run: xgtest schema export
       - run: git diff --exit-code -- src/xgtest/generated schemas
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: webui/package-lock.json
+      - run: npm ci
+        working-directory: webui
+      - run: npm run build
+        working-directory: webui

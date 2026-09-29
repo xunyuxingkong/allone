@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -119,16 +121,30 @@ def trial_candidate(
     }
     artifact_path = artifact_root / case.metadata.id / f"{semantic}.json"
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
-    artifact_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    artifact_bytes = (json.dumps(artifact, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    artifact_path.write_bytes(artifact_bytes)
+    artifact_sha256 = hashlib.sha256(artifact_bytes).hexdigest()
     payload["metadata"]["status"] = "review"
     evidence = payload["validation_evidence"]
     evidence["trial_run_hash"] = artifact_hash
+    evidence["trial_artifact_sha256"] = artifact_sha256
     evidence["trial_run_ref"] = artifact_path.relative_to(artifact_root).as_posix()
     _write_payload(path, payload)
-    return {"case_id": case.metadata.id, "status": "review", "artifact": str(artifact_path), "trial_run_hash": artifact_hash}
+    return {"case_id": case.metadata.id, "status": "review", "artifact": str(artifact_path), "trial_run_hash": artifact_hash, "trial_artifact_sha256": artifact_sha256}
 
 
-def promote_candidate(path: Path, model: TestModel, active_dir: Path, artifact_root: Path) -> Path:
+def promote_candidate(
+    path: Path,
+    model: TestModel,
+    active_dir: Path,
+    artifact_root: Path,
+    *,
+    expected_runtime_profile_id: str,
+) -> Path:
+    from xgtest.generator.candidate import static_validate_candidate
+
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_runtime_profile_id):
+        raise ValueError("CANDIDATE_RUNTIME_PROFILE_REQUIRED")
     case = load_query_case(path)
     if case.metadata.status.value != "review":
         raise ValueError("CANDIDATE_STATUS_INVALID: promote expects review status")
@@ -139,7 +155,7 @@ def promote_candidate(path: Path, model: TestModel, active_dir: Path, artifact_r
     evidence = case.validation_evidence
     if evidence.semantic_hash != semantic or case.review_evidence.semantic_hash != semantic:
         raise ValueError("CANDIDATE_SEMANTIC_HASH_STALE")
-    if not evidence.static_validation_hash or not evidence.trial_run_hash or not evidence.review_hash:
+    if not evidence.static_validation_hash or not evidence.trial_run_hash or not evidence.trial_artifact_sha256 or not evidence.review_hash:
         raise ValueError("CANDIDATE_PROMOTION_EVIDENCE_INCOMPLETE")
     expected_static_hash = xgmj1_sha256({
         "case_id": case.metadata.id,
@@ -155,15 +171,23 @@ def promote_candidate(path: Path, model: TestModel, active_dir: Path, artifact_r
         raise ValueError("CANDIDATE_TRIAL_ARTIFACT_REFERENCE_INVALID")
     artifact_path = artifact_root / artifact_ref
     try:
-        artifact_payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+        artifact_bytes = artifact_path.read_bytes()
+        artifact_payload = json.loads(artifact_bytes)
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError("CANDIDATE_TRIAL_ARTIFACT_MISSING_OR_INVALID") from error
     if artifact_payload.get("case_id") != case.metadata.id or artifact_payload.get("semantic_hash") != semantic or artifact_payload.get("status") != "PASS":
         raise ValueError("CANDIDATE_TRIAL_ARTIFACT_STALE")
+    if hashlib.sha256(artifact_bytes).hexdigest() != evidence.trial_artifact_sha256:
+        raise ValueError("CANDIDATE_TRIAL_ARTIFACT_HASH_MISMATCH")
+    current_contract_set_id = build_contract_descriptor(Path(__file__).resolve().parents[3])["contract_set_id"]
+    if artifact_payload.get("contract_set_id") != current_contract_set_id:
+        raise ValueError("CANDIDATE_CONTRACT_SET_STALE")
+    if artifact_payload.get("runtime_profile_id") != expected_runtime_profile_id:
+        raise ValueError("CANDIDATE_RUNTIME_PROFILE_MISMATCH")
     result_hash = xgmj1_sha256([_trial_projection(artifact_payload["run1"]), _trial_projection(artifact_payload["run2"])])
     if result_hash != evidence.trial_run_hash or artifact_payload.get("result_hash") != evidence.trial_run_hash:
         raise ValueError("CANDIDATE_TRIAL_ARTIFACT_HASH_MISMATCH")
-    if case.review_evidence.trial_run_artifact_hash != evidence.trial_run_hash:
+    if case.review_evidence.trial_artifact_sha256 != evidence.trial_artifact_sha256:
         raise ValueError("CANDIDATE_TRIAL_EVIDENCE_STALE")
     if case.review_evidence.review_input_hash != case.coverage_review.review_input_hash:
         raise ValueError("CANDIDATE_COVERAGE_REVIEW_STALE")
@@ -177,6 +201,7 @@ def promote_candidate(path: Path, model: TestModel, active_dir: Path, artifact_r
     expected_id = f"QUERY.JOIN.{candidate_signature(model, case.coverage[0].assignment, TEMPLATE_ID, TEMPLATE_VERSION)[:8].upper()}"
     if case.metadata.id != expected_id:
         raise ValueError("CANDIDATE_ID_MISMATCH")
+    static_validate_candidate(path, model)
     active_dir.mkdir(parents=True, exist_ok=True)
     destination = active_dir / f"{case.metadata.id}.yaml"
     if destination.exists():

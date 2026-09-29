@@ -1,5 +1,5 @@
 model_id: query.join
-model_version: "1"
+model_version: "2"
 module: query
 feature: query
 subfeature: join
@@ -7,7 +7,7 @@ dimensions:
   join_type:
     values: [inner, left, right, full, cross]
   predicate:
-    values: [none, equality, inequality, range]
+    values: [none, equality, inequality, less_equal]
   datatype:
     values: [int, varchar, date]
   null_side:
@@ -25,4 +25,10 @@ constraints:
   - if: {join_type: cross}
     exclude: {interaction: [subquery]}
   - if: {predicate: none}
+    then: {join_type: cross, null_side: none}
+  - if: {join_type: inner}
     then: {null_side: none}
+  - if: {join_type: left}
+    exclude: {null_side: [left, both]}
+  - if: {join_type: right}
+    exclude: {null_side: [right, both]}

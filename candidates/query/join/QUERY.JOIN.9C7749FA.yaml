@@ -1,0 +1,59 @@
+metadata:
+  id: QUERY.JOIN.9C7749FA
+  title: Generated JOIN f158265a
+  module: query
+  feature: query
+  subfeature: join
+  level: P1
+  status: review
+  timeout: 30s
+  isolation: session
+  tags:
+  - join
+  - generated
+coverage:
+- claim_id: join_f158265aaeaa
+  model_id: query.join
+  model_version: '2'
+  assignment:
+    datatype: date
+    interaction: where
+    join_type: inner
+    null_side: none
+    predicate: less_equal
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '2'
+  model_id: query.join
+  model_version: '2'
+  template_id: query.join.default
+  template_version: '2'
+  strategy: pairwise
+  seed: null
+  input_hash: bf551c389ec682c579618d2dbec65ed719fc7da911ae709bd2a1e4c3051e0790
+oracle:
+  kind: known_result
+  reference: join-template-v2
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.left_key, q.right_key, q.label FROM (SELECT a.k AS left_key, b.k AS
+    right_key, b.label FROM (SELECT DATE '2020-01-02' AS k) a JOIN (SELECT DATE '2020-01-03'
+    AS k, 'right-row' AS label) b ON a.k <= b.k UNION ALL SELECT DATE '2020-01-02'
+    AS left_key, DATE '2020-01-02' AS right_key, 'drop-row' AS label) q WHERE q.label
+    = 'right-row' OR q.label IS NULL
+  expected:
+    rows:
+    - - '2020-01-02'
+      - '2020-01-03'
+      - right-row
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: a132713856e2ca98793a886ed5f928f821915044bb086ec911e6e0bbe18c68be
+  static_validation_hash: c4c50011b3e439d351522f24b5ab591fa7c183bda956776dcad9730f93976fdb
+  trial_run_hash: ca4d02ac35043ecc5d3c6e61a628b18a15bbcc357940aae940a135a7e6488c59
+  trial_artifact_sha256: f796658a05b2270b605de603f7d2202d40f0290c91dfee042fcda78a96cb739a
+  trial_run_ref: QUERY.JOIN.9C7749FA/a132713856e2ca98793a886ed5f928f821915044bb086ec911e6e0bbe18c68be.json
