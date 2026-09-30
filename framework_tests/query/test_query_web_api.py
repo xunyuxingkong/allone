@@ -30,6 +30,28 @@ def api_get(app, path: str, params: dict | None = None) -> httpx.Response:
     return asyncio.run(request())
 
 
+def test_candidate_review_api_exposes_complete_rows_and_evidence() -> None:
+    root = Path(__file__).resolve().parents[2]
+    service = QueryReadService(
+        root / "artifacts" / "runs", root / "cases" / "query",
+        profile_path=root / "artifacts" / "runtime-profile-v9.json", project_root=root,
+    )
+    app = create_app(service)
+    case_id = sorted(path.stem for path in (root / "candidates" / "query" / "join").glob("*.yaml"))[0]
+    detail = api_get(app, f"/api/candidates/{case_id}")
+    assert detail.status_code == 200
+    assert detail.json()["oracle"] is not None
+    assert detail.json()["mutation_evidence"] is not None
+    assert detail.json()["review_binding_status"] == "missing"
+    rows = api_get(app, f"/api/candidates/{case_id}/trial-rows", {"run": "run1", "step_id": "q1", "offset": 0, "limit": 1})
+    assert rows.status_code == 200
+    assert len(rows.json()["rows"]) == 1
+    whole = api_get(app, f"/api/candidates/{case_id}/artifacts/trial")
+    assert whole.status_code == 200
+    assert len(json.loads(whole.content)["run1"]["steps"][0]["result_rows"]) == rows.json()["row_count"]
+    assert api_get(app, f"/api/candidates/{case_id}/trial-rows", {"run": "bad", "step_id": "q1"}).status_code == 400
+
+
 def test_read_only_api_exposes_runs_case_source_runtime_and_no_secrets(tmp_path: Path) -> None:
     cases_dir = tmp_path / "cases"
     cases_dir.mkdir()

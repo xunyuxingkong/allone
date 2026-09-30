@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     proxy: {
-      '/api': nodeEnvironment.process?.env?.XGTEST_WEB_API_TARGET ?? 'http://127.0.0.1:8000',
+      '/api': nodeEnvironment.process?.env?.XGTEST_WEB_API_TARGET ?? 'http://127.0.0.1:8001',
     },
   },
 })

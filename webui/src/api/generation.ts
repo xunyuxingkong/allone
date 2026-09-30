@@ -44,6 +44,11 @@ export interface CandidateDetail {
   generation: Record<string, unknown> | null
   steps: { id: string; sql: string; expected: unknown; comparison: unknown }[]
   validation_evidence: Record<string, string> | null
+  mutation_evidence: Record<string, unknown> | null
+  oracle: Record<string, unknown> | null
+  review_evidence: Record<string, unknown> | null
+  coverage_review: Record<string, unknown> | null
+  review_binding_status: string
   trial_evidence_status: string
   review_recorded: boolean
   coverage_contribution: {
@@ -58,6 +63,22 @@ export const getCandidates = (status?: string) =>
   api<{ items: CandidateSummary[]; total: number }>(`/api/candidates${status ? `?status=${encodeURIComponent(status)}` : ''}`)
 export const getCandidate = (caseId: string) =>
   api<CandidateDetail>(`/api/candidates/${encodeURIComponent(caseId)}`)
+
+export interface TrialRowsPage {
+  case_id: string
+  run: 'run1' | 'run2'
+  step_id: string
+  columns: string[]
+  column_types: string[]
+  row_count: number
+  offset: number
+  limit: number
+  rows: unknown[][]
+  result_sha256: string
+}
+
+export const getTrialRows = (caseId: string, run: 'run1' | 'run2', stepId: string, offset = 0, limit = 50) =>
+  api<TrialRowsPage>(`/api/candidates/${encodeURIComponent(caseId)}/trial-rows?run=${run}&step_id=${encodeURIComponent(stepId)}&offset=${offset}&limit=${limit}`)
 
 const trialEvidenceLabels: Record<string, string> = {
   verified: '已核验', missing: '未试运行', profile_unconfigured: '待配置 Profile',

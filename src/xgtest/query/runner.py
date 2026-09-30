@@ -38,6 +38,7 @@ from xgtest.runtime.comparator import (
 from xgtest.generated.registry_enums import FailureType
 
 from .loader import load_query_directory_with_sources
+from .compiler import QueryExecutable, compile_query_asset
 from .history import QueryRunHistory
 from .result import write_query_report
 from .timeout import QueryTimeoutError, QueryWorkerError, parse_timeout_seconds, supervise_worker
@@ -168,7 +169,7 @@ class QueryRunner:
             self.observer(("step_completed", report.model_dump(mode="json")))
         return report, failure_type
 
-    def run_case(self, case: QueryCaseInput) -> QueryCaseReport:
+    def run_case(self, case: QueryCaseInput | QueryExecutable) -> QueryCaseReport:
         started = time.perf_counter()
         reports: list[QueryStepReport] = []
         failure_types: list[FailureType] = []
@@ -206,7 +207,7 @@ def _case_worker(
     channel: Connection,
 ) -> None:
     """Child-process entry point. A terminated worker owns and loses its session."""
-    case = QueryCaseInput.model_validate_json(json.dumps(case_payload))
+    case = QueryExecutable.model_validate_json(json.dumps(case_payload))
     config = XuguConnectionConfig(**config_payload)
     session: XuguSession | None = None
     try:
@@ -316,7 +317,7 @@ def run_query_case_isolated(
     try:
         payload = supervise_worker(
             _case_worker,
-            (case.model_dump(mode="json"), config.__dict__, runtime_profile, capture_result_rows),
+            (compile_query_asset(case).model_dump(mode="json"), config.__dict__, runtime_profile, capture_result_rows),
             timeout_seconds=parse_timeout_seconds(case.metadata.timeout),
         )
         return QueryCaseReport.model_validate_json(json.dumps(payload))

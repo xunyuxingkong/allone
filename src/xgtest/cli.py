@@ -23,6 +23,8 @@ from .generator.dedup import classify_duplicates
 from .generator.lifecycle import promote_candidate, record_candidate_mutation_evidence, trial_candidate, validate_candidate_mutation
 from .generator.review import record_review
 from .generator.acceptance import verify_trial_artifact_index
+from .generator.package import freeze_pre_promotion_manifest, preflight_promotion, verify_pre_promotion_package
+from .generator.promotion_batch import execute_promotion_batch
 from .design.model import ConstraintRule, CoverageStrategy, Dimension, TestModel
 from .query.loader import load_query_directory
 
@@ -233,7 +235,7 @@ def _candidate_mutation_validate(args: argparse.Namespace) -> int:
     for path in _candidate_paths(Path(args.path)):
         result = validate_candidate_mutation(path, model, config, profile)
         evidence = record_candidate_mutation_evidence(path, result, Path(args.artifacts), profile)
-        results.append({**result, **evidence, "action_status": action_status[result["status"]]})
+        results.append({**{key: value for key, value in result.items() if key != "execution"}, **evidence, "action_status": action_status[result["status"]]})
     passed = bool(results) and all(row["action_status"] in {"PASS", "SKIPPED"} for row in results)
     status = "PASS" if passed else "BLOCKED" if any(row["action_status"] == "BLOCKED" for row in results) else "FAIL"
     print(json.dumps({"candidates": results, "status": status}, ensure_ascii=False, sort_keys=True))
@@ -285,40 +287,11 @@ def _candidate_review(args: argparse.Namespace) -> int:
 
 
 def _candidate_promote(args: argparse.Namespace) -> int:
-    model = load_test_model(Path(args.model))
-    profile = load_profile(Path(args.runtime_profile))
-    current_contract_set_id = build_contract_descriptor(_project_root())["contract_set_id"]
-    if profile["identity"].get("contract_set_id") != current_contract_set_id:
-        raise ValueError("RUNTIME_PROFILE_MISMATCH: contract set differs")
-    matches = list(Path(args.path).rglob(f"{args.case_id}.yaml"))
-    if len(matches) != 1:
-        raise ValueError(f"CANDIDATE_ID_MATCH_COUNT: {args.case_id}: {len(matches)}")
-    destination = promote_candidate(
-        matches[0], model, Path(args.cases), Path(args.artifacts),
-        expected_runtime_profile_id=profile["sql_runtime_profile_id"],
-        mutation_artifact_root=Path(args.mutation_artifacts),
+    raise ValueError(
+        "SIGNED_BATCH_PROMOTION_REQUIRED: use acceptance promote-batch with a frozen manifest, "
+        "operator-signed approval and allowed-signers trust store"
     )
-    active = load_query_directory(Path(args.cases))
-    all_claims = [claim for case in active if case.metadata.status.value == "active" for claim in case.coverage]
-    strategy_snapshots = {}
-    for strategy in ("all_values", "pairwise"):
-        strategy_gap = coverage_gap(model, all_claims, strategy)
-        strategy_snapshots[strategy] = {
-            "required": strategy_gap["required"],
-            "covered": strategy_gap["covered"],
-            "missing": strategy_gap["missing"],
-        }
-    snapshot = {
-        "model_id": model.model_id,
-        "model_version": model.model_version,
-        "strategies": strategy_snapshots,
-        "gap": strategy_snapshots[args.strategy]["missing"],
-    }
-    snapshot_path = Path(args.snapshot)
-    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-    snapshot_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"status": "active", "case": str(destination), "coverage_snapshot": str(snapshot_path), "coverage": snapshot}, ensure_ascii=False, sort_keys=True))
-    return 0
+
 
 
 def _acceptance_verify_trial_index(args: argparse.Namespace) -> int:
@@ -330,6 +303,37 @@ def _acceptance_verify_trial_index(args: argparse.Namespace) -> int:
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0 if result["status"] == "PASS" else 1
+
+
+def _acceptance_freeze_package(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve()
+    result = freeze_pre_promotion_manifest(root, Path(args.acceptance_dir), Path(args.runtime_profile))
+    output = Path(args.manifest)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes((json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8"))
+    print(json.dumps({"manifest": str(output), "manifest_id": result["manifest_id"], "count": len(result["members"])}, ensure_ascii=False, sort_keys=True))
+    return 0
+
+
+def _acceptance_verify_package(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve()
+    inputs = (root, Path(args.acceptance_dir), Path(args.runtime_profile), Path(args.manifest))
+    approval_inputs = {
+        "approval_path": Path(args.approval) if args.approval else None,
+        "allowed_signers_path": Path(args.allowed_signers) if args.allowed_signers else None,
+    }
+    result = preflight_promotion(*inputs, **approval_inputs) if args.preflight else verify_pre_promotion_package(*inputs, **approval_inputs)
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0 if result["package_integrity"] == "PASS" and (not args.preflight or not result["blockers"]) else 1
+
+
+def _acceptance_promote_batch(args: argparse.Namespace) -> int:
+    result = execute_promotion_batch(
+        Path(args.root), Path(args.acceptance_dir), Path(args.runtime_profile),
+        Path(args.manifest), Path(args.approval), Path(args.allowed_signers),
+    )
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0
 
 
 def main() -> None:
@@ -467,7 +471,26 @@ def main() -> None:
     verify_trial_index = acceptance_commands.add_parser("verify-trial-index")
     verify_trial_index.add_argument("--root", default=root)
     verify_trial_index.add_argument("--index", default=root / "acceptance" / "query-generation-mvp" / "trial-run-index.json")
-    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v9.json")
+    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v12.json")
     verify_trial_index.set_defaults(handler=_acceptance_verify_trial_index)
+    for name, handler in (("freeze-package", _acceptance_freeze_package), ("verify-package", _acceptance_verify_package)):
+        package_command = acceptance_commands.add_parser(name)
+        package_command.add_argument("--root", default=root)
+        package_command.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
+        package_command.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v12.json")
+        package_command.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
+        if name == "verify-package":
+            package_command.add_argument("--preflight", action="store_true")
+            package_command.add_argument("--approval")
+            package_command.add_argument("--allowed-signers")
+        package_command.set_defaults(handler=handler)
+    promote_batch = acceptance_commands.add_parser("promote-batch")
+    promote_batch.add_argument("--root", default=root)
+    promote_batch.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
+    promote_batch.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v12.json")
+    promote_batch.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
+    promote_batch.add_argument("--approval", required=True)
+    promote_batch.add_argument("--allowed-signers", required=True)
+    promote_batch.set_defaults(handler=_acceptance_promote_batch)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

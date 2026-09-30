@@ -118,6 +118,27 @@ def rows_sha256(rows: list[tuple[Any, ...]], column_types: list[str | None] | tu
     return hashlib.sha256(stream).hexdigest()
 
 
+def rows_semantic_sha256(
+    rows: list[tuple[Any, ...]],
+    column_types: list[str | None] | tuple[str | None, ...] | None = None,
+    column_count: int | None = None,
+    *,
+    mode: str = "exact",
+) -> str:
+    """Digest ordered rows or an unordered multiset, preserving duplicates."""
+    if mode != "rowsort":
+        if mode not in {"exact", "sha256"}:
+            raise ValueError("QUERY_COMPARISON_MODE_UNSUPPORTED")
+        return rows_sha256(rows, column_types, column_count)
+    _, frames = _xgc1_rows(rows, mode="rowsort", column_types=column_types, column_count=column_count)
+    digest = hashlib.sha256(b"XGC1-ROWSET-V1\x00")
+    digest.update(len(frames).to_bytes(8, "big"))
+    for frame in sorted(frames):
+        digest.update(len(frame).to_bytes(8, "big"))
+        digest.update(frame)
+    return digest.hexdigest()
+
+
 def rows_sha256_stream(rows: Any, column_types: tuple[str | None, ...], column_count: int) -> str:
     """Hash a row iterator with the same XGC1 framing as ``rows_sha256``."""
     if len(column_types) != column_count:

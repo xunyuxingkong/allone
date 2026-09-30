@@ -1,0 +1,5 @@
+# Evidence files use byte SHA-256; Git checkout must preserve their LF bytes.
+artifacts/**/*.json text eol=lf
+acceptance/**/*.json text eol=lf
+candidates/query/**/*.yaml text eol=lf
+cases/query/**/*.yaml text eol=lf

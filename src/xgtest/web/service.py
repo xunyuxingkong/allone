@@ -11,13 +11,14 @@ from typing import Any
 
 import yaml
 
-from xgtest.core.canonical import xgmj1_sha256
 from xgtest.core.contract_set import build_contract_descriptor
 from xgtest.design.coverage import assignment_requirements, coverage_gap
 from xgtest.design.model import load_test_model
 from xgtest.query.history import QueryRunHistory
 from xgtest.query.loader import load_query_case, load_query_directory, load_query_directory_with_sources
 from xgtest.runtime.profile import load_profile
+from xgtest.generator.evidence import validate_trial_artifact
+from xgtest.generator.review import current_review_input_hash
 from xgtest.generator.template import semantic_hash
 
 
@@ -80,41 +81,23 @@ class QueryReadService:
         semantic = semantic_hash(payload)
         if semantic != evidence.semantic_hash or artifact.get("semantic_hash") != semantic:
             return "candidate_changed"
-        if artifact.get("case_id") != case.metadata.id or artifact.get("result_hash") != evidence.trial_run_hash or artifact.get("status") != "PASS":
-            return "artifact_invalid"
-        try:
-            projections = [
-                {
-                    "case_id": report["case_id"],
-                    "status": report["status"],
-                    "steps": [
-                        {
-                            "id": step["id"],
-                            "status": step["status"],
-                            "columns": step.get("columns", []),
-                            "column_types": step.get("column_types", []),
-                            "logical_types": step.get("logical_types", []),
-                            "row_count": step.get("row_count"),
-                            "result_rows": step.get("result_rows"),
-                            "result_sha256": step.get("result_sha256"),
-                        }
-                        for step in report["steps"]
-                    ],
-                }
-                for report in (artifact["run1"], artifact["run2"])
-            ]
-            if any(report["status"] != "PASS" or report["case_id"] != case.metadata.id for report in projections):
-                return "artifact_invalid"
-            if projections[0] != projections[1] or xgmj1_sha256(projections) != evidence.trial_run_hash:
-                return "artifact_invalid"
-        except (KeyError, TypeError, ValueError):
-            return "artifact_invalid"
         if artifact.get("contract_set_id") != contract_set_id:
             return "contract_stale"
         if profile_id is None:
             return "profile_unconfigured"
         if artifact.get("runtime_profile_id") != profile_id:
             return "profile_stale"
+        validation = validate_trial_artifact(
+            artifact,
+            case_id=case.metadata.id,
+            semantic_hash=semantic,
+            step_ids=tuple(step.id for step in case.steps),
+            step_modes={step.id: step.comparison.mode if step.comparison else "exact" for step in case.steps},
+            contract_set_id=contract_set_id,
+            runtime_profile_id=profile_id,
+        )
+        if validation["errors"] or validation["trial_hash"] != evidence.trial_run_hash:
+            return "artifact_invalid"
         return "verified"
 
     def _current_profile_id(self) -> str | None:
@@ -209,6 +192,18 @@ class QueryReadService:
         if case.metadata.id != case_id:
             raise ValueError("CANDIDATE_ID_MISMATCH")
         trial_status = self._trial_evidence_status(path, case, build_contract_descriptor(self.project_root)["contract_set_id"], self._current_profile_id())
+        review_status = "missing"
+        if case.review_evidence is not None and case.coverage_review is not None and case.validation_evidence is not None:
+            try:
+                payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+                current_hash = current_review_input_hash(case, semantic_hash(payload))
+                review_status = "binding_valid" if (
+                    case.review_evidence.review_input_hash == current_hash
+                    and case.coverage_review.review_input_hash == current_hash
+                    and case.validation_evidence.review_hash == current_hash
+                ) else "stale"
+            except (OSError, ValueError, TypeError):
+                review_status = "invalid"
         model = self._join_model()
         active = [item for item in load_query_directory(self.cases_dir) if item.metadata.status.value == "active"]
         current = coverage_gap(model, [claim for item in active for claim in item.coverage], "pairwise")
@@ -228,10 +223,60 @@ class QueryReadService:
             "generation": case.generation.model_dump(mode="json") if case.generation else None,
             "steps": [step.model_dump(mode="json") for step in case.steps],
             "validation_evidence": case.validation_evidence.model_dump(mode="json", exclude_none=True) if case.validation_evidence else None,
+            "mutation_evidence": case.mutation_evidence.model_dump(mode="json", exclude_none=True) if case.mutation_evidence else None,
+            "oracle": case.oracle.model_dump(mode="json", exclude_none=True) if case.oracle else None,
+            "review_evidence": case.review_evidence.model_dump(mode="json", exclude_none=True) if case.review_evidence else None,
+            "coverage_review": case.coverage_review.model_dump(mode="json", exclude_none=True) if case.coverage_review else None,
+            "review_binding_status": review_status,
             "trial_evidence_status": trial_status,
             "review_recorded": case.review_evidence is not None and case.coverage_review is not None,
             "coverage_contribution": {"strategy": "pairwise", "new_requirements": new_requirements},
         }
+
+    def candidate_artifact(self, case_id: str, kind: str) -> bytes:
+        if kind not in {"trial", "mutation"}:
+            raise ValueError("CANDIDATE_ARTIFACT_KIND_INVALID")
+        detail = self.get_candidate(case_id)
+        if detail is None:
+            raise ValueError("CANDIDATE_NOT_FOUND")
+        evidence = detail["validation_evidence"] if kind == "trial" else detail["mutation_evidence"]
+        if not isinstance(evidence, dict):
+            raise ValueError("CANDIDATE_ARTIFACT_MISSING")
+        relative = evidence.get("trial_run_ref") if kind == "trial" else evidence.get("artifact_ref")
+        expected_sha = evidence.get("trial_artifact_sha256") if kind == "trial" else evidence.get("artifact_sha256")
+        if not isinstance(relative, str) or not isinstance(expected_sha, str):
+            raise ValueError("CANDIDATE_ARTIFACT_REFERENCE_INVALID")
+        root = self.trial_artifacts_dir if kind == "trial" else self.project_root / "artifacts" / "mutations"
+        ref = Path(relative)
+        if ref.is_absolute() or ".." in ref.parts:
+            raise ValueError("CANDIDATE_ARTIFACT_REFERENCE_INVALID")
+        artifact = (root / ref).resolve()
+        if not artifact.is_relative_to(root.resolve()):
+            raise ValueError("CANDIDATE_ARTIFACT_REFERENCE_INVALID")
+        content = artifact.read_bytes()
+        if hashlib.sha256(content).hexdigest() != expected_sha:
+            raise ValueError("CANDIDATE_ARTIFACT_HASH_MISMATCH")
+        return content
+
+    def candidate_trial_rows(self, case_id: str, run: str, step_id: str, offset: int, limit: int) -> dict[str, Any]:
+        if run not in {"run1", "run2"}:
+            raise ValueError("TRIAL_RUN_INVALID")
+        artifact = json.loads(self.candidate_artifact(case_id, "trial"))
+        if not isinstance(artifact, dict) or not isinstance(artifact.get(run), dict):
+            raise ValueError("TRIAL_ARTIFACT_INVALID")
+        for step in artifact[run].get("steps", []):
+            if isinstance(step, dict) and step.get("id") == step_id:
+                rows = step.get("result_rows")
+                if not isinstance(rows, list):
+                    raise ValueError("TRIAL_RAW_ROWS_MISSING")
+                return {
+                    "case_id": case_id, "run": run, "step_id": step_id,
+                    "columns": step.get("columns"), "column_types": step.get("column_types"),
+                    "row_count": len(rows), "offset": offset, "limit": limit,
+                    "rows": rows[offset:offset + limit],
+                    "result_sha256": step.get("result_sha256"),
+                }
+        raise ValueError("TRIAL_STEP_NOT_FOUND")
 
     def list_runs(
         self,

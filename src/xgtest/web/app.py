@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Response
 
 from .service import QueryReadService
 
@@ -121,6 +121,28 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
         if result is None:
             raise HTTPException(status_code=404, detail="CANDIDATE_NOT_FOUND")
         return result
+
+    @app.get("/api/candidates/{case_id}/trial-rows")
+    def candidate_trial_rows(
+        case_id: str, run: str, step_id: str,
+        offset: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=500),
+        current: QueryReadService = Depends(get_service),
+    ) -> dict:
+        try:
+            return current.candidate_trial_rows(case_id, run, step_id, offset, limit)
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.get("/api/candidates/{case_id}/artifacts/{kind}")
+    def candidate_artifact(case_id: str, kind: str, current: QueryReadService = Depends(get_service)) -> Response:
+        try:
+            content = current.candidate_artifact(case_id, kind)
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        return Response(
+            content=content, media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="{case_id}-{kind}.json"'},
+        )
 
     return app
 

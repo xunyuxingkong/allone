@@ -10,9 +10,23 @@ from xgtest.generator.candidate import generate_candidates, static_validate_cand
 from xgtest.generator.lifecycle import promote_candidate, record_candidate_mutation_evidence, trial_candidate
 from xgtest.generator.review import record_review
 from xgtest.query.loader import load_query_case, load_query_directory
+from xgtest.runtime.comparator import rows_sha256
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _passing_report(case) -> QueryCaseReport:
+    rows = ((1,),)
+    return QueryCaseReport(
+        case_id=case.metadata.id, status=CaseExecutionStatus.PASS, duration_ms=1.0,
+        steps=(QueryStepReport(
+            id="q1", status=StepStatus.PASS, duration_ms=1.0,
+            columns=("k",), column_types=("INTEGER",), logical_types=("int",),
+            row_count=1, result_rows=rows,
+            result_sha256=rows_sha256(list(rows), ("INTEGER",), 1),
+        ),),
+    )
 
 
 def _record_not_applicable_mutation(candidate: Path, mutation_root: Path) -> None:
@@ -36,12 +50,7 @@ def test_gap_to_candidate_to_review_to_active_closes_requirement(tmp_path: Path)
     assert load_query_case(candidates[0]).metadata.status.value == "draft"
 
     def passing_runner(case, config, profile):
-        return QueryCaseReport(
-            case_id=case.metadata.id,
-            status=CaseExecutionStatus.PASS,
-            duration_ms=1.0,
-            steps=(QueryStepReport(id="q1", status=StepStatus.PASS, duration_ms=1.0, row_count=1, result_sha256="a" * 64),),
-        )
+        return _passing_report(case)
 
     _record_not_applicable_mutation(candidates[0], tmp_path / "mutations")
     trial_candidate(candidates[0], model, object(), tmp_path / "trial-runs", runtime_profile={"sql_runtime_profile_id": "a" * 64}, runner=passing_runner)
@@ -61,7 +70,7 @@ def test_modified_candidate_cannot_be_promoted_after_evidence(tmp_path: Path) ->
     static_validate_candidate(candidate, model)
 
     def passing_runner(case, config, profile):
-        return QueryCaseReport(case_id=case.metadata.id, status=CaseExecutionStatus.PASS, duration_ms=1.0, steps=(QueryStepReport(id="q1", status=StepStatus.PASS, duration_ms=1.0, row_count=1, result_sha256="a" * 64),))
+        return _passing_report(case)
 
     _record_not_applicable_mutation(candidate, tmp_path / "mutations")
     trial_candidate(candidate, model, object(), tmp_path / "trial-runs", runtime_profile={"sql_runtime_profile_id": "a" * 64}, runner=passing_runner)
@@ -79,7 +88,7 @@ def test_modified_coverage_claim_invalidates_review_evidence(tmp_path: Path) -> 
     static_validate_candidate(candidate, model)
 
     def passing_runner(case, config, profile):
-        return QueryCaseReport(case_id=case.metadata.id, status=CaseExecutionStatus.PASS, duration_ms=1.0, steps=(QueryStepReport(id="q1", status=StepStatus.PASS, duration_ms=1.0, row_count=1, result_sha256="a" * 64),))
+        return _passing_report(case)
 
     _record_not_applicable_mutation(candidate, tmp_path / "mutations")
     trial_candidate(candidate, model, object(), tmp_path / "trial-runs", runtime_profile={"sql_runtime_profile_id": "a" * 64}, runner=passing_runner)
@@ -98,7 +107,7 @@ def _reviewed_candidate(tmp_path: Path):
     static_validate_candidate(candidate, model)
 
     def passing_runner(case, config, profile):
-        return QueryCaseReport(case_id=case.metadata.id, status=CaseExecutionStatus.PASS, duration_ms=1.0, steps=(QueryStepReport(id="q1", status=StepStatus.PASS, duration_ms=1.0, row_count=1, result_sha256="a" * 64),))
+        return _passing_report(case)
 
     _record_not_applicable_mutation(candidate, tmp_path / "mutations")
     result = trial_candidate(candidate, model, object(), tmp_path / "trial-runs", runtime_profile={"sql_runtime_profile_id": "a" * 64}, runner=passing_runner)

@@ -191,11 +191,34 @@ def validate_profile(
         raise ValueError("RUNTIME_PROFILE_MISMATCH: driver version differs")
 
 
+def observe_database_build(config: Any, profile: dict[str, Any]) -> dict[str, str]:
+    """Observe the current Xugu build through a separate read-only session."""
+    from datetime import datetime, timezone
+
+    from xgtest.adapter.xugu import XuguSession
+
+    target = profile.get("identity", {}).get("target", {})
+    expected = f"{target.get('db_build', '')} {target.get('database_version', '')}".strip()
+    if not target.get("db_build") or not target.get("database_version"):
+        raise ValueError("RUNTIME_PROFILE_DATABASE_BUILD_REQUIRED")
+    session = XuguSession(config).open(read_only=True)
+    try:
+        result = session.query("SHOW build_time;")
+    finally:
+        session.close()
+    if len(result.rows) != 1 or len(result.rows[0]) != 1:
+        raise ValueError("DATABASE_BUILD_OBSERVATION_INVALID")
+    observed = str(result.rows[0][0])
+    if observed != expected:
+        raise ValueError("DATABASE_BUILD_DRIFT")
+    return {"captured_at": datetime.now(timezone.utc).isoformat(), "query": "SHOW build_time;", "raw_value": observed}
+
+
 def build_profile_file(evidence_path: Path, output: Path) -> dict[str, Any]:
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
     if not isinstance(evidence, dict):
         raise ValueError("probe evidence must be a JSON object")
     profile = build_profile(evidence)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(profile, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_bytes((json.dumps(profile, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8"))
     return profile

@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 from xgtest.core.identity import compute_plan_hash, validate_target_id
 
@@ -314,6 +314,23 @@ class MutationCheck(StrictModel):
     original_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     mutated_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
+    @model_validator(mode="after")
+    def hashes_match_status(self) -> "MutationCheck":
+        if self.status == "KILLED" and (
+            self.original_hash is None
+            or self.mutated_hash is None
+            or self.original_hash == self.mutated_hash
+        ):
+            raise ValueError("MUTATION_KILLED_HASHES_REQUIRED")
+        if self.status == "NOT_APPLICABLE" and (self.original_hash is not None or self.mutated_hash is not None):
+            raise ValueError("MUTATION_NOT_APPLICABLE_HAS_RESULT")
+        return self
+
+
+class MutationValidationResult(MutationCheck):
+    case_id: str = Field(min_length=1)
+    execution: dict[str, Any] | None = None
+
 
 class MutationEvidence(StrictModel):
     policy_version: Literal["1"]
@@ -323,6 +340,13 @@ class MutationEvidence(StrictModel):
     artifact_ref: str = Field(min_length=1)
     artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     checks: tuple[MutationCheck, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def mutation_ids_are_unique(self) -> "MutationEvidence":
+        identifiers = [check.mutation_id for check in self.checks]
+        if len(identifiers) != len(set(identifiers)):
+            raise ValueError("MUTATION_ID_DUPLICATED")
+        return self
 
 
 class CoverageReview(StrictModel):
@@ -652,6 +676,22 @@ class QueryStepReport(StrictModel):
     sqlstate: str | None = None
     error: str | None = None
 
+    @field_validator("result_rows", mode="before")
+    @classmethod
+    def decode_observed_rows(cls, value: Any) -> Any:
+        if value is None:
+            return None
+        # Python driver values are already typed; only tagged JSON cells need decoding.
+        from .row_codec import decode_cell
+        if not isinstance(value, (list, tuple)) or any(not isinstance(row, (list, tuple)) for row in value):
+            raise ValueError("ROW_CODEC_ROWS_INVALID")
+        return tuple(tuple(decode_cell(cell) if isinstance(cell, dict) else cell for cell in row) for row in value)
+
+    @field_serializer("result_rows", when_used="json")
+    def encode_observed_rows(self, value: Any) -> Any:
+        from .row_codec import encode_rows
+        return None if value is None else encode_rows(value)
+
 
 class QueryCaseReport(StrictModel):
     case_id: str
@@ -708,6 +748,7 @@ MODEL_EXPORTS: dict[str, type[BaseModel]] = {
         OracleProvenance,
         ValidationEvidence,
         MutationCheck,
+        MutationValidationResult,
         MutationEvidence,
         CoverageReview,
         ReviewEvidence,
