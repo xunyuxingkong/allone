@@ -11,22 +11,9 @@ from pydantic import ValidationError
 
 from xgtest.core.errors import ContractError
 from xgtest.core.asset_lock import consistent_active_read
-from xgtest.core.models import (
-    ComparisonProfile,
-    EffectiveMetadata,
-    QueryCaseInput,
-    QueryStep,
-    RawMetadata,
-    SourceInfo,
-    CoverageClaim,
-    GenerationProvenance,
-    OracleProvenance,
-    ValidationEvidence,
-    MutationEvidence,
-    ReviewEvidence,
-    CoverageReview,
-    decode_expected,
-)
+from xgtest.core.execution_models import (ComparisonProfile, QueryStep, decode_expected)
+from xgtest.core.control_models import (EffectiveMetadata, QueryCaseInput, RawMetadata, SourceInfo)
+from xgtest.core.evidence_models import (CoverageClaim, GenerationProvenance, OracleProvenance, ValidationEvidence, MutationEvidence, ReviewEvidence, CoverageReview)
 from xgtest.core.yaml_loader import load_yaml
 from xgtest.generated.registry_enums import CaseAssetStatus, FeatureKey, IsolationScope, Level
 

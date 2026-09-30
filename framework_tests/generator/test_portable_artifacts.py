@@ -49,3 +49,16 @@ def test_bundle_limits_and_unexpected_entries_are_rejected(tmp_path):
         archive.writestr("../outside", "never extract")
     with pytest.raises(ValueError, match="BUNDLE_SCOPE"):
         import_artifact_bundle(store, bundle)
+
+
+def test_self_consistent_wrong_bundle_is_rejected_before_any_write(tmp_path):
+    import hashlib
+    source = LocalArtifactStore(tmp_path / "source")
+    bundle = tmp_path / "bundle.zip"
+    export_artifact_bundle(source, (source.put(b"target version"),), bundle)
+    expected = hashlib.sha256(bundle.read_bytes()).hexdigest()
+    export_artifact_bundle(source, (source.put(b"another valid version"),), bundle)
+    destination = LocalArtifactStore(tmp_path / "destination")
+    with pytest.raises(ValueError, match="BUNDLE_ID_MISMATCH"):
+        import_artifact_bundle(destination, bundle, expected_bundle_sha256=expected)
+    assert not destination.root.exists()

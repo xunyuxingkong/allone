@@ -27,6 +27,14 @@
       "title": "Feature",
       "type": "string"
     },
+    "legacy_feature_assets": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Legacy Feature Assets",
+      "type": "array"
+    },
     "model_ref": {
       "title": "Model Ref",
       "type": "string"

@@ -17,17 +17,8 @@ from typing import Any, Callable, Literal
 from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession, extract_error
 from xgtest.core.contract_set import build_contract_descriptor
 from xgtest.core.logical_types import query_type_support
-from xgtest.core.models import (
-    CaseExecutionStatus,
-    ExpectedError,
-    QueryCaseInput,
-    QueryCaseReport,
-    QueryRunReport,
-    QueryStep,
-    QueryStepReport,
-    QueryTargetReport,
-    StepStatus,
-)
+from xgtest.core.execution_models import (CaseExecutionStatus, ExpectedError, QueryCaseReport, QueryRunReport, QueryStep, QueryStepReport, QueryTargetReport, StepStatus)
+from xgtest.core.control_models import (QueryCaseInput)
 from xgtest.runtime.comparator import (
     UnsupportedQueryTypeError,
     compare_error,

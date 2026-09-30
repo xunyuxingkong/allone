@@ -5,7 +5,7 @@ from typing import Literal, Any
 
 from pydantic import field_validator
 
-from xgtest.core.models import StrictModel
+from xgtest.core.model_base import StrictModel
 
 
 class AcceptanceScope(StrictModel):
@@ -16,6 +16,22 @@ class AcceptanceScope(StrictModel):
     active_suite_root: str
     model_ref: str
     coverage_strategy: Literal["pairwise", "all_values"] = "pairwise"
+    legacy_feature_assets: tuple[str, ...] = ()
+
+    @field_validator("legacy_feature_assets", mode="before")
+    @classmethod
+    def legacy_paths_are_relative(cls, values):
+        if not isinstance(values, (list, tuple)):
+            raise ValueError("SCOPE_LEGACY_ASSETS_INVALID")
+        return tuple(cls.path_is_relative(value) for value in values)
+
+    @property
+    def feature_coverage_root(self) -> str:
+        return self.active_root
+
+    @property
+    def module_regression_root(self) -> str:
+        return self.active_suite_root
 
     @field_validator("module", "feature")
     @classmethod
@@ -61,6 +77,21 @@ class AcceptanceScope(StrictModel):
         directory = self.path(root, role)
         return sorted((*directory.rglob("*.yaml"), *directory.rglob("*.yml")))
 
+    def feature_claims(self, root: Path, model, assets, *, suite_root: Path | None = None):
+        """Module regression sees all assets; feature coverage sees its own paths."""
+        directory = suite_root or self.path(root, "active_suite_root")
+        feature = self.path(root, "active_root")
+        legacy = {(root / name).resolve() for name in self.legacy_feature_assets}
+        claims = []
+        for asset in assets:
+            path = (directory / asset.source.relative_path).resolve()
+            if not path.is_relative_to(feature) and path not in legacy:
+                continue
+            if asset.case.metadata.status.value != "active":
+                continue
+            claims.extend(claim for claim in asset.case.coverage if claim.model_id == model.model_id and claim.model_version == model.model_version)
+        return claims
+
 
 def resolve_scope(manifest: dict[str, Any] | None = None, scope: AcceptanceScope | None = None) -> AcceptanceScope:
     from xgtest.generator.plugins import FEATURE_PLUGINS
@@ -81,4 +112,6 @@ def resolve_scope(manifest: dict[str, Any] | None = None, scope: AcceptanceScope
     suite = Path(result.active_suite_root)
     if candidate.is_relative_to(suite) or suite.is_relative_to(candidate):
         raise ValueError("SCOPE_CANDIDATES_OVERLAP_ACTIVE_SUITE")
+    if any(not Path(path).is_relative_to(suite) for path in result.legacy_feature_assets):
+        raise ValueError("SCOPE_LEGACY_ASSET_OUTSIDE_SUITE")
     return result

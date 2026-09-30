@@ -1,22 +1,11 @@
-"""Compile legacy query assets into a governance-free worker contract."""
+"""Compile coordinator assets into the execution-only worker contract."""
+from __future__ import annotations
 
-from xgtest.core.canonical import xgmj1_sha256
-from xgtest.core.models import QueryCaseInput, QueryStep, StrictModel
+from typing import TYPE_CHECKING
+from xgtest.core.execution_models import QueryExecutable, ExecutableMetadata
 
-
-class ExecutableMetadata(StrictModel):
-    id: str
-    timeout: str
-
-
-class QueryExecutable(StrictModel):
-    schema_version: str = "1"
-    metadata: ExecutableMetadata
-    steps: tuple[QueryStep, ...]
-
-    @property
-    def execution_hash(self) -> str:
-        return xgmj1_sha256(self.model_dump(mode="json"))
+if TYPE_CHECKING:
+    from xgtest.core.control_models import QueryCaseInput
 
 
 def compile_query_asset(asset: QueryCaseInput) -> QueryExecutable:

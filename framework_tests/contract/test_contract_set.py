@@ -71,3 +71,24 @@ def test_layer_invalidation_does_not_treat_cli_or_tests_as_runtime(tmp_path: Pat
 def test_historical_v1_descriptor_is_validated_without_relabeling():
     raw = (ROOT / "docs/g0a/contract-descriptor-v12-legacy.json").read_text(encoding="utf-8")
     validate_contract_descriptor(json.loads(raw))
+
+
+def test_physical_model_ownership_and_governance_invalidation(tmp_path):
+    from xgtest.core.models import QueryStep, ReviewEvidence, QueryCaseInput, Manifest
+    assert QueryStep.__module__ == "xgtest.core.execution_models"
+    assert ReviewEvidence.__module__ == "xgtest.core.evidence_models"
+    assert QueryCaseInput.__module__ == "xgtest.core.control_models"
+    assert Manifest.__module__ == "xgtest.core.governance_models"
+    directory = tmp_path / "src/xgtest/core"
+    directory.mkdir(parents=True)
+    for name in ("execution_models", "evidence_models", "governance_models", "control_models"):
+        (directory / f"{name}.py").write_text("value = 1\n")
+    before = build_contract_descriptor(tmp_path)
+    for name in ("evidence_models", "governance_models", "control_models"):
+        (directory / f"{name}.py").write_text("value = 2\n")
+    after = build_contract_descriptor(tmp_path)
+    assert before["contract_set_id"] == after["contract_set_id"]
+    assert before["layers"]["governance"]["id"] != after["layers"]["governance"]["id"]
+    (directory / "execution_models.py").write_text("value = 2\n")
+    assert build_contract_descriptor(tmp_path)["contract_set_id"] != before["contract_set_id"]
+    validate_contract_descriptor(json.loads((ROOT / "docs/g0a/contract-descriptor-v13-legacy.json").read_text()))

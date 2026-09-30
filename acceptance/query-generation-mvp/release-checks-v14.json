@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "framework": {
+      "path": "artifacts/release-checks/objects/e4/e418f2b579ea082de25219bb847af5fa769122846aaef01b29f42d86e04dd156.json",
+      "sha256": "e418f2b579ea082de25219bb847af5fa769122846aaef01b29f42d86e04dd156"
+    },
+    "frontend": {
+      "path": "artifacts/release-checks/objects/54/5481b6e162328a5d5574c97ec597989dc28a1173f583df4bcf5191d0bc791cdd.json",
+      "sha256": "5481b6e162328a5d5574c97ec597989dc28a1173f583df4bcf5191d0bc791cdd"
+    }
+  },
+  "checks_id": "67b7d9f48360f7d8a639e6dcea36808471c969cc55713e7935673a7aed3090b4",
+  "schema_version": "1",
+  "source_snapshot_id": "ce83e79cca520f434232575cbf78ef30eddbd3142d6ca7bee55e9637f1574731"
+}

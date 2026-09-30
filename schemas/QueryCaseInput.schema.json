@@ -639,7 +639,7 @@
           "type": "string"
         },
         "policy_version": {
-          "const": "1",
+          "minLength": 1,
           "title": "Policy Version",
           "type": "string"
         },

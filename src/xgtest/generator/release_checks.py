@@ -8,6 +8,9 @@ import os
 import subprocess
 import sys
 import tempfile
+import platform
+import shutil
+from importlib import metadata
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,7 +25,9 @@ def release_source_id(root: Path) -> str:
     paths = set()
     for directory in ("src", "framework_tests", "registry", "models", "generators", "schemas", "webui/src"):
         paths.update(path for path in (root / directory).rglob("*") if path.is_file() and path.suffix in suffixes)
-    paths.update(root / name for name in ("pyproject.toml", "webui/package.json", "webui/package-lock.json", "webui/vite.config.ts", "webui/tsconfig.json", "webui/index.html") if (root / name).is_file())
+    paths.update(path for path in (root / "webui").glob("*") if path.is_file() and path.suffix in suffixes)
+    paths.update(path for path in (root / "webui/public").rglob("*") if path.is_file())
+    paths.update(root / name for name in ("pyproject.toml", "uv.lock") if (root / name).is_file())
     return xgmj1_sha256({path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest() for path in sorted(paths)})
 
 
@@ -41,13 +46,44 @@ def run_release_check(root: Path, kind: str) -> dict[str, Any]:
     temporary_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".check-", dir=temporary_root) as temporary:
         junit = Path(temporary) / "junit.xml"
-        command = [sys.executable, "-m", "pytest", "framework_tests", "-o", "addopts=", "-q", f"--junitxml={junit}"] if kind == "framework" else (["cmd.exe", "/d", "/c", "npm run build"] if os.name == "nt" else ["npm", "run", "build"])
-        completed = subprocess.run(command, cwd=root if kind == "framework" else root / "webui", capture_output=True, timeout=600, check=False)
+        environment = {"os": platform.system(), "arch": platform.machine()}
+        commands = []
+        if kind == "framework":
+            environment.update(python_version=platform.python_version(), python_executable=sys.executable)
+            dependencies = sorted({(item.metadata["Name"].lower(), item.version) for item in metadata.distributions()})
+            environment["dependencies"] = _store(root, json.dumps(dependencies, sort_keys=True).encode(), "application/json")
+            command = [sys.executable, "-m", "pytest", "framework_tests", "-o", "addopts=", "-q", f"--junitxml={junit}"]
+            cwd = root
+        else:
+            cwd = Path(temporary) / "webui"
+            shutil.copytree(root / "webui", cwd, ignore=shutil.ignore_patterns("node_modules", "dist", ".vite"))
+            environment["package_lock_sha256"] = hashlib.sha256((cwd / "package-lock.json").read_bytes()).hexdigest()
+            for name, command in (("node", ["node", "--version"]), ("npm", _npm_command("--version"))):
+                version = subprocess.run(command, cwd=cwd, capture_output=True, timeout=60, check=False)
+                if version.returncode:
+                    raise ValueError(f"RELEASE_TOOL_VERSION_UNAVAILABLE:{name}")
+                environment[f"{name}_version"] = version.stdout.decode("utf-8").strip()
+            install_command = _npm_command("ci")
+            installed = subprocess.run(install_command, cwd=cwd, capture_output=True, timeout=600, check=False)
+            commands.append({"command": install_command, "cwd": str(cwd), "exit_code": installed.returncode,
+                             "log": _store(root, installed.stdout + installed.stderr, "text/plain")})
+            command = _npm_command("run build")
+        completed = subprocess.run(command, cwd=cwd, capture_output=True, timeout=600, check=False) if not commands or commands[0]["exit_code"] == 0 else installed
+        commands.append({"command": command, "cwd": str(cwd), "exit_code": completed.returncode,
+                         "log": _store(root, completed.stdout + completed.stderr, "text/plain")})
+        dependency_ok = True
+        if kind == "frontend":
+            tree = subprocess.run(_npm_command("ls --all --json"), cwd=cwd, capture_output=True, timeout=60, check=False)
+            dependency_ok = tree.returncode == 0
+            environment["dependencies"] = _store(root, tree.stdout, "application/json")
+            environment["dependency_tree_exit_code"] = tree.returncode
+        environment_id = xgmj1_sha256(environment)
         after = release_source_id(root)
         payload = {
-            "schema_version": "1", "kind": kind, "source_snapshot_id": before,
+            "schema_version": "2", "kind": kind, "source_snapshot_id": before,
+            "environment": environment, "environment_id": environment_id, "commands": commands,
             "source_unchanged": before == after, "exit_code": completed.returncode,
-            "status": "PASS" if completed.returncode == 0 and before == after else "FAIL",
+            "status": "PASS" if completed.returncode == 0 and dependency_ok and before == after else "FAIL",
             "completed_at": datetime.now(timezone.utc).isoformat(),
             "log": _store(root, completed.stdout + completed.stderr, "text/plain"),
         }
@@ -55,6 +91,10 @@ def run_release_check(root: Path, kind: str) -> dict[str, Any]:
             payload["junit"] = _store(root, junit.read_bytes(), "application/xml")
         raw = (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
         return {"status": payload["status"], "kind": kind, "report": _store(root, raw, "application/json")}
+
+
+def _npm_command(arguments: str) -> list[str]:
+    return ["cmd.exe", "/d", "/c", f"npm {arguments}"] if os.name == "nt" else ["npm", *arguments.split()]
 
 
 def _read_ref(root: Path, ref: Any) -> bytes:
@@ -90,10 +130,29 @@ def verify_release_checks(root: Path, path: Path) -> dict[str, Any]:
             raise ValueError("RELEASE_CHECKS_SOURCE_OR_SCOPE_INVALID")
         for kind, reference in package["checks"].items():
             report = json.loads(_read_ref(root, reference))
-            if not isinstance(report, dict) or report.get("kind") != kind or report.get("schema_version") != "1" or report.get("source_snapshot_id") != source_id or report.get("source_unchanged") is not True or type(report.get("exit_code")) is not int or report["exit_code"] != 0 or report.get("status") != "PASS":
+            if not isinstance(report, dict) or report.get("kind") != kind or report.get("schema_version") != "2" or report.get("source_snapshot_id") != source_id or report.get("source_unchanged") is not True or type(report.get("exit_code")) is not int or report["exit_code"] != 0 or report.get("status") != "PASS":
                 raise ValueError(f"RELEASE_CHECK_FAILED_OR_STALE:{kind}")
             _read_ref(root, report["log"])
+            environment = report["environment"]
+            if report["environment_id"] != xgmj1_sha256(environment) or not all(isinstance(environment.get(key), str) and environment[key] for key in ("os", "arch")):
+                raise ValueError("RELEASE_ENVIRONMENT_INVALID")
+            dependencies = json.loads(_read_ref(root, environment["dependencies"]))
+            commands = report["commands"]
+            if not isinstance(commands, list) or len(commands) != (1 if kind == "framework" else 2):
+                raise ValueError("RELEASE_COMMANDS_INVALID")
+            for item in commands:
+                if type(item["exit_code"]) is not int or item["exit_code"] != 0 or not isinstance(item["cwd"], str) or not item["cwd"]:
+                    raise ValueError("RELEASE_COMMAND_FAILED")
+                _read_ref(root, item["log"])
+            if kind == "frontend":
+                if (environment.get("package_lock_sha256") != hashlib.sha256((root / "webui/package-lock.json").read_bytes()).hexdigest()
+                    or environment.get("dependency_tree_exit_code") != 0 or not isinstance(dependencies, dict)
+                    or any(not isinstance(environment.get(key), str) or not environment[key] for key in ("node_version", "npm_version"))
+                    or [item["command"] for item in commands] != [_npm_command("ci"), _npm_command("run build")]):
+                    raise ValueError("RELEASE_CLEAN_BUILD_ENVIRONMENT_INVALID")
             if kind == "framework":
+                if not isinstance(dependencies, list) or not dependencies or not environment.get("python_version") or commands[0]["command"][:4] != [environment.get("python_executable"), "-m", "pytest", "framework_tests"]:
+                    raise ValueError("RELEASE_PYTHON_ENVIRONMENT_INVALID")
                 document = ET.fromstring(_read_ref(root, report["junit"]))
                 cases = list(document.iter("testcase"))
                 failed = sum(case.find("failure") is not None or case.find("error") is not None for case in cases)

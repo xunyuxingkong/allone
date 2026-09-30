@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from xgtest.core.models import QueryRunReport
+from xgtest.core.execution_models import (QueryRunReport)
 
 
 def write_query_report(report: QueryRunReport, output: Path) -> dict[str, object]:

@@ -227,7 +227,7 @@ def verify_post_promotion_package(
                 fail("POST_REGRESSION_CASE_INVALID", case_id)
             else:
                 verified_ids.add(case_id)
-        gap = coverage_gap(model, [claim for asset in assets for claim in asset.case.coverage], scope.coverage_strategy)
+        gap = coverage_gap(model, scope.feature_claims(root, model, assets), scope.coverage_strategy)
         coverage = {"required": gap["required"], "active_covered": gap["covered"], "active_missing": gap["missing"]}
         if gap["missing"] != 0:
             fail("POST_ACTIVE_COVERAGE_INCOMPLETE")
@@ -239,7 +239,7 @@ def verify_post_promotion_package(
         "package_integrity": "FAIL" if errors else "PASS", "readiness": "BLOCKED" if errors else "READY",
         "expected_count": len(expected_ids), "case_verified_count": len(verified_ids - failed_ids),
         "case_failed_count": len(failed_ids), "package_error_count": sum(error["case_id"] == "*" for error in errors),
-        "coverage": coverage, "approval": approval_status, "errors": errors,
+        "coverage": coverage, "completion": {"feature": "DEFINED_SCOPE_COMPLETE" if coverage is not None and coverage["active_missing"] == 0 and not errors else "DEFINED_SCOPE_INCOMPLETE", "module": "MODULE_FULL_INCOMPLETE", "feature_coverage_root": scope.feature_coverage_root, "module_regression_root": scope.module_regression_root} if "scope" in locals() else None, "approval": approval_status, "errors": errors,
     }
 
 

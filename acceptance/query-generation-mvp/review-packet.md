@@ -1,17 +1,17 @@
-# JOIN 候选评审包：v13
+# JOIN 候选评审包：v14
 
 21 条候选保持 review；Package Integrity=PASS，Readiness=WAITING_APPROVAL，Final=HOLD。
 
 ## 当前输入
 
-- Execution Contract：`46e6ceacf0503a315ab844929f3a287184461faa1a7c57ccbfd583d3f76d1ead`。
-- Runtime Profile：`5fbbe255381418c934372a11107f4ce628b7c492726ed64926f32389d548ef02`；`artifacts/runtime-profile-v13.json`。
-- Manifest：`217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f`。
-- 尚未审批的 PromotionPlan：`3ab6c67a0580b35affdc666f0610559cdb40796c8d2393b1303a03f4782911f1`；[完整计划](promotion-plan-v13.json)。
+- Execution Contract：`f7589aabf3714f1897cf8bd84eb9de7fdc0f19acadf881be4548d2a4ca172680`。
+- Runtime Profile：`15f80cc0258cd008d4b70accdc6b0cc89e17a6ff369a61b1d572cd25da05a7ea`；`artifacts/runtime-profile-v14.json`。
+- Manifest：`bccf05ed22a97384a3ebbc4626db67eedde8dfec01ffd718e311241ce410e615`。
+- 尚未审批的 [完整 PromotionPlan](promotion-plan-v14.json)。
 - [Trial 索引](trial-run-index.json)：21/21 双跑 PASS，完整原始行。
 - [Mutation 索引](mutation-validation-index.json)：5 KILLED、16 NOT_APPLICABLE。
 - 现有 Active 回归 30/30 PASS；Active 覆盖 17/137，provisional 137/137。
-- 框架 232 passed、1 skipped；前端构建 PASS。
+- 框架 239 passed、1 skipped；前端独立 `npm ci` 后构建 PASS，环境/依赖快照可复核。
 - CI=DEFERRED_BY_USER，正式发布豁免未开启。
 
 ## 人工评审与签名
@@ -27,4 +27,6 @@
 
 读取锁阻止正在晋级或中断批次的部分可见状态；仍为 RECOVERABLE_BATCH，版本化 ActiveManifest 尚未完成。Post verifier 与派生 Final 已实现，真实 post 验收尚未执行。
 
-[完整修复、证据与后续步骤](../../审核意见/XG_DB_Test_Quality_Audit_Fix_Progress_v13.md)。本包是评审输入，不是人工批准记录。
+[完整修复、证据与后续步骤](../../审核意见/XG_DB_Test_Quality_Audit_153ba26_Progress_v14.md)。本包是评审输入，不是人工批准记录。
+
+现有前端/API 可访问，但自动审批检查拒绝了 API 重启命令，运行服务仍加载 v13 Profile。须停止旧 API 后运行更新的 `dev-api.ps1`，才能在页面中复核 v14 身份。

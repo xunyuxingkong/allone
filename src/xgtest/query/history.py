@@ -10,7 +10,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from xgtest.core.models import QueryRunReport
+from xgtest.core.execution_models import (QueryRunReport)
 
 
 class QueryHistoryError(ValueError):

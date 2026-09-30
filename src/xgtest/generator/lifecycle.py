@@ -19,7 +19,7 @@ from xgtest.design.constraint import validate_assignment
 from xgtest.design.model import TestModel
 from xgtest.generator.artifact_store import LocalArtifactStore
 from xgtest.generator.evidence import trial_projection as _trial_projection, validate_trial_artifact
-from xgtest.generator.plugins import FEATURE_PLUGINS
+from xgtest.generator.plugins import FEATURE_PLUGINS, mutation_spec_for, mutation_specs_for
 from xgtest.generator.template import semantic_hash
 from xgtest.generator.review import current_review_input_hash
 from xgtest.query.loader import load_query_case
@@ -80,12 +80,13 @@ def _mutation_result_digest(report: dict[str, Any], case: Any, *, require_rows: 
     return xgmj1_sha256(projected)
 
 
-def _validate_mutation_execution(case: Any, execution: Any, original_hash: str, mutated_hash: str, expected_build: str | None = None) -> None:
+def _validate_mutation_execution(case: Any, execution: Any, original_hash: str, mutated_hash: str, expected_build: str | None = None, *, mutation_id: str | None = None) -> None:
     if not isinstance(execution, dict):
         raise ValueError("MUTATION_EXECUTION_EVIDENCE_REQUIRED")
     plugin = FEATURE_PLUGINS.for_case(case)
     original_sql = [step.sql for step in case.steps]
-    mutated_sql = [plugin.mutated_sql(sql) for sql in original_sql]
+    spec = mutation_spec_for(plugin, mutation_id)
+    mutated_sql = [spec.rewrite(sql) for sql in original_sql]
     if mutated_sql == original_sql or execution.get("original_sql_sha256") != xgmj1_sha256(original_sql) or execution.get("mutated_sql_sha256") != xgmj1_sha256(mutated_sql):
         raise ValueError("MUTATION_EXECUTION_SQL_MISMATCH")
     baseline = execution.get("baseline_runs")
@@ -126,7 +127,6 @@ def trial_candidate(
 ) -> dict[str, Any]:
     from xgtest.core.models import CaseExecutionStatus
     from xgtest.query.runner import run_query_case_isolated
-    from xgtest.generator.plugins import FEATURE_PLUGINS
 
     if runner is None:
         if runtime_profile is None:
@@ -234,12 +234,12 @@ def validate_candidate_mutation(
     runtime_profile: dict[str, Any],
     *,
     runner: Any = None,
+    mutation_id: str | None = None,
 ) -> dict[str, Any]:
     """Execute the registered feature mutation against a validated candidate."""
     from xgtest.core.models import CaseExecutionStatus, QueryCaseInput
     from xgtest.query.runner import run_query_case_isolated
 
-    from xgtest.generator.plugins import FEATURE_PLUGINS
 
     if runner is None:
         if not runtime_profile:
@@ -260,14 +260,15 @@ def validate_candidate_mutation(
     if case.metadata.status.value != "draft":
         raise ValueError("CANDIDATE_STATUS_INVALID: mutation validation expects draft status")
     plugin = FEATURE_PLUGINS.for_model(model.model_id)
-    if not plugin.mutation_applies(case):
-        return {"case_id": case.metadata.id, "mutation_id": plugin.mutation_id, "status": "NOT_APPLICABLE"}
+    spec = mutation_spec_for(plugin, mutation_id)
+    if not spec.applies(case):
+        return {"case_id": case.metadata.id, "mutation_id": spec.mutation_id, "status": "NOT_APPLICABLE"}
     FEATURE_PLUGINS.for_model(model.model_id).static_validate(path, model)
     case = load_query_case(path)
     payload = case.model_dump(mode="python")
     occurrences = 0
     for step in payload["steps"]:
-        changed = plugin.mutated_sql(step["sql"])
+        changed = spec.rewrite(step["sql"])
         occurrences += int(changed != step["sql"])
         step["sql"] = changed
     if occurrences == 0:
@@ -283,11 +284,11 @@ def validate_candidate_mutation(
         for _ in range(2)
     ]
     if any(report.status != CaseExecutionStatus.PASS for report in original_reports):
-        return {"case_id": case.metadata.id, "mutation_id": plugin.mutation_id, "status": "BASELINE_NOT_PASS"}
+        return {"case_id": case.metadata.id, "mutation_id": spec.mutation_id, "status": "BASELINE_NOT_PASS"}
     original = [report.model_dump(mode="json") for report in original_reports]
     original_hashes = [_mutation_result_digest(report, case, require_rows=runner is None) for report in original]
     if original_hashes[0] != original_hashes[1]:
-        return {"case_id": case.metadata.id, "mutation_id": plugin.mutation_id, "status": "BASELINE_NONDETERMINISTIC"}
+        return {"case_id": case.metadata.id, "mutation_id": spec.mutation_id, "status": "BASELINE_NONDETERMINISTIC"}
     mutated_reports = [
         run(mutated_case, config, runtime_profile, capture_result_rows=True) if runner is None else run(mutated_case, config, runtime_profile)
         for _ in range(2)
@@ -296,19 +297,19 @@ def validate_candidate_mutation(
     if any(report.status in {CaseExecutionStatus.ERROR, CaseExecutionStatus.TIMEOUT} for report in mutated_reports):
         return {
             "case_id": case.metadata.id,
-            "mutation_id": plugin.mutation_id,
+            "mutation_id": spec.mutation_id,
             "status": "INCONCLUSIVE",
             "original_hash": original_hashes[0],
         }
     mutated = [report.model_dump(mode="json") for report in mutated_reports]
     mutated_hashes = [_mutation_result_digest(report, case, require_rows=runner is None) for report in mutated]
     if mutated_hashes[0] != mutated_hashes[1]:
-        return {"case_id": case.metadata.id, "mutation_id": plugin.mutation_id, "status": "MUTATED_NONDETERMINISTIC"}
+        return {"case_id": case.metadata.id, "mutation_id": spec.mutation_id, "status": "MUTATED_NONDETERMINISTIC"}
     original_hash = original_hashes[0]
     mutated_hash = mutated_hashes[0]
     return {
         "case_id": case.metadata.id,
-        "mutation_id": plugin.mutation_id,
+        "mutation_id": spec.mutation_id,
         "status": "KILLED" if original_hash != mutated_hash else "WEAK",
         "original_hash": original_hash,
         "mutated_hash": mutated_hash,
@@ -320,6 +321,11 @@ def validate_candidate_mutation(
             "build_observations": [build_before, build_after],
         } if runner is None else None,
     }
+
+
+def validate_candidate_mutations(path: Path, model: TestModel, config: Any, runtime_profile: dict[str, Any], *, runner: Any = None) -> tuple[dict[str, Any], ...]:
+    plugin = FEATURE_PLUGINS.for_model(model.model_id)
+    return tuple(validate_candidate_mutation(path, model, config, runtime_profile, runner=runner, mutation_id=spec.mutation_id) for spec in mutation_specs_for(plugin))
 
 
 def record_candidate_mutation_evidence(
@@ -338,43 +344,46 @@ def record_candidate_mutation_evidence(
     semantic = semantic_hash(payload)
     if case.validation_evidence is None or case.validation_evidence.semantic_hash != semantic:
         raise ValueError("CANDIDATE_SEMANTIC_HASH_STALE")
-    if result.get("case_id") != case.metadata.id:
+    from xgtest.core.evidence_models import MutationValidationResult
+    results = result if isinstance(result, (list, tuple)) else [result]
+    checked_results = tuple(MutationValidationResult.model_validate(item) for item in results)
+    if any(item.case_id != case.metadata.id for item in checked_results):
         raise ValueError("CANDIDATE_MUTATION_CASE_ID_MISMATCH")
-    checked_result = MutationValidationResult.model_validate(result)
     plugin = FEATURE_PLUGINS.for_case(case)
-    if checked_result.mutation_id != plugin.mutation_id:
-        raise ValueError("CANDIDATE_MUTATION_ID_UNSUPPORTED")
-    requires_kill = plugin.mutation_applies(case)
-    if (checked_result.status == "NOT_APPLICABLE") != (not requires_kill):
-        raise ValueError("CANDIDATE_MUTATION_APPLICABILITY_MISMATCH")
-    if checked_result.status == "KILLED":
-        target = runtime_profile.get("identity", {}).get("target", {})
-        expected_build = f"{target.get('db_build', '')} {target.get('database_version', '')}".strip() if target.get("db_build") else None
-        _validate_mutation_execution(
-            case, checked_result.execution, checked_result.original_hash or "", checked_result.mutated_hash or "", expected_build,
-        )
+    specs = mutation_specs_for(plugin)
+    plugin.mutation_policy.validate(case, checked_results, specs)
+    executions = {}
+    for item in checked_results:
+        spec = mutation_spec_for(plugin, item.mutation_id)
+        if item.status == "KILLED":
+            target = runtime_profile.get("identity", {}).get("target", {})
+            expected_build = f"{target.get('db_build', '')} {target.get('database_version', '')}".strip() if target.get("db_build") else None
+            _validate_mutation_execution(case, item.execution, item.original_hash or "", item.mutated_hash or "", expected_build, mutation_id=spec.mutation_id)
+            executions[item.mutation_id] = item.execution
     contract_id = str(build_contract_descriptor(Path(__file__).resolve().parents[3])["contract_set_id"])
     profile_id = str(runtime_profile.get("sql_runtime_profile_id", ""))
     if not re.fullmatch(r"[0-9a-f]{64}", profile_id):
         raise ValueError("CANDIDATE_RUNTIME_PROFILE_REQUIRED")
-    checks = [checked_result.model_dump(mode="json", exclude={"case_id", "execution"})]
+    checks = [item.model_dump(mode="json", exclude={"case_id", "execution"}) for item in sorted(checked_results, key=lambda item: item.mutation_id)]
     artifact = {
         "case_id": case.metadata.id,
         "semantic_hash": semantic,
-        "policy_version": "1",
+        "policy_version": plugin.mutation_policy.version,
+        "spec_versions": {spec.mutation_id: spec.version for spec in specs},
         "contract_set_id": contract_id,
         "runtime_profile_id": profile_id,
         "database_build_time": runtime_profile.get("identity", {}).get("target", {}).get("db_build"),
         "database_version": runtime_profile.get("identity", {}).get("target", {}).get("database_version"),
         "checks": checks,
-        "execution": checked_result.execution if checked_result.status == "KILLED" else None,
+        "execution": checked_results[0].execution if len(checked_results) == 1 and checked_results[0].status == "KILLED" else None,
+        **({"executions": executions} if len(checked_results) > 1 else {}),
     }
     artifact_bytes = (json.dumps(artifact, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
     artifact_ref = LocalArtifactStore(artifact_root).put(artifact_bytes)
     artifact_path = artifact_root / artifact_ref.uri
     artifact_sha256 = artifact_ref.sha256
     evidence = MutationEvidence.model_validate({
-        "policy_version": "1",
+        "policy_version": plugin.mutation_policy.version,
         "semantic_hash": semantic,
         "contract_set_id": contract_id,
         "runtime_profile_id": profile_id,
@@ -397,7 +406,6 @@ def promote_candidate(
     mutation_artifact_root: Path | None = None,
     dry_run: bool = False,
 ) -> Path:
-    from xgtest.generator.plugins import FEATURE_PLUGINS
 
     if not re.fullmatch(r"[0-9a-f]{64}", expected_runtime_profile_id):
         raise ValueError("CANDIDATE_RUNTIME_PROFILE_REQUIRED")
@@ -458,7 +466,7 @@ def promote_candidate(
     )
     if trial_validation["errors"]:
         raise ValueError(f"CANDIDATE_TRIAL_EVIDENCE_INVALID: {','.join(trial_validation['errors'])}")
-    if mutation.policy_version != "1" or mutation.semantic_hash != semantic:
+    if mutation.semantic_hash != semantic:
         raise ValueError("CANDIDATE_MUTATION_EVIDENCE_STALE")
     if mutation.contract_set_id != current_contract_set_id:
         raise ValueError("CANDIDATE_MUTATION_EVIDENCE_STALE")
@@ -488,20 +496,16 @@ def promote_candidate(
     ):
         raise ValueError("CANDIDATE_MUTATION_EVIDENCE_STALE")
     plugin = FEATURE_PLUGINS.for_model(model.model_id)
-    applicable = [check for check in mutation.checks if check.mutation_id == plugin.mutation_id]
-    requires_kill = plugin.mutation_applies(case)
-    if len(applicable) != 1 or len(mutation.checks) != 1:
-        raise ValueError("CANDIDATE_MUTATION_EVIDENCE_REQUIRED")
-    if requires_kill and any(check.status != "KILLED" for check in applicable):
-        raise ValueError("CANDIDATE_MUTATION_GATE_FAILED")
-    if not requires_kill and any(check.status != "NOT_APPLICABLE" for check in applicable):
-        raise ValueError("CANDIDATE_MUTATION_GATE_FAILED")
-    if requires_kill:
-        check = applicable[0]
-        _validate_mutation_execution(
-            case, mutation_payload.get("execution"), check.original_hash or "", check.mutated_hash or "",
-            f"{mutation_payload.get('database_build_time', '')} {mutation_payload.get('database_version', '')}".strip() if mutation_payload.get("database_build_time") else None,
-        )
+    plugin.mutation_policy.validate(case, mutation.checks, mutation_specs_for(plugin), artifact=mutation_payload)
+    for check in mutation.checks:
+        if check.status == "KILLED":
+            executions = mutation_payload.get("executions")
+            execution = executions.get(check.mutation_id) if isinstance(executions, dict) else mutation_payload.get("execution") if len(mutation.checks) == 1 else None
+            _validate_mutation_execution(
+                case, execution, check.original_hash or "", check.mutated_hash or "",
+                f"{mutation_payload.get('database_build_time', '')} {mutation_payload.get('database_version', '')}".strip() if mutation_payload.get("database_build_time") else None,
+                mutation_id=check.mutation_id,
+            )
     result_hash = trial_validation["trial_hash"]
     if result_hash != evidence.trial_run_hash or artifact_payload.get("result_hash") != evidence.trial_run_hash:
         raise ValueError("CANDIDATE_TRIAL_ARTIFACT_HASH_MISMATCH")

@@ -140,9 +140,22 @@ def export_artifact_bundle(store: ArtifactStore, references: tuple[ArtifactRef, 
         Path(temporary).unlink(missing_ok=True)
 
 
-def import_artifact_bundle(store: ArtifactStore, source: Path, *, max_bytes: int = 64 * 1024 * 1024) -> tuple[ArtifactRef, ...]:
+def import_artifact_bundle(store: ArtifactStore, source: Path, *, max_bytes: int = 64 * 1024 * 1024, expected_bundle_sha256: str | None = None) -> tuple[ArtifactRef, ...]:
     """Validate the entire bundle before publishing; never extract archive paths."""
-    with zipfile.ZipFile(source) as archive:
+    # Hash and parse the same open file; do not check one path then reopen another revision.
+    with source.open("rb") as stream:
+        if expected_bundle_sha256 is not None:
+            if not isinstance(expected_bundle_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_bundle_sha256):
+                raise ValueError("ARTIFACT_BUNDLE_EXPECTED_ID_INVALID")
+            digest = hashlib.file_digest(stream, "sha256").hexdigest()
+            if digest != expected_bundle_sha256:
+                raise ValueError("ARTIFACT_BUNDLE_ID_MISMATCH")
+        stream.seek(0)
+        return _import_open_bundle(store, stream, max_bytes=max_bytes)
+
+
+def _import_open_bundle(store: ArtifactStore, stream, *, max_bytes: int) -> tuple[ArtifactRef, ...]:
+    with zipfile.ZipFile(stream) as archive:
         infos = archive.infolist()
         if len(infos) > 10_000 or sum(item.file_size for item in infos) > max_bytes:
             raise ValueError("ARTIFACT_BUNDLE_LIMIT_EXCEEDED")

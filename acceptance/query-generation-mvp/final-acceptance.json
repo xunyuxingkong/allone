@@ -2,7 +2,7 @@
   "blockers": [
     {
       "case_id": "*",
-      "code": "POST_PACKAGE_INVALID:[Errno 2] No such file or directory: 'acceptance\\\\query-generation-mvp\\\\post-package-v13.json'"
+      "code": "POST_PACKAGE_INVALID:[Errno 2] No such file or directory: 'D:\\\\测试\\\\allone\\\\acceptance\\\\query-generation-mvp\\\\post-package-v14.json'"
     },
     {
       "case_id": "*",
@@ -11,10 +11,10 @@
   ],
   "ci_disposition": "DEFERRED_BY_USER",
   "evidence_bindings": {
-    "candidate_manifest": "2be7616c4a0c4b9021ec23f2b7c17261708712ab4744ff88ca0a62f4b1cac1a7",
+    "candidate_manifest": "5a2b6e92ca043249d7a65fe785cd778f6964e87e1113051778ad7b39ac2c0d65",
     "governance_policy": "f6c52c91a8d47118b253c47689e1195e3bb9fa749324a9fdbf012029ef87de2a",
     "post_package": null,
-    "release_checks": "12737489d04017b04c40824ed8b865c2a35a684b47841856adcb77b145d9fc8c"
+    "release_checks": "760ea038c6b9c71455c7307c9aec34236730ffee16a0fa55b28f10d96d94c135"
   },
   "governance_policy": {
     "allow_release_with_ci_exception": false,
@@ -26,11 +26,12 @@
     "approval": null,
     "case_failed_count": 0,
     "case_verified_count": 0,
+    "completion": null,
     "coverage": null,
     "errors": [
       {
         "case_id": "*",
-        "code": "POST_PACKAGE_INVALID:[Errno 2] No such file or directory: 'acceptance\\\\query-generation-mvp\\\\post-package-v13.json'"
+        "code": "POST_PACKAGE_INVALID:[Errno 2] No such file or directory: 'D:\\\\测试\\\\allone\\\\acceptance\\\\query-generation-mvp\\\\post-package-v14.json'"
       }
     ],
     "expected_count": 0,
@@ -52,7 +53,7 @@
     "failed_cases": [],
     "failed_count": 0,
     "global_errors": [],
-    "manifest_id": "217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f",
+    "manifest_id": "bccf05ed22a97384a3ebbc4626db67eedde8dfec01ffd718e311241ce410e615",
     "observed_count": 21,
     "package_error_count": 0,
     "package_integrity": "PASS",
@@ -60,20 +61,20 @@
     "readiness": "WAITING_APPROVAL",
     "schema_version": "1",
     "scope": "query.join",
-    "scope_id": "217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f",
+    "scope_id": "bccf05ed22a97384a3ebbc4626db67eedde8dfec01ffd718e311241ce410e615",
     "verified_count": 21
   },
   "release_checks": {
     "errors": [],
     "framework": {
       "failed": 0,
-      "passed": 232,
+      "passed": 239,
       "skipped": 1
     },
     "status": "PASS"
   },
   "schema_version": "2",
   "scope": "query.join",
-  "source_state_id": "614b9cf3126964cdb58ab0db934ab6ecac54d38efaa139c9bc152fa959b3f90c",
+  "source_state_id": "b9a392b9e05db9c0ff584fec4d77fbd3d46d72258576884fdc087a16179cf560",
   "status": "HOLD"
 }

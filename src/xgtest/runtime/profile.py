@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from xgtest.core.canonical import xgmj1_bytes
-from xgtest.core.models import RuntimeProfile
+from xgtest.core.execution_models import (RuntimeProfile)
 
 
 def _canonical_bytes(value: Any) -> bytes:

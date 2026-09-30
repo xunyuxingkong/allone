@@ -23,3 +23,16 @@ def test_scope_fails_closed_for_unknown_feature_and_escaping_paths():
     scope = AcceptanceScope(module="query", feature="unknown", candidate_root="drafts", active_root="cases/query/x", active_suite_root="cases/query", model_ref="model.yaml")
     with pytest.raises(ValueError, match="FEATURE_PLUGIN_UNAVAILABLE"):
         resolve_scope(scope=scope)
+
+
+def test_feature_coverage_excludes_other_feature_paths_and_claims():
+    from types import SimpleNamespace as Item
+    scope = resolve_scope()
+    root = Path(__file__).resolve().parents[2]
+    model = scope.load_model(root)
+    valid = Item(model_id=model.model_id, model_version=model.model_version, assignment={})
+    foreign = Item(model_id="query.filter", model_version="1", assignment={"not_join": "value"})
+    def asset(path, claims):
+        return Item(source=Item(relative_path=path), case=Item(metadata=Item(status=Item(value="active")), coverage=claims))
+    assets = [asset("join/JOIN.yaml", (valid, foreign)), asset("filter/FILTER.yaml", (valid, foreign)), asset("join_01_inner.yaml", (valid,))]
+    assert scope.feature_claims(root, model, assets) == [valid, valid]

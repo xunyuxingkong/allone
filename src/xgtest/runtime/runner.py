@@ -11,19 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from xgtest.adapter.xugu import XuguConnectionConfig, XuguSession, extract_error
-from xgtest.core.models import (
-    BootstrapCaseInput,
-    ComparisonProfile,
-    EffectiveMetadata,
-    ExpectedError,
-    MvpCaseReport,
-    MvpRunReport,
-    MvpStepReport,
-    MvpTargetReport,
-    RawMetadata,
-    SqlStep,
-    decode_expected,
-)
+from xgtest.core.control_models import (BootstrapCaseInput, EffectiveMetadata, RawMetadata)
+from xgtest.core.execution_models import (ComparisonProfile, ExpectedError, MvpCaseReport, MvpRunReport, MvpStepReport, MvpTargetReport, SqlStep, decode_expected)
 from xgtest.generated.registry_enums import CaseAssetStatus, CaseExecutionStatus, FailureType, FeatureKey, IsolationScope, Level, StepStatus
 from xgtest.core.yaml_loader import load_yaml
 

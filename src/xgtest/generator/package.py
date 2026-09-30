@@ -16,10 +16,10 @@ from xgtest.design.model import load_test_model
 from xgtest.generator.acceptance import verify_trial_artifact_index
 from xgtest.generator.approval import ApprovalService
 from xgtest.generator.lifecycle import _validate_mutation_execution, promote_candidate
-from xgtest.generator.plugins import FEATURE_PLUGINS
+from xgtest.generator.plugins import FEATURE_PLUGINS, mutation_specs_for
 from xgtest.generator.scope import AcceptanceScope, resolve_scope
 from xgtest.generator.template import semantic_hash
-from xgtest.query.loader import load_query_case, load_query_directory
+from xgtest.query.loader import load_query_case, load_query_directory, load_query_directory_with_sources
 from xgtest.runtime.profile import load_profile
 
 
@@ -276,37 +276,41 @@ def verify_pre_promotion_package(
                 ):
                     fail(case_id, "MUTATION_ARTIFACT_CONTENT_MISMATCH")
             plugin = FEATURE_PLUGINS.for_case(case)
-            requires_kill = plugin.mutation_applies(case)
-            expected_status = "KILLED" if requires_kill else "NOT_APPLICABLE"
-            if len(evidence.checks) != 1 or evidence.checks[0].mutation_id != plugin.mutation_id or evidence.checks[0].status != expected_status:
-                fail(case_id, "MUTATION_APPLICABILITY_INVALID")
+            try:
+                plugin.mutation_policy.validate(case, evidence.checks, mutation_specs_for(plugin), artifact=artifact_payload)
+            except ValueError as error:
+                fail(case_id, f"MUTATION_APPLICABILITY_INVALID:{error}")
+            expected_status = "KILLED" if any(check.status == "KILLED" for check in evidence.checks) else "NOT_APPLICABLE"
             if entry.get("status") != expected_status:
                 fail(case_id, "MUTATION_INDEX_STATUS_MISMATCH")
-            if len(evidence.checks) == 1 and (
-                entry.get("mutation_id") != evidence.checks[0].mutation_id
-                or entry.get("original_hash") != evidence.checks[0].original_hash
-                or entry.get("mutated_hash") != evidence.checks[0].mutated_hash
-            ):
+            if len(evidence.checks) == 1:
+                check = evidence.checks[0]
+                if entry.get("mutation_id") != check.mutation_id or entry.get("original_hash") != check.original_hash or entry.get("mutated_hash") != check.mutated_hash:
+                    fail(case_id, "MUTATION_INDEX_RESULT_MISMATCH")
+            elif entry.get("checks") != [check.model_dump(mode="json") for check in evidence.checks]:
                 fail(case_id, "MUTATION_INDEX_RESULT_MISMATCH")
-            if requires_kill and isinstance(artifact_payload, dict) and len(evidence.checks) == 1:
-                try:
-                    check = evidence.checks[0]
-                    target = load_profile(profile_path)["identity"]["target"]
-                    _validate_mutation_execution(
-                        case, artifact_payload.get("execution"), check.original_hash or "", check.mutated_hash or "",
-                        f"{target.get('db_build', '')} {target.get('database_version', '')}".strip(),
-                    )
-                except (ValueError, TypeError, OverflowError):
-                    fail(case_id, "MUTATION_EXECUTION_EVIDENCE_INVALID")
+            if isinstance(artifact_payload, dict):
+                for check in evidence.checks:
+                    if check.status != "KILLED":
+                        continue
+                    try:
+                        target = load_profile(profile_path)["identity"]["target"]
+                        executions = artifact_payload.get("executions")
+                        execution = executions.get(check.mutation_id) if isinstance(executions, dict) else artifact_payload.get("execution") if len(evidence.checks) == 1 else None
+                        _validate_mutation_execution(case, execution, check.original_hash or "", check.mutated_hash or "", f"{target.get('db_build', '')} {target.get('database_version', '')}".strip(), mutation_id=check.mutation_id)
+                    except (ValueError, TypeError, OverflowError):
+                        fail(case_id, "MUTATION_EXECUTION_EVIDENCE_INVALID")
+
     except (OSError, ValueError, KeyError, TypeError) as error:
         fail("*", f"MUTATION_INDEX_INVALID:{error}")
 
     try:
         model = scope.load_model(root)
-        active = [case for case in load_query_directory(scope.path(root, "active_suite_root")) if case.metadata.status.value == "active"]
+        assets = load_query_directory_with_sources(scope.path(root, "active_suite_root"))
+        active_claims = scope.feature_claims(root, model, assets)
         candidates = [load_query_case(path) for path in _candidate_paths(root, scope) if load_query_case(path).metadata.status.value == "review"]
-        active_gap = coverage_gap(model, [claim for case in active for claim in case.coverage], scope.coverage_strategy)
-        provisional = coverage_gap(model, [claim for case in active + candidates for claim in case.coverage], scope.coverage_strategy)
+        active_gap = coverage_gap(model, active_claims, scope.coverage_strategy)
+        provisional = coverage_gap(model, active_claims + [claim for case in candidates for claim in case.coverage], scope.coverage_strategy)
         summary = json.loads((acceptance_dir / "coverage-summary.json").read_text(encoding="utf-8"))
         if not all(summary.get(key) == value for key, value in {
             "required": active_gap["required"], "active_covered": active_gap["covered"],

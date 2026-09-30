@@ -116,9 +116,9 @@ class QueryReadService:
         if strategy not in {"pairwise", "all_values"}:
             raise ValueError("COVERAGE_STRATEGY_UNSUPPORTED")
         model = self._feature_model()
-        active = [case for case in load_query_directory(self.cases_dir) if case.metadata.status.value == "active"]
+        assets = load_query_directory_with_sources(self.cases_dir)
         candidates = [case for _, case in self._candidate_cases() if case.metadata.status.value == "review"]
-        active_claims = [claim for case in active for claim in case.coverage]
+        active_claims = self.scope.feature_claims(self.project_root, model, assets, suite_root=self.cases_dir)
         current = coverage_gap(model, active_claims, strategy)
         provisional = coverage_gap(model, active_claims + [claim for case in candidates for claim in case.coverage], strategy)
         active_missing_ids = {item.requirement_id for item in current["missing_requirements"]}
@@ -147,6 +147,9 @@ class QueryReadService:
             "model_version": model.model_version,
             "strategy": strategy,
             "required": current["required"],
+            "feature_coverage_root": self.scope.feature_coverage_root,
+            "module_regression_root": self.scope.module_regression_root,
+            "completion": {"feature": "DEFINED_SCOPE_COMPLETE" if current["missing"] == 0 else "DEFINED_SCOPE_INCOMPLETE", "module": "MODULE_FULL_INCOMPLETE"},
             "active_covered": current["covered"],
             "active_missing": current["missing"],
             "missing_requirements": [
@@ -209,8 +212,8 @@ class QueryReadService:
             except (OSError, ValueError, TypeError):
                 review_status = "invalid"
         model = self._feature_model()
-        active = [item for item in load_query_directory(self.cases_dir) if item.metadata.status.value == "active"]
-        current = coverage_gap(model, [claim for item in active for claim in item.coverage], self.scope.coverage_strategy)
+        assets = load_query_directory_with_sources(self.cases_dir)
+        current = coverage_gap(model, self.scope.feature_claims(self.project_root, model, assets, suite_root=self.cases_dir), self.scope.coverage_strategy)
         candidate_requirement_ids: set[str] = set()
         for claim in case.coverage:
             if claim.model_id == model.model_id and claim.model_version == model.model_version:

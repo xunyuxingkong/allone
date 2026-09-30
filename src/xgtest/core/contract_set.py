@@ -8,7 +8,7 @@ from pathlib import Path
 from .canonical import xgmj1_sha256
 
 
-DESCRIPTOR_VERSION = "2"
+DESCRIPTOR_VERSION = "3"
 CONTRACT_VERSION = "1.1"
 _SOURCE_DIRS = ("registry", "src/xgtest/core", "src/xgtest/query", "src/xgtest/design", "src/xgtest/generator", "framework_tests/contract", "framework_tests/design", "framework_tests/generator", "models", "generators")
 _SOURCE_FILES = (
@@ -51,17 +51,17 @@ def build_legacy_contract_descriptor(root: Path) -> dict[str, object]:
 def build_contract_descriptor(root: Path) -> dict[str, object]:
     """Execution identity is independent of governance, CLI/Web and tests.
 
-    Co-located model/loader validators remain conservative execution dependencies;
-    removing those requires splitting their implementation, not only schemas.
+    Worker models are physically separate; coordinator assets, evidence, admission
+    and publication locks are governance dependencies, not execution inputs.
     """
     root = root.resolve()
     dependencies = {
         "runtime": (("src/xgtest/adapter",), ("src/xgtest/runtime/profile.py",)),
         "comparison": ((), ("src/xgtest/runtime/comparator.py", "src/xgtest/core/canonical.py", "src/xgtest/core/logical_types.py", "src/xgtest/core/row_codec.py")),
-        "execution_schema": (("registry", "src/xgtest/core"), ("src/xgtest/query/compiler.py", "src/xgtest/query/loader.py", "src/xgtest/query/runner.py", "src/xgtest/query/result.py", "src/xgtest/query/timeout.py", "src/xgtest/generated/registry_enums.py", "schemas/QueryCaseInput.schema.json", "schemas/QueryRunReport.schema.json", "schemas/RuntimeProfile.schema.json")),
+        "execution_schema": ((), ("src/xgtest/core/model_base.py", "src/xgtest/core/execution_models.py", "src/xgtest/core/errors.py", "src/xgtest/query/compiler.py", "src/xgtest/query/runner.py", "src/xgtest/query/result.py", "src/xgtest/query/timeout.py", "src/xgtest/generated/registry_enums.py", "schemas/QueryExecutable.schema.json", "schemas/QueryRunReport.schema.json", "schemas/RuntimeProfile.schema.json")),
         "design": (("src/xgtest/design", "models"), ()),
         "generator": (("generators",), ("src/xgtest/generator/candidate.py", "src/xgtest/generator/template.py", "src/xgtest/generator/plugins.py")),
-        "governance": (("src/xgtest/generator",), ()),
+        "governance": (("src/xgtest/generator", "registry"), ("src/xgtest/core/evidence_models.py", "src/xgtest/core/governance_models.py", "src/xgtest/core/control_models.py", "src/xgtest/core/admission.py", "src/xgtest/core/manifest.py", "src/xgtest/core/identity.py", "src/xgtest/core/metadata.py", "src/xgtest/core/yaml_loader.py", "src/xgtest/core/asset_lock.py", "src/xgtest/query/loader.py")),
         "control_plane": (("src/xgtest/web", "webui/src"), ("src/xgtest/cli.py", "webui/vite.config.ts")),
         "suite": (("framework_tests",), ()),
     }
@@ -75,7 +75,7 @@ def build_contract_descriptor(root: Path) -> dict[str, object]:
     execution = {name: layers[name]["id"] for name in ("runtime", "comparison", "execution_schema")}
     sources = _content_hashes(root, ("registry", "src/xgtest/core", "src/xgtest/query", "src/xgtest/design", "src/xgtest/generator", "models", "generators"), _SOURCE_FILES[1:])
     generated = _content_hashes(root, _GENERATED_DIRS, _GENERATED_FILES)
-    return {"descriptor_version": DESCRIPTOR_VERSION, "contract_version": "2.0",
+    return {"descriptor_version": DESCRIPTOR_VERSION, "contract_version": "3.0",
             "identity_kind": "execution", "execution_projection": execution,
             "contract_set_id": xgmj1_sha256(execution), "layers": layers,
             "sources": sources, "generated": generated}
@@ -87,7 +87,7 @@ def validate_contract_descriptor(descriptor: dict[str, object]) -> None:
         identity = {key: value for key, value in descriptor.items() if key != "contract_set_id"}
         if descriptor.get("contract_set_id") != xgmj1_sha256(identity):
             raise ValueError("LEGACY_CONTRACT_DESCRIPTOR_ID_INVALID")
-    elif descriptor.get("descriptor_version") == "2":
+    elif descriptor.get("descriptor_version") in {"2", "3"}:
         layers = descriptor["layers"]
         for name, layer in layers.items():
             if layer.get("layer") != name or layer["id"] != xgmj1_sha256({key: value for key, value in layer.items() if key != "id"}):

@@ -16,7 +16,7 @@ from typing import Any
 from xgtest.adapter.xugu import extract_error
 from xgtest.core.canonical import CanonicalCell, xgc1_encode, xgc1_iter_encode
 from xgtest.core.logical_types import map_declared_logical_type, query_type_support
-from xgtest.core.models import ExpectedError
+from xgtest.core.execution_models import (ExpectedError)
 
 
 def is_expected_error(expected: Any) -> bool:

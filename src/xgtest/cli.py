@@ -22,7 +22,7 @@ from .generator.plugins import FEATURE_PLUGINS
 from .generator.scope import AcceptanceScope
 from .query.compiler import QueryExecutable
 from .generator.dedup import classify_duplicates
-from .generator.lifecycle import promote_candidate, record_candidate_mutation_evidence, trial_candidate, validate_candidate_mutation
+from .generator.lifecycle import promote_candidate, record_candidate_mutation_evidence, trial_candidate, validate_candidate_mutation, validate_candidate_mutations
 from .generator.review import record_review
 from .generator.acceptance import verify_trial_artifact_index
 from .generator.package import freeze_pre_promotion_manifest, preflight_promotion, verify_pre_promotion_package
@@ -237,9 +237,15 @@ def _candidate_mutation_validate(args: argparse.Namespace) -> int:
     }
     results = []
     for path in _candidate_paths(Path(args.path)):
-        result = validate_candidate_mutation(path, model, config, profile)
-        evidence = record_candidate_mutation_evidence(path, result, Path(args.artifacts), profile)
-        results.append({**{key: value for key, value in result.items() if key != "execution"}, **evidence, "action_status": action_status[result["status"]]})
+        checks = validate_candidate_mutations(path, model, config, profile)
+        actions = [action_status[check["status"]] for check in checks]
+        outcome = "PASS" if all(status in {"PASS", "SKIPPED"} for status in actions) else "BLOCKED" if "BLOCKED" in actions else "FAIL"
+        evidence = record_candidate_mutation_evidence(path, checks, Path(args.artifacts), profile) if outcome == "PASS" else {}
+        if len(checks) == 1:
+            result = checks[0]
+            results.append({**{key: value for key, value in result.items() if key != "execution"}, **evidence, "action_status": actions[0]})
+        else:
+            results.append({"case_id": checks[0]["case_id"], "checks": [{key: value for key, value in check.items() if key != "execution"} for check in checks], **evidence, "action_status": outcome})
     passed = bool(results) and all(row["action_status"] in {"PASS", "SKIPPED"} for row in results)
     status = "PASS" if passed else "BLOCKED" if any(row["action_status"] == "BLOCKED" for row in results) else "FAIL"
     print(json.dumps({"candidates": results, "status": status}, ensure_ascii=False, sort_keys=True))
@@ -510,13 +516,13 @@ def main() -> None:
     verify_trial_index = acceptance_commands.add_parser("verify-trial-index")
     verify_trial_index.add_argument("--root", default=root)
     verify_trial_index.add_argument("--index", default=root / "acceptance" / "query-generation-mvp" / "trial-run-index.json")
-    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v13.json")
+    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v14.json")
     verify_trial_index.set_defaults(handler=_acceptance_verify_trial_index)
     for name, handler in (("freeze-package", _acceptance_freeze_package), ("verify-package", _acceptance_verify_package)):
         package_command = acceptance_commands.add_parser(name)
         package_command.add_argument("--root", default=root)
         package_command.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
-        package_command.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v13.json")
+        package_command.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v14.json")
         package_command.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
         if name == "freeze-package":
             package_command.add_argument("--scope-file")
@@ -529,7 +535,7 @@ def main() -> None:
     promote_batch = acceptance_commands.add_parser("promote-batch")
     promote_batch.add_argument("--root", default=root)
     promote_batch.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
-    promote_batch.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v13.json")
+    promote_batch.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v14.json")
     promote_batch.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
     promote_batch.add_argument("--approval", required=True)
     promote_batch.add_argument("--allowed-signers", required=True)
