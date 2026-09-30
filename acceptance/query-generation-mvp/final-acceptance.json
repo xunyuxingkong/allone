@@ -1,53 +1,79 @@
 {
-  "ai_technical_review_basis": "Historical SQL/Expected/Coverage review; semantic inputs unchanged; does not constitute v12 human approval",
-  "ai_technical_review_pass_count": 21,
-  "ai_technical_review_ref": "审核意见/XG_DB_Test_JOIN_v6_AI_Technical_Review.md",
-  "ai_technical_review_rework_count": 0,
-  "ai_technical_review_status": "PASS_WITH_REVIEW_NOTES",
-  "candidate_review_status": "PENDING_HUMAN_REVIEW",
+  "blockers": [
+    {
+      "case_id": "*",
+      "code": "POST_PACKAGE_INVALID:[Errno 2] No such file or directory: 'acceptance\\\\query-generation-mvp\\\\post-package-v13.json'"
+    },
+    {
+      "case_id": "*",
+      "code": "FINAL_CI_GATE_INCOMPLETE"
+    }
+  ],
   "ci_disposition": "DEFERRED_BY_USER",
-  "contract_set_id": "2f37cd4c97ddcf53407cbd985fb9dc68dc21ccd18626b199da9aaf54a3ff4a75",
-  "current_active_pairwise_missing": 120,
-  "current_regression_artifact": "artifacts/runs/query-active-regression-v12.json",
-  "current_regression_artifact_sha256": "a39f174c1c712c77161b55838ab9ac4078e22fe8efe579720acead9950a0a914",
-  "current_regression_case_count": 30,
-  "current_regression_status": "PASS",
-  "database_build_probe_sha256": "a0efadf5118e23ef682219a9bd0a6905f6fe31071ee7df62342ca7b13c1c0153",
-  "database_build_time": "2026-05-18 12:11:00",
-  "database_version": "BETA-11679_11665",
-  "framework_tests_deselected": 0,
-  "framework_tests_passed": 209,
-  "framework_tests_skipped": 1,
-  "framework_tests_status": "PASS",
-  "frontend_build_status": "PASS",
-  "integer_cast_probe_sha256": "a987b266b440e751df7ad7951cfaeab0256a77b55ec25adaa68ba9e46c8a49c0",
-  "integer_type_system_probe_sha256": "1e30a3ecbe165579cc9e5350e015d61b8fb9ba50b233c438ddac8907c7ce255f",
-  "manifest_id": "3986441afbf95625ccc195734ffa62262b1197ac256660d7f63236d03a588a82",
-  "model_version": "2",
-  "mutation_evidence_status": "PASS",
-  "mutation_gate_status": "PASS",
-  "mutation_killed": 5,
-  "package_integrity": "PASS",
-  "post_promotion_regression_status": "PENDING",
-  "previous_v3_runtime_profile_id": "310d95205a3b6c68c014e5b19e25a70879bc60ab0411c0ecc2d0d5b17da998fb",
-  "previous_v4_runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
-  "previous_v5_runtime_profile_id": "9161277ed4161237ff1804e505bad5071c9a73eca884ec92d88d55976f6afc54",
-  "previous_v6_contract_set_id": "c1fb2d3586a70dd627f8da950dbe900847837f48cb33ece865c0aa0ae85e911a",
-  "previous_v6_runtime_profile_id": "5ea8f183395d637fd37366173abe1722b5f6a9744f3ce5c895115dbafd068fd0",
-  "previous_v8_contract_set_id": "eacc919ec2433fb6cc1d2652138a9d9e360d6ffb3a430eed9650f9a7a079fb9e",
-  "previous_v8_runtime_profile_id": "a0b9b7484b9f757388e898ebacb0db2470567446ff29d44fa8af6e3afa7325ee",
-  "promotion_plan_hash": "9ce4ff687d99b30081ae076e34e6ddda73bf4e4f101ff8af6e7c45d944cb7fab",
-  "promotion_preflight_readiness": "BLOCKED",
-  "promotion_status": "PENDING_HUMAN_APPROVAL",
-  "raw_trial_rows_status": "PASS",
-  "readiness": "WAITING_APPROVAL",
-  "real_xugu_double_trial_pass": 21,
-  "reason": "v12: 21 real Xugu double trials with complete raw rows; mutation 5 KILLED/16 NOT_APPLICABLE with execution evidence; 30-case Active regression PASS; package integrity PASS. Human review and signed approval, promotion, post-promotion regression/acceptance remain pending. Platform stages C/D are not complete.",
-  "registry_schema_contract_status": "PASS",
-  "runtime_profile_id": "dd656644fc3e87223cc25d9eb94cfc26e025d90d9256d2bcd9ac2d8315f67493",
-  "static_validated_candidates": 21,
-  "status": "HOLD",
-  "template_version": "4",
-  "trial_artifact_root": "artifacts/trial-runs",
-  "trial_index_verify_status": "PASS"
+  "evidence_bindings": {
+    "candidate_manifest": "2be7616c4a0c4b9021ec23f2b7c17261708712ab4744ff88ca0a62f4b1cac1a7",
+    "governance_policy": "f6c52c91a8d47118b253c47689e1195e3bb9fa749324a9fdbf012029ef87de2a",
+    "post_package": null,
+    "release_checks": "12737489d04017b04c40824ed8b865c2a35a684b47841856adcb77b145d9fc8c"
+  },
+  "governance_policy": {
+    "allow_release_with_ci_exception": false,
+    "ci_decision_reference": "User explicitly deferred PR and GitHub CI in this task",
+    "ci_disposition": "DEFERRED_BY_USER",
+    "schema_version": "1"
+  },
+  "post_promotion": {
+    "approval": null,
+    "case_failed_count": 0,
+    "case_verified_count": 0,
+    "coverage": null,
+    "errors": [
+      {
+        "case_id": "*",
+        "code": "POST_PACKAGE_INVALID:[Errno 2] No such file or directory: 'acceptance\\\\query-generation-mvp\\\\post-package-v13.json'"
+      }
+    ],
+    "expected_count": 0,
+    "package_error_count": 1,
+    "package_id": null,
+    "package_integrity": "FAIL",
+    "phase": "post_promotion",
+    "readiness": "BLOCKED",
+    "schema_version": "1",
+    "scope": null
+  },
+  "pre_promotion": {
+    "approval": null,
+    "case_failed_count": 0,
+    "case_verified_count": 21,
+    "ci_disposition": "DEFERRED_BY_USER",
+    "errors": [],
+    "expected_count": 21,
+    "failed_cases": [],
+    "failed_count": 0,
+    "global_errors": [],
+    "manifest_id": "217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f",
+    "observed_count": 21,
+    "package_error_count": 0,
+    "package_integrity": "PASS",
+    "phase": "pre_promotion",
+    "readiness": "WAITING_APPROVAL",
+    "schema_version": "1",
+    "scope": "query.join",
+    "scope_id": "217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f",
+    "verified_count": 21
+  },
+  "release_checks": {
+    "errors": [],
+    "framework": {
+      "failed": 0,
+      "passed": 232,
+      "skipped": 1
+    },
+    "status": "PASS"
+  },
+  "schema_version": "2",
+  "scope": "query.join",
+  "source_state_id": "614b9cf3126964cdb58ab0db934ab6ecac54d38efaa139c9bc152fa959b3f90c",
+  "status": "HOLD"
 }

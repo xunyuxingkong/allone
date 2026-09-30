@@ -1,49 +1,192 @@
 {
-  "capability_evidence_reused_from": "artifacts/capabilities/runtime-profile-evidence-v6.json",
-  "capability_probe_cleanup": "VERIFIED",
-  "contract_set_id": "2f37cd4c97ddcf53407cbd985fb9dc68dc21ccd18626b199da9aaf54a3ff4a75",
-  "current_profile_evidence": "artifacts/capabilities/runtime-profile-evidence-v12.json",
-  "database_build_probe_ref": "artifacts/capabilities/xugu-show-build-time-v12.json",
-  "database_build_probe_sha256": "a0efadf5118e23ef682219a9bd0a6905f6fe31071ee7df62342ca7b13c1c0153",
-  "database_build_time": "2026-05-18 12:11:00",
-  "database_product": "Xugu",
-  "database_version": "BETA-11679_11665",
-  "integer_cast_probe_sha256": "a987b266b440e751df7ad7951cfaeab0256a77b55ec25adaa68ba9e46c8a49c0",
-  "integer_type_system_probe_sha256": "1e30a3ecbe165579cc9e5350e015d61b8fb9ba50b233c438ddac8907c7ce255f",
-  "previous_v10_runtime_profile_id": "2f3dae3d022cc3188db632905da60573416326b8a8ca111b5fba9b7716d91082",
-  "previous_v11_runtime_profile_id": "2c239ab90e5ca4df820351676132b755308558e04670e3d04837cc53391d58af",
-  "previous_v3_runtime_profile_id": "310d95205a3b6c68c014e5b19e25a70879bc60ab0411c0ecc2d0d5b17da998fb",
-  "previous_v4_runtime_profile_id": "45e7e9b320a9bc24503d214a97223018b659f24b1e0fa68e736d979bd8be4b78",
-  "previous_v5_runtime_profile_id": "9161277ed4161237ff1804e505bad5071c9a73eca884ec92d88d55976f6afc54",
-  "previous_v6_runtime_profile_id": "5ea8f183395d637fd37366173abe1722b5f6a9744f3ce5c895115dbafd068fd0",
-  "previous_v8_runtime_profile_id": "a0b9b7484b9f757388e898ebacb0db2470567446ff29d44fa8af6e3afa7325ee",
-  "previous_v9_runtime_profile_id": "45b562cd11cd74e08bc0d389f334b738c2a9dec475a8bb6c3add1ae973dd2079",
-  "profile_evidence_sha256": "cd2890523f3b936902b55aaf89f3197677505d3396b139f58eff21e23e722360",
-  "runtime_profile_id": "dd656644fc3e87223cc25d9eb94cfc26e025d90d9256d2bcd9ac2d8315f67493",
-  "type_mapping_supported": [
-    "bigint",
-    "blob",
-    "boolean",
-    "char",
-    "date",
-    "double",
-    "float",
-    "int",
-    "integer",
-    "smallint",
-    "text",
-    "time",
-    "varchar"
-  ],
-  "type_mapping_unsupported": [
-    "binary",
-    "datetime",
-    "decimal",
-    "number",
-    "numeric",
-    "raw",
-    "timestamp",
-    "timestamp_tz",
-    "varbinary"
-  ]
+  "driver": {
+    "module": "xgcondb",
+    "version": [
+      2,
+      3,
+      9
+    ]
+  },
+  "evidence_sha256": "ec301c791c223526decae1bdb531940abda0f1770716b76d1dc56f8207456d15",
+  "identity": {
+    "capabilities": {
+      "cancel_stop_proof": {
+        "driver_has_cancel": false,
+        "status": "UNKNOWN"
+      },
+      "connection": {
+        "status": "VERIFIED"
+      },
+      "reset_probe": {
+        "status": "UNKNOWN"
+      },
+      "sql_error_mapping": {
+        "code": "E5021",
+        "exception_type": "OperationalError",
+        "status": "VERIFIED"
+      },
+      "transaction_commit_rollback": {
+        "autocommit_disabled": true,
+        "commit_visible": true,
+        "rollback_visible": true,
+        "status": "VERIFIED"
+      },
+      "type_mapping": {
+        "bigint": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "int",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "binary": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "bytes",
+          "mapping_fidelity": "EXACT",
+          "support_status": "UNSUPPORTED"
+        },
+        "blob": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "bytes",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "boolean": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "bool",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "char": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "string",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "date": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "date",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "datetime": {
+          "canonical_encoding": "FAILED",
+          "logical_type": "timestamp",
+          "mapping_fidelity": "AMBIGUOUS",
+          "support_status": "UNSUPPORTED"
+        },
+        "decimal": {
+          "canonical_encoding": "FAILED",
+          "logical_type": "decimal",
+          "mapping_fidelity": "LOSSY",
+          "support_status": "UNSUPPORTED"
+        },
+        "double": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "float",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "float": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "float",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "int": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "int",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "integer": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "int",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "number": {
+          "canonical_encoding": "FAILED",
+          "logical_type": "decimal",
+          "mapping_fidelity": "LOSSY",
+          "support_status": "UNSUPPORTED"
+        },
+        "numeric": {
+          "canonical_encoding": "FAILED",
+          "logical_type": "decimal",
+          "mapping_fidelity": "LOSSY",
+          "support_status": "UNSUPPORTED"
+        },
+        "raw": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "bytes",
+          "mapping_fidelity": "EXACT",
+          "support_status": "UNSUPPORTED"
+        },
+        "smallint": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "int",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "text": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "string",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "time": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "time",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        },
+        "timestamp": {
+          "canonical_encoding": "FAILED",
+          "logical_type": "timestamp",
+          "mapping_fidelity": "AMBIGUOUS",
+          "support_status": "UNSUPPORTED"
+        },
+        "timestamp_tz": {
+          "canonical_encoding": "FAILED",
+          "logical_type": "timestamp",
+          "mapping_fidelity": "AMBIGUOUS",
+          "support_status": "UNSUPPORTED"
+        },
+        "varbinary": {
+          "canonical_encoding": "UNKNOWN",
+          "mapping_fidelity": "UNKNOWN",
+          "support_status": "UNSUPPORTED"
+        },
+        "varchar": {
+          "canonical_encoding": "VERIFIED",
+          "logical_type": "string",
+          "mapping_fidelity": "EXACT",
+          "support_status": "SUPPORTED"
+        }
+      }
+    },
+    "contract_set_id": "46e6ceacf0503a315ab844929f3a287184461faa1a7c57ccbfd583d3f76d1ead",
+    "driver": {
+      "module": "xgcondb",
+      "version": [
+        2,
+        3,
+        9
+      ]
+    },
+    "profile_schema_version": "0.2",
+    "target": {
+      "arch": "x86_64",
+      "database_product": "Xugu",
+      "database_version": "BETA-11679_11665",
+      "db_build": "2026-05-18 12:11:00",
+      "os": "Linux"
+    }
+  },
+  "profile_schema_version": "0.2",
+  "sql_runtime_profile_id": "5fbbe255381418c934372a11107f4ce628b7c492726ed64926f32389d548ef02",
+  "target": {
+    "database_alias": "SYSTEM",
+    "host_hash": "589e9fd1967699e3ed31821c270093155cd076a7344e44c48507c0cb7d6e02d0"
+  }
 }

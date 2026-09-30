@@ -22,14 +22,25 @@ def _setup(tmp_path, monkeypatch):
     manifest_path = root / "manifest.json"
     manifest_path.write_text(json.dumps(manifest))
     monkeypatch.setattr(batch, "preflight_promotion", lambda *a, **kw: {"readiness": "READY", "blockers": []})
-    monkeypatch.setattr(batch, "verify_promotion_approval", lambda *a, **kw: {"status": "APPROVED", "principal": "synthetic-test"})
-    monkeypatch.setattr(batch, "load_test_model", lambda *a: object())
+    monkeypatch.setattr(batch.ApprovalService, "verify", lambda *a, **kw: {"status": "APPROVED", "principal": "synthetic-test"})
+    monkeypatch.setattr("xgtest.generator.scope.AcceptanceScope.load_model", lambda *a: object())
     monkeypatch.setattr(batch, "load_profile", lambda *a: {"sql_runtime_profile_id": "a" * 64})
+    (root / "synthetic-approval").write_text("synthetic approval fixture")
     return root, source, manifest_path
 
 
 def _args(root, manifest_path):
     return (root, root / "acceptance", root / "profile.json", manifest_path, root / "synthetic-approval", root / "synthetic-trust")
+
+
+def test_approval_is_rechecked_before_each_publish(tmp_path, monkeypatch):
+    root, source, manifest = _setup(tmp_path, monkeypatch)
+    decisions = iter([{"status": "APPROVED"}, {"status": "WAITING_APPROVAL", "reason": "APPROVAL_REVOKED"}])
+    monkeypatch.setattr(batch.ApprovalService, "verify", lambda *a, **kw: next(decisions))
+    with pytest.raises(ValueError, match="APPROVAL_REVOKED"):
+        batch.execute_promotion_batch(*_args(root, manifest))
+    assert source.is_file()
+    assert not (root / "cases/query/join" / source.name).exists()
 
 
 @pytest.mark.parametrize("after_unlink", [False, True])

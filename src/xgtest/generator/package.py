@@ -6,14 +6,18 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any
+from functools import wraps
 
 from xgtest.core.canonical import xgmj1_sha256
+from xgtest.core.contract_set import build_contract_descriptor
+from xgtest.core.asset_lock import active_asset_lock
 from xgtest.design.coverage import coverage_gap
 from xgtest.design.model import load_test_model
 from xgtest.generator.acceptance import verify_trial_artifact_index
-from xgtest.generator.approval import verify_promotion_approval
+from xgtest.generator.approval import ApprovalService
 from xgtest.generator.lifecycle import _validate_mutation_execution, promote_candidate
 from xgtest.generator.plugins import FEATURE_PLUGINS
+from xgtest.generator.scope import AcceptanceScope, resolve_scope
 from xgtest.generator.template import semantic_hash
 from xgtest.query.loader import load_query_case, load_query_directory
 from xgtest.runtime.profile import load_profile
@@ -23,13 +27,55 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _candidate_paths(root: Path) -> list[Path]:
-    return sorted((root / "candidates" / "query" / "join").glob("*.yaml"))
+def consistent_project_read(function):
+    @wraps(function)
+    def wrapped(root: Path, *args, **kwargs):
+        try:
+            with active_asset_lock(root):
+                return function(root, *args, **kwargs)
+        except (OSError, ValueError) as error:
+            issue = {"case_id": "*", "code": f"PROJECT_READ_BLOCKED:{error}"}
+            if function.__name__.startswith("verify_"):
+                return {"schema_version": "1", "package_integrity": "FAIL", "readiness": "BLOCKED",
+                        "expected_count": 0, "observed_count": 0, "verified_count": 0, "failed_count": 0,
+                        "case_verified_count": 0, "case_failed_count": 0, "package_error_count": 1,
+                        "failed_cases": [], "global_errors": [issue], "errors": [issue]}
+            if function.__name__ == "generate_final_acceptance":
+                state = {"schema_version": "2", "status": "HOLD", "blockers": [issue]}
+                return {**state, "source_state_id": xgmj1_sha256(state)}
+            raise
+    return wrapped
 
 
-def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path: Path) -> dict[str, Any]:
+def _candidate_paths(root: Path, scope: AcceptanceScope | None = None) -> list[Path]:
+    return resolve_scope(scope=scope).asset_paths(root, "candidate_root")
+
+
+def load_governance_policy(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {"schema_version": "1", "ci_disposition": "CI_NOT_CONFIGURED", "allow_release_with_ci_exception": False}
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    allowed = {"CI_REQUIRED", "CI_PASS", "CI_FAIL", "CI_NOT_CONFIGURED", "DEFERRED_BY_POLICY", "DEFERRED_BY_USER"}
+    if not isinstance(policy, dict) or policy.get("schema_version") != "1" or policy.get("ci_disposition") not in allowed or type(policy.get("allow_release_with_ci_exception")) is not bool:
+        raise ValueError("GOVERNANCE_POLICY_INVALID")
+    if policy["ci_disposition"].startswith("DEFERRED") and not policy.get("ci_decision_reference"):
+        raise ValueError("GOVERNANCE_CI_DECISION_REFERENCE_REQUIRED")
+    return policy
+
+
+def contract_bindings(root: Path) -> dict[str, str]:
+    descriptor = build_contract_descriptor(root)
+    layers = descriptor.get("layers", {})
+    return {"execution": str(descriptor["contract_set_id"]), **{name: layers[name]["id"] for name in ("design", "generator", "governance") if name in layers}}
+
+
+@consistent_project_read
+def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path: Path, *, scope: AcceptanceScope | None = None) -> dict[str, Any]:
     """Describe an exact review snapshot; caller decides when to save it."""
     root = root.resolve()
+    scope = resolve_scope(scope=scope)
+    policy_path = acceptance_dir / "governance-policy.json"
+    policy = load_governance_policy(policy_path)
     profile = load_profile(profile_path)
     profile_suffix = profile_path.stem.removeprefix("runtime-profile-")
     evidence_path = profile_path.parent / "capabilities" / f"runtime-profile-evidence-{profile_suffix}.json"
@@ -39,8 +85,10 @@ def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path
         raise ValueError("RUNTIME_PROFILE_PROBE_HASH_MISMATCH")
     names = ("trial-run-index.json", "mutation-validation-index.json", "coverage-summary.json")
     inputs = {name: _sha(acceptance_dir / name) for name in names}
+    if policy_path.is_file():
+        inputs["governance-policy.json"] = _sha(policy_path)
     members: list[dict[str, str]] = []
-    for path in _candidate_paths(root):
+    for path in _candidate_paths(root, scope):
         case = load_query_case(path)
         if case.metadata.status.value != "review":
             continue
@@ -59,20 +107,25 @@ def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path
     if not members:
         raise ValueError("ACCEPTANCE_SCOPE_EMPTY")
     descriptor = {
-        "schema_version": "1", "phase": "pre_promotion", "scope": "query.join.review",
+        "schema_version": "1", "phase": "pre_promotion", "scope": scope.scope_id, "scope_definition": scope.model_dump(mode="json"),
         "runtime_profile_id": profile["sql_runtime_profile_id"],
         "runtime_profile_sha256": _sha(profile_path),
         "runtime_profile_evidence_ref": evidence_path.relative_to(root).as_posix(),
         "runtime_profile_evidence_sha256": _sha(evidence_path),
+        "acceptance_root": acceptance_dir.resolve().relative_to(root).as_posix(),
         "inputs": inputs, "members": members,
-        "ci_disposition": "DEFERRED_BY_USER",
+        "ci_disposition": policy["ci_disposition"],
+        "governance_policy": policy,
+        "contract_bindings": contract_bindings(root),
     }
     return {**descriptor, "manifest_id": xgmj1_sha256(descriptor)}
 
 
+@consistent_project_read
 def verify_pre_promotion_package(
     root: Path, acceptance_dir: Path, profile_path: Path, manifest_path: Path,
     *, approval_path: Path | None = None, allowed_signers_path: Path | None = None,
+    revoked_path: Path | None = None,
 ) -> dict[str, Any]:
     """Verify a frozen package without changing candidates or evidence."""
     errors: list[dict[str, str]] = []
@@ -88,8 +141,11 @@ def verify_pre_promotion_package(
         projection = {key: value for key, value in manifest.items() if key != "manifest_id"}
         if manifest_id != xgmj1_sha256(projection):
             fail("*", "MANIFEST_HASH_MISMATCH")
-        if manifest.get("phase") != "pre_promotion" or manifest.get("scope") != "query.join.review":
+        scope = resolve_scope(manifest)
+        if manifest.get("phase") != "pre_promotion":
             fail("*", "MANIFEST_SCOPE_INVALID")
+        if "contract_bindings" in manifest and manifest["contract_bindings"] != contract_bindings(root):
+            fail("*", "MANIFEST_CONTRACT_BINDINGS_STALE")
         if manifest.get("runtime_profile_sha256") != _sha(profile_path):
             fail("*", "MANIFEST_PROFILE_BYTES_CHANGED")
         evidence_ref = manifest.get("runtime_profile_evidence_ref")
@@ -110,14 +166,21 @@ def verify_pre_promotion_package(
         for name in ("trial-run-index.json", "mutation-validation-index.json", "coverage-summary.json"):
             if inputs.get(name) != _sha(acceptance_dir / name):
                 fail("*", f"MANIFEST_INPUT_CHANGED:{name}")
+        if "governance_policy" in manifest:
+            current_policy = load_governance_policy(acceptance_dir / "governance-policy.json")
+            if current_policy != manifest["governance_policy"] or current_policy["ci_disposition"] != manifest.get("ci_disposition"):
+                fail("*", "MANIFEST_GOVERNANCE_POLICY_CHANGED")
+            if "governance-policy.json" in inputs and inputs["governance-policy.json"] != _sha(acceptance_dir / "governance-policy.json"):
+                fail("*", "MANIFEST_GOVERNANCE_POLICY_BYTES_CHANGED")
         members = manifest.get("members")
         if not isinstance(members, list) or not all(isinstance(item, dict) for item in members):
             raise ValueError("MANIFEST_MEMBERS_INVALID")
     except (OSError, ValueError, TypeError, KeyError) as error:
         return {
             "schema_version": "1", "phase": "pre_promotion", "package_integrity": "FAIL",
-            "readiness": "BLOCKED", "global_errors": [{"case_id": "*", "code": str(error)}],
+            "readiness": "BLOCKED", "global_errors": [*errors, {"case_id": "*", "code": str(error)}],
             "expected_count": 0, "observed_count": 0, "verified_count": 0, "failed_count": 0,
+            "case_verified_count": 0, "case_failed_count": 0, "package_error_count": len(errors) + 1,
             "failed_cases": [], "manifest_id": None,
         }
 
@@ -129,7 +192,7 @@ def verify_pre_promotion_package(
         expected_ids.add(case_id)
         try:
             asset = (root.resolve() / item["asset_path"]).resolve()
-            if not asset.is_relative_to((root / "candidates" / "query" / "join").resolve()):
+            if not asset.is_relative_to(scope.path(root, "candidate_root")):
                 raise ValueError("MANIFEST_ASSET_OUTSIDE_SCOPE")
             case = load_query_case(asset)
             if case.metadata.id != case_id or case.metadata.status.value != "review":
@@ -148,7 +211,7 @@ def verify_pre_promotion_package(
         except (OSError, ValueError, KeyError):
             fail(case_id, "MANIFEST_ASSET_INVALID")
     current_ids: set[str] = set()
-    for path in _candidate_paths(root):
+    for path in _candidate_paths(root, scope):
         try:
             case = load_query_case(path)
             if case.metadata.status.value == "review":
@@ -160,7 +223,7 @@ def verify_pre_promotion_package(
     for extra in sorted(expected_ids - current_ids):
         fail(extra, "MANIFEST_CASE_EXTRA")
 
-    trial = verify_trial_artifact_index(root, acceptance_dir / "trial-run-index.json", profile_path)
+    trial = verify_trial_artifact_index(root, acceptance_dir / "trial-run-index.json", profile_path, scope=scope)
     if trial["status"] != "PASS":
         for item in trial.get("errors", []):
             fail(item["case_id"], f"TRIAL:{item['code']}")
@@ -182,7 +245,7 @@ def verify_pre_promotion_package(
             case_id = str(entry["case_id"])
             if case_id not in current_ids:
                 continue
-            case = load_query_case(root / "candidates" / "query" / "join" / f"{case_id}.yaml")
+            case = load_query_case(scope.path(root, "candidate_root") / f"{case_id}.yaml")
             evidence = case.mutation_evidence
             if evidence is None:
                 fail(case_id, "MUTATION_EVIDENCE_MISSING")
@@ -239,11 +302,11 @@ def verify_pre_promotion_package(
         fail("*", f"MUTATION_INDEX_INVALID:{error}")
 
     try:
-        model = load_test_model(root / "models" / "query" / "join.yaml")
-        active = [case for case in load_query_directory(root / "cases" / "query") if case.metadata.status.value == "active"]
-        candidates = [load_query_case(path) for path in _candidate_paths(root) if load_query_case(path).metadata.status.value == "review"]
-        active_gap = coverage_gap(model, [claim for case in active for claim in case.coverage], "pairwise")
-        provisional = coverage_gap(model, [claim for case in active + candidates for claim in case.coverage], "pairwise")
+        model = scope.load_model(root)
+        active = [case for case in load_query_directory(scope.path(root, "active_suite_root")) if case.metadata.status.value == "active"]
+        candidates = [load_query_case(path) for path in _candidate_paths(root, scope) if load_query_case(path).metadata.status.value == "review"]
+        active_gap = coverage_gap(model, [claim for case in active for claim in case.coverage], scope.coverage_strategy)
+        provisional = coverage_gap(model, [claim for case in active + candidates for claim in case.coverage], scope.coverage_strategy)
         summary = json.loads((acceptance_dir / "coverage-summary.json").read_text(encoding="utf-8"))
         if not all(summary.get(key) == value for key, value in {
             "required": active_gap["required"], "active_covered": active_gap["covered"],
@@ -263,47 +326,56 @@ def verify_pre_promotion_package(
     approval_status: dict[str, str] | None = None
     if integrity == "PASS" and approval_path is not None and allowed_signers_path is not None:
         plan = build_promotion_plan(root, manifest_path)
-        approval_status = verify_promotion_approval(
-            approval_path, allowed_signers_path, manifest_id=manifest_id,
+        approval_status = ApprovalService(allowed_signers_path, revoked_path).verify(
+            approval_path, manifest_id=manifest_id,
             plan_hash=plan["plan_hash"],
         )
         if approval_status["status"] == "APPROVED":
             readiness = "READY"
+    if manifest.get("ci_disposition") in {"CI_FAIL", "CI_REQUIRED"}:
+        readiness = "BLOCKED"
     return {
         "schema_version": "1", "scope_id": manifest_id, "manifest_id": manifest_id,
         "phase": "pre_promotion", "package_integrity": integrity,
+        "scope": scope.model_id,
         "readiness": readiness, "approval": approval_status,
         "ci_disposition": manifest.get("ci_disposition"),
         "expected_count": len(expected_ids), "observed_count": len(current_ids),
         "verified_count": min(trial.get("verified_count", 0), len(expected_ids - set(failed_cases))),
         "failed_count": len(failed_cases), "failed_cases": failed_cases,
+        "case_verified_count": min(trial.get("verified_count", 0), len(expected_ids - set(failed_cases))),
+        "case_failed_count": len(failed_cases), "package_error_count": len(global_errors),
         "global_errors": global_errors, "errors": errors,
     }
 
 
+@consistent_project_read
 def preflight_promotion(
     root: Path, acceptance_dir: Path, profile_path: Path, manifest_path: Path,
     *, approval_path: Path | None = None, allowed_signers_path: Path | None = None,
+    revoked_path: Path | None = None,
 ) -> dict[str, Any]:
     """Check the frozen batch and every destination without publishing files."""
     package = verify_pre_promotion_package(
         root, acceptance_dir, profile_path, manifest_path,
         approval_path=approval_path, allowed_signers_path=allowed_signers_path,
+        revoked_path=revoked_path,
     )
     blockers: list[dict[str, str]] = []
     if package["package_integrity"] != "PASS":
         blockers.append({"case_id": "*", "code": "PACKAGE_INTEGRITY_FAILED"})
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        scope = resolve_scope(manifest)
         profile_id = load_profile(profile_path)["sql_runtime_profile_id"]
-        model = load_test_model(root / "models" / "query" / "join.yaml")
+        model = scope.load_model(root)
         destinations: set[Path] = set()
         for item in manifest["members"]:
             case_id = item["case_id"]
             path = root / item["asset_path"]
             try:
                 destination = promote_candidate(
-                    path, model, root / "cases" / "query" / "join",
+                    path, model, scope.path(root, "active_root"),
                     root / "artifacts" / "trial-runs",
                     expected_runtime_profile_id=profile_id,
                     mutation_artifact_root=root / "artifacts" / "mutations",
@@ -325,15 +397,17 @@ def preflight_promotion(
     }
 
 
+@consistent_project_read
 def build_promotion_plan(root: Path, manifest_path: Path) -> dict[str, Any]:
     """Bind selected candidates to the current Active file snapshot."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict) or manifest.get("phase") != "pre_promotion":
         raise ValueError("PROMOTION_MANIFEST_INVALID")
-    active_root = root / "cases" / "query"
+    scope = resolve_scope(manifest)
+    active_root = scope.path(root, "active_suite_root")
     active = [
         {"path": path.relative_to(root).as_posix(), "sha256": _sha(path)}
-        for path in sorted(active_root.rglob("*.yaml"))
+        for path in sorted(scope.asset_paths(root, "active_suite_root"))
     ]
     selected = [
         {"case_id": item["case_id"], "asset_sha256": item["asset_sha256"]}

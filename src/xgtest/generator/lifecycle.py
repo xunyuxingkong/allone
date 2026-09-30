@@ -126,7 +126,7 @@ def trial_candidate(
 ) -> dict[str, Any]:
     from xgtest.core.models import CaseExecutionStatus
     from xgtest.query.runner import run_query_case_isolated
-    from xgtest.generator.candidate import static_validate_candidate
+    from xgtest.generator.plugins import FEATURE_PLUGINS
 
     if runner is None:
         if runtime_profile is None:
@@ -151,7 +151,7 @@ def trial_candidate(
         raise ValueError("CANDIDATE_STATUS_INVALID: trial expects draft status")
     if case.validation_evidence is None or case.validation_evidence.static_validation_hash is None:
         raise ValueError("CANDIDATE_STATIC_EVIDENCE_REQUIRED")
-    static_result = static_validate_candidate(path, model)
+    static_result = FEATURE_PLUGINS.for_model(model.model_id).static_validate(path, model)
     if static_result["static_validation_hash"] != case.validation_evidence.static_validation_hash:
         raise ValueError("CANDIDATE_STATIC_EVIDENCE_STALE")
     case = load_query_case(path)
@@ -239,7 +239,7 @@ def validate_candidate_mutation(
     from xgtest.core.models import CaseExecutionStatus, QueryCaseInput
     from xgtest.query.runner import run_query_case_isolated
 
-    from xgtest.generator.candidate import static_validate_candidate
+    from xgtest.generator.plugins import FEATURE_PLUGINS
 
     if runner is None:
         if not runtime_profile:
@@ -262,7 +262,7 @@ def validate_candidate_mutation(
     plugin = FEATURE_PLUGINS.for_model(model.model_id)
     if not plugin.mutation_applies(case):
         return {"case_id": case.metadata.id, "mutation_id": plugin.mutation_id, "status": "NOT_APPLICABLE"}
-    static_validate_candidate(path, model)
+    FEATURE_PLUGINS.for_model(model.model_id).static_validate(path, model)
     case = load_query_case(path)
     payload = case.model_dump(mode="python")
     occurrences = 0
@@ -397,7 +397,7 @@ def promote_candidate(
     mutation_artifact_root: Path | None = None,
     dry_run: bool = False,
 ) -> Path:
-    from xgtest.generator.candidate import static_validate_candidate
+    from xgtest.generator.plugins import FEATURE_PLUGINS
 
     if not re.fullmatch(r"[0-9a-f]{64}", expected_runtime_profile_id):
         raise ValueError("CANDIDATE_RUNTIME_PROFILE_REQUIRED")
@@ -519,7 +519,7 @@ def promote_candidate(
     expected_id = plugin.expected_id(model, case.coverage[0].assignment)
     if case.metadata.id != expected_id:
         raise ValueError("CANDIDATE_ID_MISMATCH")
-    static_validate_candidate(path, model)
+    FEATURE_PLUGINS.for_model(model.model_id).static_validate(path, model)
     destination = active_dir / f"{case.metadata.id}.yaml"
     if destination.exists():
         raise ValueError(f"ACTIVE_CASE_EXISTS: {destination}")

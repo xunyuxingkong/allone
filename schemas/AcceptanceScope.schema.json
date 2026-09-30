@@ -1,0 +1,50 @@
+{
+  "$id": "xgtest://schema/1.1/AcceptanceScope",
+  "additionalProperties": false,
+  "properties": {
+    "active_root": {
+      "title": "Active Root",
+      "type": "string"
+    },
+    "active_suite_root": {
+      "title": "Active Suite Root",
+      "type": "string"
+    },
+    "candidate_root": {
+      "title": "Candidate Root",
+      "type": "string"
+    },
+    "coverage_strategy": {
+      "default": "pairwise",
+      "enum": [
+        "pairwise",
+        "all_values"
+      ],
+      "title": "Coverage Strategy",
+      "type": "string"
+    },
+    "feature": {
+      "title": "Feature",
+      "type": "string"
+    },
+    "model_ref": {
+      "title": "Model Ref",
+      "type": "string"
+    },
+    "module": {
+      "title": "Module",
+      "type": "string"
+    }
+  },
+  "required": [
+    "module",
+    "feature",
+    "candidate_root",
+    "active_root",
+    "active_suite_root",
+    "model_ref"
+  ],
+  "title": "AcceptanceScope",
+  "type": "object",
+  "x-xg-contract-version": "1.1"
+}

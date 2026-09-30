@@ -20,6 +20,7 @@ from xgtest.runtime.profile import load_profile
 from xgtest.generator.evidence import validate_trial_artifact
 from xgtest.generator.review import current_review_input_hash
 from xgtest.generator.template import semantic_hash
+from xgtest.generator.scope import AcceptanceScope, resolve_scope
 
 
 class QueryReadService:
@@ -32,26 +33,29 @@ class QueryReadService:
         project_root: Path | None = None,
         candidates_dir: Path | None = None,
         trial_artifacts_dir: Path | None = None,
+        scope: AcceptanceScope | None = None,
     ) -> None:
+        self.scope = resolve_scope(scope=scope)
         self.history = QueryRunHistory(runs_dir)
         self.cases_dir = Path(cases_dir).resolve()
         self.profile_path = profile_path
         self.project_root = (project_root or Path(__file__).resolve().parents[3]).resolve()
-        self.candidates_dir = (candidates_dir or self.project_root / "candidates" / "query" / "join").resolve()
+        self.candidates_dir = (candidates_dir or self.scope.path(self.project_root, "candidate_root")).resolve()
         self.trial_artifacts_dir = (trial_artifacts_dir or self.project_root / "artifacts" / "trial-runs").resolve()
 
     @classmethod
     def from_environment(cls) -> "QueryReadService":
         root = Path(__file__).resolve().parents[3]
         runs = Path(os.environ.get("XGTEST_RUNS_DIR", root / "artifacts" / "runs"))
-        cases = Path(os.environ.get("XGTEST_CASES_DIR", root / "cases" / "query"))
+        scope = resolve_scope()
+        cases = Path(os.environ.get("XGTEST_CASES_DIR", scope.path(root, "active_suite_root")))
         profile = os.environ.get("XGTEST_RUNTIME_PROFILE")
-        candidates = Path(os.environ.get("XGTEST_CANDIDATES_DIR", root / "candidates" / "query" / "join"))
+        candidates = Path(os.environ.get("XGTEST_CANDIDATES_DIR", scope.path(root, "candidate_root")))
         trials = Path(os.environ.get("XGTEST_TRIAL_ARTIFACTS_DIR", root / "artifacts" / "trial-runs"))
         return cls(runs, cases, profile_path=Path(profile) if profile else None, project_root=root, candidates_dir=candidates, trial_artifacts_dir=trials)
 
-    def _join_model(self):
-        return load_test_model(self.project_root / "models" / "query" / "join.yaml")
+    def _feature_model(self):
+        return self.scope.load_model(self.project_root)
 
     def _candidate_cases(self) -> list[tuple[Path, Any]]:
         if not self.candidates_dir.is_dir():
@@ -111,7 +115,7 @@ class QueryReadService:
     def coverage(self, strategy: str = "pairwise") -> dict[str, Any]:
         if strategy not in {"pairwise", "all_values"}:
             raise ValueError("COVERAGE_STRATEGY_UNSUPPORTED")
-        model = self._join_model()
+        model = self._feature_model()
         active = [case for case in load_query_directory(self.cases_dir) if case.metadata.status.value == "active"]
         candidates = [case for _, case in self._candidate_cases() if case.metadata.status.value == "review"]
         active_claims = [claim for case in active for claim in case.coverage]
@@ -204,13 +208,13 @@ class QueryReadService:
                 ) else "stale"
             except (OSError, ValueError, TypeError):
                 review_status = "invalid"
-        model = self._join_model()
+        model = self._feature_model()
         active = [item for item in load_query_directory(self.cases_dir) if item.metadata.status.value == "active"]
-        current = coverage_gap(model, [claim for item in active for claim in item.coverage], "pairwise")
+        current = coverage_gap(model, [claim for item in active for claim in item.coverage], self.scope.coverage_strategy)
         candidate_requirement_ids: set[str] = set()
         for claim in case.coverage:
             if claim.model_id == model.model_id and claim.model_version == model.model_version:
-                candidate_requirement_ids.update(assignment_requirements(model, claim.assignment, "pairwise"))
+                candidate_requirement_ids.update(assignment_requirements(model, claim.assignment, self.scope.coverage_strategy))
         new_requirements = [
             {"requirement_id": item.requirement_id, "selections": dict(item.selections)}
             for item in current["missing_requirements"]
@@ -230,7 +234,7 @@ class QueryReadService:
             "review_binding_status": review_status,
             "trial_evidence_status": trial_status,
             "review_recorded": case.review_evidence is not None and case.coverage_review is not None,
-            "coverage_contribution": {"strategy": "pairwise", "new_requirements": new_requirements},
+            "coverage_contribution": {"strategy": self.scope.coverage_strategy, "new_requirements": new_requirements},
         }
 
     def candidate_artifact(self, case_id: str, kind: str) -> bytes:

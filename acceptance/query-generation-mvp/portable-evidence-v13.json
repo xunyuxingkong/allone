@@ -1,0 +1,8 @@
+{
+  "bundle": "artifacts/bundles/query-join-v13.zip",
+  "bundle_sha256": "10fbb7558e1c796cb011d6893cf72d1aab370e01699b440f1e51d914bb55b653",
+  "original_file_count": 62,
+  "restore_map_sha256": "a36ee53c58546cefeb83038e2c660c8222f68652e5d8869e97414bf199eb8a4d",
+  "status": "PASS",
+  "verified_in_fresh_store": true
+}

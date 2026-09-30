@@ -18,13 +18,17 @@ from .query.loader import validate_query_directory
 from .query.runner import run_query_cases
 from .design.model import load_test_model
 from .design.coverage import FileCoverageSource, coverage_gap
-from .generator.candidate import generate_candidates, static_validate_candidate
+from .generator.plugins import FEATURE_PLUGINS
+from .generator.scope import AcceptanceScope
+from .query.compiler import QueryExecutable
 from .generator.dedup import classify_duplicates
 from .generator.lifecycle import promote_candidate, record_candidate_mutation_evidence, trial_candidate, validate_candidate_mutation
 from .generator.review import record_review
 from .generator.acceptance import verify_trial_artifact_index
 from .generator.package import freeze_pre_promotion_manifest, preflight_promotion, verify_pre_promotion_package
 from .generator.promotion_batch import execute_promotion_batch
+from .generator.post_acceptance import freeze_post_promotion_package, verify_post_promotion_package, generate_final_acceptance
+from .generator.release_checks import run_release_check, freeze_release_checks
 from .design.model import ConstraintRule, CoverageStrategy, Dimension, TestModel
 from .query.loader import load_query_directory
 
@@ -64,7 +68,7 @@ def _schema_export(args: argparse.Namespace) -> int:
         generated.mkdir()
         exported_models = {
             **MODEL_EXPORTS,
-            **{model.__name__: model for model in (ConstraintRule, CoverageStrategy, Dimension, TestModel)},
+            **{model.__name__: model for model in (ConstraintRule, CoverageStrategy, Dimension, TestModel, AcceptanceScope, QueryExecutable)},
         }
         for name, model in exported_models.items():
             schema = model.model_json_schema()
@@ -182,7 +186,7 @@ def _coverage_report(args: argparse.Namespace) -> int:
 def _generate(args: argparse.Namespace) -> int:
     model = _generation_model(args)
     cases = load_query_directory(Path(args.cases))
-    paths = generate_candidates(model, args.strategy, cases, Path(args.output), limit=args.limit)
+    paths = FEATURE_PLUGINS.for_model(model.model_id).generate(model, args.strategy, cases, Path(args.output), limit=args.limit)
     from .query.loader import load_query_case
     candidate_cases = tuple(load_query_case(path) for path in paths)
     duplicates = [item for item in classify_duplicates((*cases, *candidate_cases), model) if item["classification"] != "UNIQUE"]
@@ -201,7 +205,7 @@ def _candidate_validate(args: argparse.Namespace) -> int:
     results = []
     for path in _candidate_paths(Path(args.path)):
         try:
-            results.append(static_validate_candidate(path, model))
+            results.append(FEATURE_PLUGINS.for_model(model.model_id).static_validate(path, model))
         except ValueError as error:
             results.append({"path": str(path), "status": "FAIL", "error": str(error)})
     print(json.dumps({"candidates": results, "status": "PASS" if results and all(row.get("status") == "draft" for row in results) else "FAIL"}, ensure_ascii=False, sort_keys=True))
@@ -307,7 +311,8 @@ def _acceptance_verify_trial_index(args: argparse.Namespace) -> int:
 
 def _acceptance_freeze_package(args: argparse.Namespace) -> int:
     root = Path(args.root).resolve()
-    result = freeze_pre_promotion_manifest(root, Path(args.acceptance_dir), Path(args.runtime_profile))
+    scope = AcceptanceScope.model_validate_json(Path(args.scope_file).read_bytes()) if args.scope_file else None
+    result = freeze_pre_promotion_manifest(root, Path(args.acceptance_dir), Path(args.runtime_profile), scope=scope)
     output = Path(args.manifest)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes((json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8"))
@@ -321,6 +326,7 @@ def _acceptance_verify_package(args: argparse.Namespace) -> int:
     approval_inputs = {
         "approval_path": Path(args.approval) if args.approval else None,
         "allowed_signers_path": Path(args.allowed_signers) if args.allowed_signers else None,
+        "revoked_path": Path(args.revoked) if args.revoked else None,
     }
     result = preflight_promotion(*inputs, **approval_inputs) if args.preflight else verify_pre_promotion_package(*inputs, **approval_inputs)
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
@@ -331,9 +337,42 @@ def _acceptance_promote_batch(args: argparse.Namespace) -> int:
     result = execute_promotion_batch(
         Path(args.root), Path(args.acceptance_dir), Path(args.runtime_profile),
         Path(args.manifest), Path(args.approval), Path(args.allowed_signers),
+        revoked_path=Path(args.revoked) if args.revoked else None,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
+
+
+def _save_acceptance_result(result: dict, output: str | Path | None) -> None:
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8"))
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+
+
+def _acceptance_post(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve()
+    if args.acceptance_command == "freeze-post-package":
+        result = freeze_post_promotion_package(root, candidate_manifest=Path(args.candidate_manifest), receipt=Path(args.receipt), regression=Path(args.regression), runtime_profile=Path(args.runtime_profile), approval=Path(args.approval), regression_build=Path(args.regression_build) if args.regression_build else None)
+    else:
+        keywords = {"allowed_signers_path": Path(args.allowed_signers), "revoked_path": Path(args.revoked) if args.revoked else None}
+        if args.acceptance_command == "generate-final":
+            result = generate_final_acceptance(root, Path(args.package), policy_path=Path(args.policy), release_checks_path=Path(args.release_checks) if args.release_checks else None, candidate_manifest_path=Path(args.candidate_manifest) if args.candidate_manifest else None, runtime_profile_path=Path(args.runtime_profile) if args.runtime_profile else None, acceptance_dir=Path(args.acceptance_dir) if args.acceptance_dir else None, **keywords)
+        else:
+            result = verify_post_promotion_package(root, Path(args.package), **keywords)
+    _save_acceptance_result(result, args.output)
+    return 0 if result.get("package_integrity", result.get("status", "PASS")) in {"PASS", "PASS_WITH_EXCEPTION"} else 1
+
+
+def _acceptance_release_checks(args: argparse.Namespace) -> int:
+    root = Path(args.root).resolve()
+    if args.acceptance_command == "run-release-check":
+        result = run_release_check(root, args.kind)
+    else:
+        result = freeze_release_checks(root, {"framework": json.loads(Path(args.framework).read_text(encoding="utf-8"))["report"], "frontend": json.loads(Path(args.frontend).read_text(encoding="utf-8"))["report"]})
+    _save_acceptance_result(result, args.output)
+    return 0 if result.get("status", "PASS") == "PASS" else 1
 
 
 def main() -> None:
@@ -471,26 +510,59 @@ def main() -> None:
     verify_trial_index = acceptance_commands.add_parser("verify-trial-index")
     verify_trial_index.add_argument("--root", default=root)
     verify_trial_index.add_argument("--index", default=root / "acceptance" / "query-generation-mvp" / "trial-run-index.json")
-    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v12.json")
+    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v13.json")
     verify_trial_index.set_defaults(handler=_acceptance_verify_trial_index)
     for name, handler in (("freeze-package", _acceptance_freeze_package), ("verify-package", _acceptance_verify_package)):
         package_command = acceptance_commands.add_parser(name)
         package_command.add_argument("--root", default=root)
         package_command.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
-        package_command.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v12.json")
+        package_command.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v13.json")
         package_command.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
+        if name == "freeze-package":
+            package_command.add_argument("--scope-file")
         if name == "verify-package":
             package_command.add_argument("--preflight", action="store_true")
             package_command.add_argument("--approval")
             package_command.add_argument("--allowed-signers")
+            package_command.add_argument("--revoked", help="Revocation JSON list; a configured missing/invalid file fails closed")
         package_command.set_defaults(handler=handler)
     promote_batch = acceptance_commands.add_parser("promote-batch")
     promote_batch.add_argument("--root", default=root)
     promote_batch.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
-    promote_batch.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v12.json")
+    promote_batch.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v13.json")
     promote_batch.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
     promote_batch.add_argument("--approval", required=True)
     promote_batch.add_argument("--allowed-signers", required=True)
+    promote_batch.add_argument("--revoked")
     promote_batch.set_defaults(handler=_acceptance_promote_batch)
+    for name in ("freeze-post-package", "verify-post-package", "generate-final"):
+        command = acceptance_commands.add_parser(name)
+        command.add_argument("--root", default=root)
+        command.add_argument("--output")
+        if name == "freeze-post-package":
+            command.add_argument("--regression-build", help="Required by verifier when Runtime Profile records a DB build")
+            for option in ("candidate-manifest", "receipt", "regression", "runtime-profile", "approval"):
+                command.add_argument(f"--{option}", required=True)
+        else:
+            command.add_argument("--package", required=True)
+            command.add_argument("--allowed-signers", required=True)
+            command.add_argument("--revoked")
+            if name == "generate-final":
+                command.add_argument("--policy", default=root / "acceptance/query-generation-mvp/governance-policy.json")
+                command.add_argument("--release-checks")
+                command.add_argument("--candidate-manifest")
+                command.add_argument("--runtime-profile")
+                command.add_argument("--acceptance-dir")
+        command.set_defaults(handler=_acceptance_post)
+    for name in ("run-release-check", "freeze-release-checks"):
+        command = acceptance_commands.add_parser(name)
+        command.add_argument("--root", default=root)
+        command.add_argument("--output", required=True)
+        if name == "run-release-check":
+            command.add_argument("kind", choices=("framework", "frontend"))
+        else:
+            command.add_argument("--framework", required=True)
+            command.add_argument("--frontend", required=True)
+        command.set_defaults(handler=_acceptance_release_checks)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

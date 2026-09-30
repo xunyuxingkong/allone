@@ -10,6 +10,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from xgtest.core.errors import ContractError
+from xgtest.core.asset_lock import consistent_active_read
 from xgtest.core.models import (
     ComparisonProfile,
     EffectiveMetadata,
@@ -131,6 +132,7 @@ def load_query_case(path: Path) -> QueryCaseInput:
         raise _source_error(path, error) from error
 
 
+@consistent_active_read
 def validate_query_directory(directory: Path) -> dict[str, Any]:
     paths = sorted((*directory.rglob("*.yaml"), *directory.rglob("*.yml")))
     if not paths:
@@ -154,6 +156,7 @@ def load_query_directory(directory: Path) -> tuple[QueryCaseInput, ...]:
     return tuple(asset.case for asset in load_query_directory_with_sources(directory))
 
 
+@consistent_active_read
 def load_query_directory_with_sources(directory: Path) -> tuple[LoadedQueryAsset, ...]:
     result = validate_query_directory(directory)
     if result["status"] != "PASS":

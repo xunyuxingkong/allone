@@ -1,0 +1,6 @@
+{
+  "schema_version": "1",
+  "ci_disposition": "DEFERRED_BY_USER",
+  "ci_decision_reference": "User explicitly deferred PR and GitHub CI in this task",
+  "allow_release_with_ci_exception": false
+}

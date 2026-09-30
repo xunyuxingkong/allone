@@ -38,6 +38,12 @@ def test_signed_approval_binds_exact_plan(tmp_path: Path) -> None:
         "signature_base64": base64.b64encode(signed_file.with_suffix(".json.sig").read_bytes()).decode("ascii"),
     }), encoding="utf-8")
     assert verify_promotion_approval(approval, allowed, manifest_id="a" * 64, plan_hash="b" * 64)["status"] == "APPROVED"
+    revoked = tmp_path / "revoked.json"
+    revoked.write_text(json.dumps(["b" * 64]), encoding="utf-8")
+    assert verify_promotion_approval(approval, allowed, manifest_id="a" * 64, plan_hash="b" * 64, revoked_path=revoked)["reason"] == "APPROVAL_REVOKED"
+    revoked.write_text("{}", encoding="utf-8")
+    assert verify_promotion_approval(approval, allowed, manifest_id="a" * 64, plan_hash="b" * 64, revoked_path=revoked)["reason"] == "APPROVAL_REVOCATION_STORE_INVALID"
+    assert verify_promotion_approval(approval, allowed, manifest_id="a" * 64, plan_hash="b" * 64, clock=lambda: now + timedelta(hours=2))["status"] == "WAITING_APPROVAL"
     assert verify_promotion_approval(approval, allowed, manifest_id="a" * 64, plan_hash="c" * 64)["status"] == "WAITING_APPROVAL"
     data = json.loads(approval.read_text(encoding="utf-8"))
     data["payload"]["principal"] = "other"

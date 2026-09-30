@@ -11,6 +11,7 @@ import yaml
 
 from xgtest.core.contract_set import build_contract_descriptor
 from xgtest.generator.evidence import validate_trial_artifact
+from xgtest.generator.scope import AcceptanceScope, resolve_scope
 from xgtest.generator.template import semantic_hash
 from xgtest.query.loader import load_query_case
 from xgtest.runtime.profile import load_profile
@@ -30,9 +31,11 @@ def verify_trial_artifact_index(
     project_root: Path,
     index_path: Path,
     runtime_profile_path: Path,
+    *, scope: AcceptanceScope | None = None,
 ) -> dict[str, Any]:
     """Verify index, candidate, trial artifact, contract and runtime identities."""
     root = project_root.resolve()
+    scope = resolve_scope(scope=scope)
     errors: list[dict[str, str]] = []
 
     def fail(case_id: str, code: str) -> None:
@@ -42,7 +45,7 @@ def verify_trial_artifact_index(
         error = {"case_id": "*", "code": details}
         return {"status": "FAIL", "error": "ACCEPTANCE_TRIAL_INDEX_INVALID", "details": details,
                 "expected_count": 0, "candidate_count": 0, "verified_count": 0,
-                "failed_count": 0, "failed_cases": [], "global_errors": [error], "errors": [error]}
+                "failed_count": 0, "case_verified_count": 0, "case_failed_count": 0, "package_error_count": 1, "failed_cases": [], "global_errors": [error], "errors": [error]}
 
     try:
         index = json.loads(index_path.read_text(encoding="utf-8"))
@@ -73,9 +76,9 @@ def verify_trial_artifact_index(
     if not isinstance(identity, dict) or identity.get("contract_set_id") != contract_id:
         fail("*", "RUNTIME_PROFILE_CONTRACT_SET_STALE")
 
-    candidate_dir = (root / "candidates" / "query" / "join").resolve()
+    candidate_dir = scope.path(root, "candidate_root")
     expected_ids: set[str] = set()
-    for candidate_path in sorted(candidate_dir.glob("*.yaml")):
+    for candidate_path in scope.asset_paths(root, "candidate_root"):
         try:
             if load_query_case(candidate_path).metadata.status.value == "review":
                 expected_ids.add(candidate_path.stem)

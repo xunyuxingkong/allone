@@ -12,8 +12,7 @@ from xgtest.query.loader import load_query_case
 from xgtest.generator.template import semantic_hash
 from xgtest.design.constraint import validate_assignment
 from xgtest.design.model import TestModel
-from xgtest.design.signature import candidate_signature
-from xgtest.generator.template import TEMPLATE_ID, TEMPLATE_VERSION
+from xgtest.generator.plugins import FEATURE_PLUGINS
 
 
 def current_review_input_hash(case: Any, semantic: str) -> str:
@@ -46,7 +45,7 @@ def record_review(
     if len(case.coverage) != 1 or case.coverage[0].model_id != model.model_id or case.coverage[0].model_version != model.model_version:
         raise ValueError("CANDIDATE_COVERAGE_MODEL_MISMATCH")
     validate_assignment(model, case.coverage[0].assignment)
-    if case.metadata.id != f"QUERY.JOIN.{candidate_signature(model, case.coverage[0].assignment, TEMPLATE_ID, TEMPLATE_VERSION)[:8].upper()}":
+    if case.metadata.id != FEATURE_PLUGINS.for_model(model.model_id).expected_id(model, case.coverage[0].assignment):
         raise ValueError("CANDIDATE_ID_MISMATCH")
     semantic = semantic_hash(payload)
     if case.validation_evidence.semantic_hash != semantic:
@@ -71,5 +70,5 @@ def record_review(
         "evidence_ref": coverage_reference,
     }
     payload["validation_evidence"]["review_hash"] = review_input_hash
-    path.write_text(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    path.write_bytes(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True).encode("utf-8"))
     return {"case_id": case.metadata.id, "review_input_hash": review_input_hash}

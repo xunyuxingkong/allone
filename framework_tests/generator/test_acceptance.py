@@ -16,8 +16,12 @@ INDEX = ROOT / "acceptance" / "query-generation-mvp" / "trial-run-index.json"
 PROFILE = ROOT / "artifacts" / "runtime-profile-v9.json"
 CURRENT_PROFILE = max(
     (ROOT / "artifacts").glob("runtime-profile-v*.json"),
+    default=ROOT / "artifacts/runtime-profile-v13.json",
     key=lambda path: int(path.stem.rsplit("v", 1)[1]),
 )
+
+
+pytestmark = pytest.mark.skipif(not PROFILE.is_file() or not CURRENT_PROFILE.is_file(), reason="historical live acceptance artifacts are local; import a verified artifact bundle to run these checks")
 
 
 @pytest.fixture(autouse=True)

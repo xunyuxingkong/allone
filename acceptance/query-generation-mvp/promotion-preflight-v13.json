@@ -1,0 +1,92 @@
+{
+  "blockers": [
+    {
+      "case_id": "QUERY.JOIN.0D0BBF8C",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.203908E1",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.23229486",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.244FDDA1",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.26B774DD",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.274C0E9A",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.2833D345",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.3B332CE4",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.4CEF656C",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.593A35D9",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.5C2BA314",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.5F6BFA55",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.66220C62",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.79CE12B8",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.94E99B87",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.9AD85025",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.CD4C9BF1",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.D398430A",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.D9F1ECD9",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.DF308258",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    },
+    {
+      "case_id": "QUERY.JOIN.E3E11FE7",
+      "code": "CANDIDATE_PROMOTION_EVIDENCE_REQUIRED"
+    }
+  ],
+  "manifest_id": "217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f",
+  "package_integrity": "PASS",
+  "promotable_count": 0,
+  "readiness": "BLOCKED"
+}

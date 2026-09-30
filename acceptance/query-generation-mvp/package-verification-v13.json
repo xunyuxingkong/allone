@@ -1,0 +1,21 @@
+{
+  "approval": null,
+  "case_failed_count": 0,
+  "case_verified_count": 21,
+  "ci_disposition": "DEFERRED_BY_USER",
+  "errors": [],
+  "expected_count": 21,
+  "failed_cases": [],
+  "failed_count": 0,
+  "global_errors": [],
+  "manifest_id": "217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f",
+  "observed_count": 21,
+  "package_error_count": 0,
+  "package_integrity": "PASS",
+  "phase": "pre_promotion",
+  "readiness": "WAITING_APPROVAL",
+  "schema_version": "1",
+  "scope": "query.join",
+  "scope_id": "217a0ad9a300b4b9ddce671f139d48bf3c60277f73758f56e27381a859a2508f",
+  "verified_count": 21
+}

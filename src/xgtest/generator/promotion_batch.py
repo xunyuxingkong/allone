@@ -1,7 +1,7 @@
 """Recoverable, signed batch promotion over the current directory loader.
 
-The loader scans files, so readers may observe partial progress. Receipts label
-this explicitly as RECOVERABLE_BATCH rather than an atomic Active publication.
+Cooperating readers wait for the publisher lock and reject interrupted batches.
+Receipts remain RECOVERABLE_BATCH; no atomic version pointer is claimed.
 """
 
 from __future__ import annotations
@@ -11,18 +11,19 @@ import json
 import os
 import tempfile
 import re
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 import yaml
 
-from xgtest.generator.approval import verify_promotion_approval
+from xgtest.generator.approval import ApprovalService
+from xgtest.generator.scope import resolve_scope
 from xgtest.generator.lifecycle import promote_candidate
 from xgtest.generator.package import build_promotion_plan, preflight_promotion
 from xgtest.design.model import load_test_model
 from xgtest.runtime.profile import load_profile
 from xgtest.core.canonical import xgmj1_sha256
+from xgtest.core.asset_lock import active_asset_lock
 
 
 def _sha(path: Path) -> str:
@@ -42,48 +43,26 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
         Path(temporary).unlink(missing_ok=True)
 
 
-@contextmanager
-def _promotion_lock(root: Path) -> Iterator[None]:
-    lock_path = root / "artifacts" / "promotion-journal" / "promotion.lock"
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with lock_path.open("a+b") as stream:
-        stream.seek(0)
-        stream.write(b"0")
-        stream.flush()
-        if os.name == "nt":
-            import msvcrt
-            stream.seek(0)
-            try:
-                msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
-            except OSError as error:
-                raise ValueError("PROMOTION_LOCK_BUSY") from error
-            try:
-                yield
-            finally:
-                stream.seek(0)
-                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
-        else:
-            import fcntl
-            try:
-                fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError as error:
-                raise ValueError("PROMOTION_LOCK_BUSY") from error
-            try:
-                yield
-            finally:
-                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+def _promotion_lock(root: Path):
+    return active_asset_lock(root, publishing=True)
 
 
 def _members(root: Path, manifest: dict[str, Any]) -> list[dict[str, str]]:
+    scope = resolve_scope(manifest)
     members: list[dict[str, str]] = []
     for item in manifest["members"]:
-        source = root / item["asset_path"]
+        case_id = item["case_id"]
+        if not isinstance(case_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+", case_id):
+            raise ValueError("PROMOTION_CASE_ID_INVALID")
+        source = (root / item["asset_path"]).resolve()
+        if not source.is_relative_to(scope.path(root, "candidate_root")):
+            raise ValueError("PROMOTION_SOURCE_PATH_INVALID")
         if _sha(source) != item["asset_sha256"]:
             raise ValueError(f"PROMOTION_INPUT_DRIFT:{item['case_id']}")
         payload = yaml.safe_load(source.read_text(encoding="utf-8"))
         payload["metadata"]["status"] = "active"
         active_bytes = yaml.safe_dump(payload, sort_keys=False, allow_unicode=True).encode("utf-8")
-        destination = root / "cases" / "query" / "join" / f"{item['case_id']}.yaml"
+        destination = scope.path(root, "active_root") / f"{item['case_id']}.yaml"
         members.append({
             "case_id": item["case_id"], "source": item["asset_path"],
             "source_sha256": item["asset_sha256"],
@@ -93,9 +72,9 @@ def _members(root: Path, manifest: dict[str, Any]) -> list[dict[str, str]]:
     return members
 
 
-def _verify_approval(approval_path: Path, allowed_signers_path: Path, manifest_id: str, plan_hash: str) -> None:
-    decision = verify_promotion_approval(
-        approval_path, allowed_signers_path, manifest_id=manifest_id, plan_hash=plan_hash,
+def _verify_approval(approval_path: Path, allowed_signers_path: Path, manifest_id: str, plan_hash: str, revoked_path: Path | None = None) -> None:
+    decision = ApprovalService(allowed_signers_path, revoked_path).verify(
+        approval_path, manifest_id=manifest_id, plan_hash=plan_hash,
     )
     if decision["status"] != "APPROVED":
         raise ValueError(f"PROMOTION_APPROVAL_REQUIRED:{decision.get('reason', '')}")
@@ -105,6 +84,7 @@ def _validate_resume(root: Path, manifest: dict[str, Any], journal: dict[str, An
     """Reconstruct the approved plan rather than trusting recovery metadata."""
     if xgmj1_sha256({key: value for key, value in manifest.items() if key != "manifest_id"}) != manifest.get("manifest_id"):
         raise ValueError("PROMOTION_MANIFEST_HASH_MISMATCH")
+    scope = resolve_scope(manifest)
     projection = {
         "schema_version": "1", "manifest_id": manifest["manifest_id"],
         "active_snapshot": journal["active_snapshot"],
@@ -127,8 +107,8 @@ def _validate_resume(root: Path, manifest: dict[str, Any], journal: dict[str, An
         if not isinstance(case_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+", case_id):
             raise ValueError("PROMOTION_JOURNAL_PATH_INVALID")
         source = (root / expected[case_id]["asset_path"]).resolve()
-        destination = (root / "cases/query/join" / f"{case_id}.yaml").resolve()
-        if not source.is_relative_to((root / "candidates/query/join").resolve()):
+        destination = (scope.path(root, "active_root") / f"{case_id}.yaml").resolve()
+        if not source.is_relative_to(scope.path(root, "candidate_root")):
             raise ValueError("PROMOTION_JOURNAL_PATH_INVALID")
         if item["source"] != expected[case_id]["asset_path"] or item["source_sha256"] != expected[case_id]["asset_sha256"] or (root / item["destination"]).resolve() != destination:
             raise ValueError("PROMOTION_JOURNAL_MEMBER_MISMATCH")
@@ -152,10 +132,10 @@ def _validate_resume(root: Path, manifest: dict[str, Any], journal: dict[str, An
         raise ValueError("PROMOTION_ACTIVE_SNAPSHOT_INVALID")
     for relative, digest in baseline.items():
         path = (root / relative).resolve()
-        if not path.is_relative_to((root / "cases/query").resolve()) or _sha(path) != digest:
+        if not path.is_relative_to(scope.path(root, "active_suite_root")) or _sha(path) != digest:
             raise ValueError("PROMOTION_ACTIVE_SNAPSHOT_DRIFT")
     expected_paths = set(baseline) | {item["destination"] for item in members if (root / item["destination"]).exists()}
-    actual_paths = {path.relative_to(root).as_posix() for path in (root / "cases/query").rglob("*.yaml")}
+    actual_paths = {path.relative_to(root).as_posix() for path in scope.asset_paths(root, "active_suite_root")}
     if actual_paths != expected_paths:
         raise ValueError("PROMOTION_ACTIVE_SNAPSHOT_DRIFT")
 
@@ -163,11 +143,13 @@ def _validate_resume(root: Path, manifest: dict[str, Any], journal: dict[str, An
 def execute_promotion_batch(
     root: Path, acceptance_dir: Path, profile_path: Path, manifest_path: Path,
     approval_path: Path, allowed_signers_path: Path,
+    *, revoked_path: Path | None = None,
 ) -> dict[str, Any]:
     """Start or resume a reviewed batch; every file move is journaled."""
     root = root.resolve()
     with _promotion_lock(root):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        scope = resolve_scope(manifest)
         journal_root = root / "artifacts" / "promotion-journal"
         matching = []
         for path in journal_root.glob("*.json"):
@@ -189,6 +171,7 @@ def execute_promotion_batch(
             preflight = preflight_promotion(
                 root, acceptance_dir, profile_path, manifest_path,
                 approval_path=approval_path, allowed_signers_path=allowed_signers_path,
+                revoked_path=revoked_path,
             )
             if preflight["readiness"] != "READY" or preflight["blockers"]:
                 raise ValueError("PROMOTION_PREFLIGHT_BLOCKED")
@@ -202,16 +185,17 @@ def execute_promotion_batch(
             _write_json_atomic(journal_path, journal)
         if journal.get("plan_hash") != plan_hash or journal.get("manifest_id") != manifest["manifest_id"]:
             raise ValueError("PROMOTION_JOURNAL_PLAN_MISMATCH")
-        _verify_approval(approval_path, allowed_signers_path, manifest["manifest_id"], plan_hash)
+        _verify_approval(approval_path, allowed_signers_path, manifest["manifest_id"], plan_hash, revoked_path)
         _validate_resume(root, manifest, journal)
         baseline = {item["path"]: item["sha256"] for item in journal["active_snapshot"]}
         for relative, digest in baseline.items():
             if _sha(root / relative) != digest:
                 raise ValueError("PROMOTION_ACTIVE_SNAPSHOT_DRIFT")
-        model = load_test_model(root / "models" / "query" / "join.yaml")
+        model = scope.load_model(root)
         profile_id = load_profile(profile_path)["sql_runtime_profile_id"]
         completed = set(journal["completed"])
         for item in journal["members"]:
+            _verify_approval(approval_path, allowed_signers_path, manifest["manifest_id"], plan_hash, revoked_path)
             case_id = item["case_id"]
             source = root / item["source"]
             destination = root / item["destination"]
@@ -239,14 +223,23 @@ def execute_promotion_batch(
             journal["completed"].append(case_id)
             _write_json_atomic(journal_path, journal)
         receipt = {
-            "schema_version": "1", "plan_hash": plan_hash,
+            "schema_version": "2", "plan_hash": plan_hash,
             "manifest_id": manifest["manifest_id"],
             "visibility": "RECOVERABLE_BATCH", "completed": journal["completed"],
+            "promotion_plan": {
+                "schema_version": "1", "manifest_id": manifest["manifest_id"],
+                "active_snapshot": journal["active_snapshot"],
+                "selected": [{"case_id": item["case_id"], "asset_sha256": item["asset_sha256"]} for item in manifest["members"]],
+                "governance_policy_version": "1",
+            },
+            "members": journal["members"], "runtime_profile_id": profile_id,
+            "approval_sha256": _sha(approval_path),
             "active_snapshot_after": [
                 {"path": path.relative_to(root).as_posix(), "sha256": _sha(path)}
-                for path in sorted((root / "cases" / "query").rglob("*.yaml"))
+                for path in sorted(scope.asset_paths(root, "active_suite_root"))
             ],
         }
+        receipt["receipt_id"] = xgmj1_sha256(receipt)
         receipt_path = journal_path.with_name(f"receipt-{plan_hash}.json")
         _write_json_atomic(receipt_path, receipt)
         journal["state"] = "COMPLETE"
