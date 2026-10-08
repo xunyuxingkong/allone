@@ -14,6 +14,21 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
     def get_service() -> QueryReadService:
         return service or QueryReadService.from_environment()
 
+    @app.get("/api/jobs")
+    def list_jobs(current: QueryReadService = Depends(get_service)) -> dict:
+        from xgtest.ai.store import JobStore
+        return {"items": JobStore(current.project_root / "artifacts/jobs").list()}
+
+    @app.get("/api/jobs/{job_id}")
+    def get_job(job_id: str, current: QueryReadService = Depends(get_service)) -> dict:
+        from xgtest.ai.store import JobStore
+        try:
+            return JobStore(current.project_root / "artifacts/jobs").load(job_id).model_dump(mode="json")
+        except FileNotFoundError as error:
+            raise HTTPException(status_code=404, detail="JOB_NOT_FOUND") from error
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail="JOB_INVALID") from error
+
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}

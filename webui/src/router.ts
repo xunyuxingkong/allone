@@ -7,10 +7,14 @@ import RuntimeView from './views/RuntimeView.vue'
 import CoverageView from './views/CoverageView.vue'
 import CandidateListView from './views/CandidateListView.vue'
 import CandidateDetailView from './views/CandidateDetailView.vue'
+import JobsView from './views/JobsView.vue'
+import JobDetailView from './views/JobDetailView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/jobs', name: 'jobs', component: JobsView },
+    { path: '/jobs/:jobId', name: 'job-detail', component: JobDetailView, props: true },
     { path: '/', name: 'dashboard', component: DashboardView },
     { path: '/runs', name: 'runs', component: RunListView },
     { path: '/runs/:runId', name: 'run-detail', component: RunDetailView, props: true },

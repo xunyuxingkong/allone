@@ -570,5 +570,7 @@ def main() -> None:
             command.add_argument("--framework", required=True)
             command.add_argument("--frontend", required=True)
         command.set_defaults(handler=_acceptance_release_checks)
+    from xgtest.ai.cli import register as register_ai
+    register_ai(commands, root)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

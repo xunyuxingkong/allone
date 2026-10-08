@@ -68,15 +68,24 @@
       }
     },
     "control_plane": {
-      "id": "2d89f4cc34f72a3853bd3f6eccd546d10d72ed1ccd87dd32528ad7f228543fff",
+      "id": "8b54c63b2b4f8ccce968b97a91916c65881f28273f9d4215cda3a743720e227b",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
-        "src/xgtest/cli.py": "7927f72690e331712d4a7621258a56ab57255d31cfd1c72401c20e26d767f3fd",
+        "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
+        "src/xgtest/ai/cli.py": "354ffd347848e1879f84173f5eb7435944fe48fd8c2a347f5e44fd5af21e08fd",
+        "src/xgtest/ai/controller.py": "8e5ac18e8799ed036102704ba6446749a0a377dbe05ebf231cb9b970eb023f95",
+        "src/xgtest/ai/mcp_server.py": "cb15e2365f3ebb1494b20b576f03a81f38ed029638664c749c7fc74850f0fdc0",
+        "src/xgtest/ai/models.py": "0ab03051ae9b9555378a295be716186175d17ad23c72bc955e102f60e4b69d90",
+        "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
+        "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
+        "src/xgtest/application/db_worker.py": "fe520886413bd02ee32655d73d3625b468e683c3ce7ac5e690693e0f43442dc1",
+        "src/xgtest/application/services.py": "8675f742455f83b2586d0b68f679c91e715e651d9acbb3a8c18d37cfadc0479c",
+        "src/xgtest/cli.py": "9e2cc67cc57fdf55c7c1326940d71a31ae367e21795f4ea2fdffb77eeab7629c",
         "src/xgtest/web/__init__.py": "cb31bfb4bd485de552392442d54a7512d36eaded1686adb53d3fa374d655f14b",
-        "src/xgtest/web/app.py": "7102e424fb2cb6ecd5ff5691df6682137940f490a3efed19b18ff72be66b6824",
+        "src/xgtest/web/app.py": "be1a38b17f3a01d4d0344c107ddd4ed1852c8348806a5f392353978e264f4f00",
         "src/xgtest/web/service.py": "644d345187c449db6155067270303b10dc2f226eda9ff6b4a0fcd9fb7b9d7251",
-        "webui/src/App.vue": "d72b3f980a8a5ff335bd0a622f33bd60d73e9a1238a2ab652a10e55ec2de719f",
+        "webui/src/App.vue": "259f8016e1f48f8f04d578c2784b6a79a42b4560ce8128c2950b2c5f20105ccd",
         "webui/src/api/cases.ts": "fc925b0f1a8660585d39331e609cd1ee182344b206ba84bfc2680d7e9ce8802b",
         "webui/src/api/client.ts": "f7ba468f903f6f4bb46e8ba8d0ce192e0687a33586f3c764a50571d90286b4a5",
         "webui/src/api/generation.ts": "8d0faf866a97d507997e2fe6ec266162fa259bf417d1848249ba4a243e1c259a",
@@ -88,7 +97,7 @@
         "webui/src/components/StatusTag.vue": "c9640d4d829eece79da47f155a1fdbcc2c1da4769292cd35ad4f388dafbce926",
         "webui/src/components/TypeSupportTable.vue": "3b5b8ff5098ad3c389ae38aa49ca2ff658162a85ea5e84eba04fe24639ef6e93",
         "webui/src/main.ts": "e0608b55bd0c9c21defe2c734f8136863ccabeff3c39b83fa31637c72c24c42f",
-        "webui/src/router.ts": "bc6f887d6fbbc39b3e57b6029eed582b139023de92c84318d20f9187b658ba40",
+        "webui/src/router.ts": "ea450b47d00310c68a275d9ba32a89f9f9cc9abd6f7c4b577df4d272fe4bd23b",
         "webui/src/stores/runs.ts": "df84b46b6f80c0f2a6629ffa59c32b200b0eeadb95e52d35a86c0e087138061b",
         "webui/src/style.css": "7364517409490e7011e98dc9bfbdcc388f5415f3b94a93ce753af9dbddc09300",
         "webui/src/types.ts": "8df646300059ea925cbb4f1f86e5de3a7b807d051ac0039e9442da0a4215c47a",
@@ -98,6 +107,8 @@
         "webui/src/views/CaseDetailView.vue": "a19ee4120c8fc987efbddb2854ed55d740ad820a401be86cebc855715496df49",
         "webui/src/views/CoverageView.vue": "daa456785087334d4c5e9bc437ccf1ac571e3020cb54f29e66d79e052f32f652",
         "webui/src/views/DashboardView.vue": "de9c0f5691b86fac3434f049eeb8736eae039c135cea4ba63ffa9497ebccfb79",
+        "webui/src/views/JobDetailView.vue": "68663c74727f5b36db5eae2a976d9e3a4dc8e90f27abcfe5096609d0e9fcfccb",
+        "webui/src/views/JobsView.vue": "e98ae1e0784afe398a2e0e2630f816eb18cbafbb647e60357d653fafbda85960",
         "webui/src/views/RunDetailView.vue": "3d8e3635516cc24a0c077c01651a8df105f78dc99b0a70f2c1f4f1ef2078e8c8",
         "webui/src/views/RunListView.vue": "cf25c311efffba1a160ca33bdada0867cb40a7255bbee6a8e7b20b78441ec788",
         "webui/src/views/RuntimeView.vue": "d4d99f821d5458d521caf064b77cc4c4e33a6860f65052c2314e332eef52f3a8",
@@ -193,7 +204,7 @@
       }
     },
     "suite": {
-      "id": "2f78caf82620b31ea960457b06b71dffe4a0a80ef6fe550b4091c0236132ea53",
+      "id": "9e350af5e970081e10f99375226ffcc0bf41e1bdcd07896148cc50a4e322f399",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -242,7 +253,8 @@
         "framework_tests/query/test_query_web_api.py": "bcf6de774c78320888426dc11418ec2aa750beded2a8f475e64d583aa9031814",
         "framework_tests/runtime/test_comparator.py": "38a4755c85c9f3abc8b226c5cacae8b2e29d54dc4ec4edf963f47b693f12e6c3",
         "framework_tests/runtime/test_profile.py": "357f65ea3853c20ba7dc3ebc9829217b7b49a7d45a28026e6272b75c7afbe8a6",
-        "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de"
+        "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de",
+        "framework_tests/test_ai_jobs.py": "2878c9a5fbf1ddbf85993bab494e7eaaa2b8ec79fe4fc64978f961858536917f"
       }
     }
   },
@@ -261,7 +273,7 @@
     "src/xgtest/core/admission.py": "0f324115656120b65fded97fccb8ed2989f73e08421dd41af9283eab2cd9ed2b",
     "src/xgtest/core/asset_lock.py": "dadd5e7efc6b3da4368efb3aa4bf956e91e1cdde9f10c5c3286370d700f5ce3d",
     "src/xgtest/core/canonical.py": "0efdc939e579e0695daf89952e4e50815f06ea202faabdb9b1cce274f18aff79",
-    "src/xgtest/core/contract_set.py": "9781257b10b5c68bb05edfd3bc2e2b882df73770684194aa14db0c2e83f23ad7",
+    "src/xgtest/core/contract_set.py": "502a8de360733b48155923cbaf11432ba65d854774a0b284215a0b2deaf42ddb",
     "src/xgtest/core/control_models.py": "f8b32a88054fd037cfbcffb3cd042e473d4567e56c11051ba8bb3629b4b5a259",
     "src/xgtest/core/errors.py": "1a8d6cbce7083e32ae4d0e0b24971964d47234d862728cc3113c943283ecafc8",
     "src/xgtest/core/evidence_models.py": "e936ec56acd3101dab2bca5a15c790aafa6f8f61954592cf9468d875ec53cc80",

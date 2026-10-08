@@ -62,7 +62,7 @@ def build_contract_descriptor(root: Path) -> dict[str, object]:
         "design": (("src/xgtest/design", "models"), ()),
         "generator": (("generators",), ("src/xgtest/generator/candidate.py", "src/xgtest/generator/template.py", "src/xgtest/generator/plugins.py")),
         "governance": (("src/xgtest/generator", "registry"), ("src/xgtest/core/evidence_models.py", "src/xgtest/core/governance_models.py", "src/xgtest/core/control_models.py", "src/xgtest/core/admission.py", "src/xgtest/core/manifest.py", "src/xgtest/core/identity.py", "src/xgtest/core/metadata.py", "src/xgtest/core/yaml_loader.py", "src/xgtest/core/asset_lock.py", "src/xgtest/query/loader.py")),
-        "control_plane": (("src/xgtest/web", "webui/src"), ("src/xgtest/cli.py", "webui/vite.config.ts")),
+        "control_plane": (("src/xgtest/web", "src/xgtest/ai", "src/xgtest/application", "webui/src"), ("src/xgtest/cli.py", "webui/vite.config.ts")),
         "suite": (("framework_tests",), ()),
     }
     layers = {}
