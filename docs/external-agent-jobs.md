@@ -45,6 +45,7 @@ tool_timeout_sec = 660
 .venv/Scripts/xgtest.exe ai context <job_id> QUERY.JOIN.203908E1
 .venv/Scripts/xgtest.exe ai resume <job_id> --revision <current_revision>
 .venv/Scripts/xgtest.exe ai annotate <job_id> --revision <current_revision> --request artifacts/analysis.json
+.venv/Scripts/xgtest.exe ai abandon <job_id> --revision <current_revision> --reason "legacy job before control-plane identity"
 ```
 
 `action.json` 示例：
@@ -83,6 +84,8 @@ tool_timeout_sec = 660
 创建时冻结 `control_plane_layer_id` 和 `git_commit`。Action/Resume 前检查当前控制面内容身份，源码变化时保存 `JOB_CONTROL_PLANE_CHANGED` 并 BLOCKED；旧任务没有身份字段时返回 `JOB_CONTROL_PLANE_IDENTITY_MISSING`。Git commit 是来源记录，控制面内容哈希是执行检查依据；仅提交同样内容不会改变控制面内容身份。历史任务仍可读取，不会自动采用新版本逻辑。跨版本迁移须由操作者确认；本轮未开放自动迁移工具。
 
 同一项目只允许一个非终态 `query.full_test`/`query.join.verify`，PLANNED、RUNNING、WAITING_APPROVAL、BLOCKED 都占用该位置；创建第二个返回 `MUTABLE_JOB_ALREADY_EXISTS`。query.status 可并存。FAILED/COMPLETED 可释放位置；旧 FAILED 任务恢复或重新执行时仍需检查位置，不能与新工作流交替修改候选。未恢复的 publication 不会因 FAILED 而释放位置。
+
+旧任务（例如引入 control-plane identity 之前创建、已无法 resume 的历史任务）会永久占用该位置。这是由操作者显式执行的终态动作 `ai abandon`（或 MCP `abandon_test_job`）：置 `state=FAILED`、`current_action=None`、追加 `JOB_ABANDONED_BY_OPERATOR`，并写入不可删除的 `abandonment` 记录（operator、reason、时间、原状态）与 `ABANDONED` 事件。旧 Job、事件、evidence 与 identity 全部保留，不删除 Job、不伪造成 COMPLETED。放弃后该 Job 为终态：action、resume 再次放弃均被拒绝，status 返回 FAILED 且无 eligible 动作。`abandon` 需携带当前 `--revision`，且不要求身份有效，因此可退出身份缺失的死锁任务。
 
 Worker 原始异常不进入 `.result.json`、Job Event 或 Final Report，只返回固定安全码、通用类型和安全提示。回归失败摘要只含 case/step/status/failure_type/安全码及原始 Run Artifact 引用，完整 Step 行值仍在原始执行制品中，不复制进每个 Job 检查点。本轮不另存原始连接异常。
 

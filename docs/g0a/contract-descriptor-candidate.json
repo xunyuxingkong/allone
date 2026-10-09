@@ -68,16 +68,16 @@
       }
     },
     "control_plane": {
-      "id": "e8e7fc434a4ee3d8473f26e3ed762c3597df0b9a6a4e18df504469ceff03a7d9",
+      "id": "799214cbefb5fa07977e55502724d18443ca05f2703c4a150d6824c837b10357",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
         "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
-        "src/xgtest/ai/cli.py": "354ffd347848e1879f84173f5eb7435944fe48fd8c2a347f5e44fd5af21e08fd",
-        "src/xgtest/ai/controller.py": "f9be06f8c71ffbc87920f78aa90fdb0a7762634e79b6a42ad49be593ae7f00e1",
+        "src/xgtest/ai/cli.py": "f9adb091fd2606fbbec0782e813b50c22c29af3778c166aa934b89df95efdc60",
+        "src/xgtest/ai/controller.py": "5c537ef6b16cd3413ce18f6032429a9d9fe88f7f7d17f257afc9775889416ec1",
         "src/xgtest/ai/identity.py": "3fb026188922f11f2ebc67798e949f76c1f75c186a787c337fa438735b62715a",
-        "src/xgtest/ai/mcp_server.py": "cb15e2365f3ebb1494b20b576f03a81f38ed029638664c749c7fc74850f0fdc0",
-        "src/xgtest/ai/models.py": "b49387b30574c076bde1f7803de4370ad4800ab6545d3dac17cf632d8aaf07ea",
+        "src/xgtest/ai/mcp_server.py": "65380106e45e768812621ddd9a269eea5a10b8da0d8ef40b29e1b41c4021fa4a",
+        "src/xgtest/ai/models.py": "5fc3262acae5adfb8d8b2a65820ddc8958b5583bac920f18ca2e6328e198ae64",
         "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
         "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
         "src/xgtest/application/db_worker.py": "2796fa07d551ef9ca109c9ccaabb8a82bf2447444fd3f2ab89a3966cab8a4c41",
@@ -94,9 +94,11 @@
         "webui/src/api/runs.ts": "63288a3a28b61df1bac2879e2fb1f3643c071aacad94dcee897cda01f78354e7",
         "webui/src/api/runtime.ts": "36badc779e28158ba5c5de133fa4200f6e253bc096adedfa5fe48fbebbebcbd0",
         "webui/src/components/CaseTable.vue": "2267af0aa44fd5a2f959e5279013d10c8407ba1688f5a5c295587bc9f18897ba",
+        "webui/src/components/ResultRowsTable.vue": "9f5cb1cee0a3dbbc10eadc021b8a69b62071e030636a69023bf03971047f43bf",
         "webui/src/components/SqlViewer.vue": "686e956802295ed093df524fbaaef08593ae8724bda23365dba4bfe16344d6ea",
         "webui/src/components/StatCard.vue": "07e24df204f2b1f306ba3db02fd511e897484677260bf22bfd2cd0622b252143",
         "webui/src/components/StatusTag.vue": "c9640d4d829eece79da47f155a1fdbcc2c1da4769292cd35ad4f388dafbce926",
+        "webui/src/components/StructuredTable.vue": "503885db2cadb528ff645253e4aa77b4c03ac386d5263719cee570bf0fb17b79",
         "webui/src/components/TypeSupportTable.vue": "3b5b8ff5098ad3c389ae38aa49ca2ff658162a85ea5e84eba04fe24639ef6e93",
         "webui/src/main.ts": "e0608b55bd0c9c21defe2c734f8136863ccabeff3c39b83fa31637c72c24c42f",
         "webui/src/router.ts": "ea450b47d00310c68a275d9ba32a89f9f9cc9abd6f7c4b577df4d272fe4bd23b",
@@ -104,12 +106,12 @@
         "webui/src/style.css": "7364517409490e7011e98dc9bfbdcc388f5415f3b94a93ce753af9dbddc09300",
         "webui/src/types.ts": "8df646300059ea925cbb4f1f86e5de3a7b807d051ac0039e9442da0a4215c47a",
         "webui/src/utils.ts": "0f802be3431b152c61c4ce69da64d1219addd6e9bff491ad461a318c2dc050b0",
-        "webui/src/views/CandidateDetailView.vue": "71cf7111bfa783d2918a139a4be30b03890d3daf83cf6bc2436259b788774c76",
+        "webui/src/views/CandidateDetailView.vue": "a8c7344b662ea9398241d86a33d10f54f75f4bde152f4969eaa267fed698028f",
         "webui/src/views/CandidateListView.vue": "2c206d576d89fb3e29517cfd5855affc892aeca44de8843dd7a16dd9138a62a4",
-        "webui/src/views/CaseDetailView.vue": "a19ee4120c8fc987efbddb2854ed55d740ad820a401be86cebc855715496df49",
+        "webui/src/views/CaseDetailView.vue": "a47718f3336b8701cba1d56a0eac0af540c35c06d06bc011ae0c149e6cec11b2",
         "webui/src/views/CoverageView.vue": "daa456785087334d4c5e9bc437ccf1ac571e3020cb54f29e66d79e052f32f652",
         "webui/src/views/DashboardView.vue": "de9c0f5691b86fac3434f049eeb8736eae039c135cea4ba63ffa9497ebccfb79",
-        "webui/src/views/JobDetailView.vue": "68663c74727f5b36db5eae2a976d9e3a4dc8e90f27abcfe5096609d0e9fcfccb",
+        "webui/src/views/JobDetailView.vue": "b239f5fbe3a5cba431dc85b10512e7984679c985b6859e1fba7216d4cc0a5e15",
         "webui/src/views/JobsView.vue": "e98ae1e0784afe398a2e0e2630f816eb18cbafbb647e60357d653fafbda85960",
         "webui/src/views/RunDetailView.vue": "3d8e3635516cc24a0c077c01651a8df105f78dc99b0a70f2c1f4f1ef2078e8c8",
         "webui/src/views/RunListView.vue": "cf25c311efffba1a160ca33bdada0867cb40a7255bbee6a8e7b20b78441ec788",
@@ -206,7 +208,7 @@
       }
     },
     "suite": {
-      "id": "5d1a419f0c45112a550536f4fe83404a0e92cf05210df0936000d8f39e580725",
+      "id": "f424776443eb40636abcf6095b63fb4e558a90f16f786601e993a48da65bb46a",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -256,7 +258,7 @@
         "framework_tests/runtime/test_comparator.py": "38a4755c85c9f3abc8b226c5cacae8b2e29d54dc4ec4edf963f47b693f12e6c3",
         "framework_tests/runtime/test_profile.py": "357f65ea3853c20ba7dc3ebc9829217b7b49a7d45a28026e6272b75c7afbe8a6",
         "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de",
-        "framework_tests/test_ai_jobs.py": "2878c9a5fbf1ddbf85993bab494e7eaaa2b8ec79fe4fc64978f961858536917f",
+        "framework_tests/test_ai_jobs.py": "11767d64e95e4c11d0ab0e89c2cca299af69bb668843ec5a353c293b01e56f1a",
         "framework_tests/test_ai_review_fixes.py": "86313f673c434afe793e800fbece7b8a48cbe991ec305b1911a006eac7e88268"
       }
     }

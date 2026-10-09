@@ -63,6 +63,14 @@ class TechnicalReview(StrictModel):
     recommendation: Literal["READY_FOR_HUMAN_REVIEW", "NEEDS_HUMAN_CHECK", "INVESTIGATE"]
 
 
+class JobAbandonment(StrictModel):
+    """Immutable record of an operator's explicit decision to stop a job."""
+    operator: str = Field(min_length=1, max_length=200)
+    reason: str = Field(min_length=1, max_length=2000)
+    abandoned_at: str
+    previous_state: Literal["PLANNED", "RUNNING", "WAITING_APPROVAL", "BLOCKED", "FAILED", "COMPLETED"]
+
+
 class TestJob(StrictModel):
     job_id: str = Field(pattern=r"^[0-9a-f]{32}$")
     intent: TestIntent
@@ -78,6 +86,7 @@ class TestJob(StrictModel):
     preflight_required: bool = True
     control_plane_layer_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     git_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{40,64}$")
+    abandonment: JobAbandonment | None = None
 
 
 class ActionRequest(StrictModel):
@@ -97,7 +106,7 @@ class ActionRequest(StrictModel):
 
 class JobEvent(StrictModel):
     sequence: int = Field(ge=1)
-    event: Literal["CREATED", "STARTED", "ACTION_STARTED", "ACTION_FINISHED", "PAUSED", "RESUMED", "FINISHED", "RECOVERED"]
+    event: Literal["CREATED", "STARTED", "ACTION_STARTED", "ACTION_FINISHED", "PAUSED", "RESUMED", "FINISHED", "RECOVERED", "ABANDONED"]
     timestamp: str
     checkpoint: TestJob
 

@@ -2,8 +2,9 @@
 import os
 import re
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
-from xgtest.ai.models import ActionRequest, ActionResult, FailureAnalysis, TestIntent, TestJob, TestPlan
+from xgtest.ai.models import ActionRequest, ActionResult, FailureAnalysis, JobAbandonment, TestIntent, TestJob, TestPlan
 from xgtest.ai.store import JobStore, write_json
 from xgtest.ai.identity import job_source_identity
 from xgtest.application.services import (ServiceContext, DatabaseExecutor, ProjectService,
@@ -51,6 +52,7 @@ class JobController:
         return None
 
     def guard_job(self, job):
+        if job.abandonment is not None: raise ValueError("JOB_ABANDONED")
         error = self.identity_error(job)
         if error:
             if job.state != "BLOCKED" or job.blockers != [error]:
@@ -64,7 +66,7 @@ class JobController:
         return next((result for result in reversed(job.action_results) if result.action == action), None)
 
     def eligible(self, job):
-        if job.current_action is not None or self.identity_error(job):
+        if job.current_action is not None or job.abandonment is not None or self.identity_error(job):
             return []
         project, module, candidates, acceptance = self.services(job.job_id)
         def option(action, case_id=None):
@@ -121,7 +123,8 @@ class JobController:
 
     def status(self, job_id):
         job = self.store.load(job_id)
-        identity_error = self.identity_error(job)
+        # An abandoned job is terminal: report its stored FAILED state, not the identity overlay.
+        identity_error = None if job.abandonment is not None else self.identity_error(job)
         try:
             eligible = self.eligible(job)
             policy_error = None
@@ -221,6 +224,22 @@ class JobController:
             self.report(job)
             return job.model_dump(mode="json")
 
+    def abandon(self, job_id, expected_revision, reason, operator="operator"):
+        """Operator-only terminal stop. Releases the mutable slot while preserving all job history."""
+        if not isinstance(reason, str) or not 1 <= len(reason) <= 2000: raise ValueError("ABANDON_REASON_INVALID")
+        if not isinstance(operator, str) or not 1 <= len(operator) <= 200: raise ValueError("ABANDON_OPERATOR_INVALID")
+        with self.store.execution_lock(), self.store.lock(job_id):
+            job = self.store.load(job_id)
+            if job.abandonment is not None: raise ValueError("JOB_ALREADY_ABANDONED")
+            if job.revision != expected_revision: raise ValueError("JOB_REVISION_CONFLICT")
+            record = JobAbandonment(operator=operator, reason=reason, abandoned_at=datetime.now(UTC).isoformat(),
+                previous_state=job.state)
+            # Terminal: FAILED releases the single mutable slot; no action, resume or report may revive it.
+            job = self.store.save(job.model_copy(update={"state": "FAILED", "current_action": None,
+                "blockers": list(dict.fromkeys([*job.blockers, "JOB_ABANDONED_BY_OPERATOR"])), "abandonment": record}), "ABANDONED")
+            self.report(job)
+            return job.model_dump(mode="json")
+
     def annotate(self, job_id, expected_revision, summary, failure_analysis=None):
         if not isinstance(summary, str) or not 1 <= len(summary) <= 12000: raise ValueError("SUMMARY_INVALID")
         analysis = FailureAnalysis.model_validate(failure_analysis) if failure_analysis is not None else None
@@ -238,5 +257,6 @@ class JobController:
             "job_id": job.job_id, "state": job.state, "revision": job.revision,
             "control_plane_layer_id": job.control_plane_layer_id, "git_commit": job.git_commit,
             "results": [result.model_dump(mode="json") for result in job.action_results],
-            "blockers": job.blockers, "agent_explanation": job.explanation,
+            "blockers": job.blockers, "abandonment": job.abandonment.model_dump(mode="json") if job.abandonment else None,
+            "agent_explanation": job.explanation,
             "human_approval": "ONLY_CORE_ACCEPTANCE_CAN_VERIFY", "module_completion": "MODULE_FULL_INCOMPLETE"})

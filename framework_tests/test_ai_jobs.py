@@ -202,3 +202,58 @@ def test_complete_existing_active_coverage_without_empty_promotion(controller, m
     result = act(controller, job_id, "module.regression")
     assert result["state"] == "COMPLETED"
     assert not any(r["action"].startswith("acceptance.") for r in result["action_results"])
+
+
+def test_abandon_releases_mutable_slot_and_preserves_history(controller):
+    job_id = create(controller)
+    act(controller, job_id, "project.inspect")
+    revision = controller.store.load(job_id).revision
+    result = controller.abandon(job_id, revision, "legacy job before control-plane identity", operator="operator-1")
+    assert result["state"] == "FAILED"
+    assert result["current_action"] is None
+    assert "JOB_ABANDONED_BY_OPERATOR" in result["blockers"]
+    assert result["abandonment"] == {"operator": "operator-1", "reason": "legacy job before control-plane identity",
+        "abandoned_at": result["abandonment"]["abandoned_at"], "previous_state": "RUNNING"}
+    # History and evidence are preserved; the job is never deleted nor faked COMPLETED.
+    assert [item["action"] for item in result["action_results"]] == ["project.inspect"]
+    assert controller.store.load(job_id).abandonment is not None
+    directory = controller.store.directory(job_id)
+    assert "ABANDONED" in {json.loads(line)["event"] for line in (directory / "events.jsonl").read_text().splitlines()}
+    assert json.loads((directory / "final-report.json").read_text())["abandonment"]["reason"] == "legacy job before control-plane identity"
+    # The single mutable slot is now free for a fresh real run.
+    assert create(controller) != job_id
+
+
+def test_abandoned_job_is_terminal(controller):
+    job_id = create(controller)
+    controller.abandon(job_id, controller.store.load(job_id).revision, "stop after inspection")
+    # status() reports the stored FAILED terminal state, not an identity overlay, and offers no actions.
+    status = controller.status(job_id)
+    assert status["state"] == "FAILED" and status["eligible_actions"] == []
+    assert status["abandonment"] is not None
+    with pytest.raises(ValueError, match="JOB_ABANDONED"): act(controller, job_id, "project.inspect")
+    with pytest.raises(ValueError, match="JOB_ABANDONED"): controller.resume(job_id, controller.store.load(job_id).revision)
+    with pytest.raises(ValueError, match="JOB_ALREADY_ABANDONED"):
+        controller.abandon(job_id, controller.store.load(job_id).revision, "again")
+
+
+def test_abandon_requires_operator_reason_and_current_revision(controller):
+    job_id = create(controller)
+    with pytest.raises(ValueError, match="JOB_REVISION_CONFLICT"): controller.abandon(job_id, 999, "stale")
+    with pytest.raises(ValueError, match="ABANDON_REASON_INVALID"):
+        controller.abandon(job_id, controller.store.load(job_id).revision, "")
+    assert controller.store.load(job_id).abandonment is None
+
+
+def test_legacy_identity_missing_job_can_be_abandoned_after_blocking_new_runs(controller):
+    legacy = create(controller)
+    job = controller.store.load(legacy)
+    with controller.store.lock(legacy):
+        controller.store.save(job.model_copy(update={"control_plane_layer_id": None}), "PAUSED")
+    # The blocked legacy job monopolises the mutable slot, exactly like the real pre-identity job.
+    assert controller.status(legacy)["state"] == "BLOCKED"
+    with pytest.raises(ValueError, match="MUTABLE_JOB_ALREADY_EXISTS"): create(controller)
+    # Abandon does not require a valid identity, so the operator can retire it and reopen the slot.
+    result = controller.abandon(legacy, controller.store.load(legacy).revision, "legacy job before control-plane identity")
+    assert result["state"] == "FAILED" and result["abandonment"]["previous_state"] == "PLANNED"
+    assert create(controller) != legacy

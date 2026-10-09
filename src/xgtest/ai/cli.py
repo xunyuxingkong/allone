@@ -18,6 +18,11 @@ def register(commands, root):
         if name in {"resume", "annotate"}: item.add_argument("--revision", type=int, required=True)
         if name in {"act", "annotate"}: item.add_argument("--request", type=Path, required=True)
         if name == "context": item.add_argument("case_id")
+    abandon = sub.add_parser("abandon", help="Operator-only terminal stop that releases the mutable slot")
+    abandon.add_argument("job_id")
+    abandon.add_argument("--revision", type=int, required=True)
+    abandon.add_argument("--reason", required=True)
+    abandon.add_argument("--operator", default="operator")
     def handle(args):
         controller = JobController(root, args.runtime_profile)
         try:
@@ -27,6 +32,7 @@ def register(commands, root):
             elif name == "status": value = controller.status(args.job_id)
             elif name == "resume": value = controller.resume(args.job_id, args.revision)
             elif name == "context": value = controller.review_context(args.job_id, args.case_id)
+            elif name == "abandon": value = controller.abandon(args.job_id, args.revision, args.reason, args.operator)
             else:
                 request = json.loads(args.request.read_text(encoding="utf-8-sig"))
                 value = controller.execute(args.job_id, request) if name == "act" else controller.annotate(args.job_id, args.revision, **request)

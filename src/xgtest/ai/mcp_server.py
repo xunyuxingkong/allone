@@ -51,5 +51,11 @@ def explain_test_job(job_id: str, expected_revision: int, summary: str, failure_
         failure_analysis.model_dump(mode="json") if failure_analysis else None)
 
 
+@server.tool()
+def abandon_test_job(job_id: str, expected_revision: int, reason: str, operator: str = "operator") -> dict:
+    """Operator-only terminal stop. Records an auditable reason and releases the mutable slot; never deletes the job or fakes COMPLETED."""
+    return controller.abandon(job_id, expected_revision, reason, operator)
+
+
 if __name__ == "__main__":
     server.run(transport="stdio")
