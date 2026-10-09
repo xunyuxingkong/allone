@@ -12,6 +12,7 @@ import yaml
 
 from xgtest.ai.models import ActionResult, TechnicalReview
 from xgtest.ai.store import write_json
+from xgtest.ai.identity import git_output
 from xgtest.core.canonical import xgmj1_sha256
 from xgtest.core.contract_set import build_contract_descriptor
 from xgtest.core.asset_lock import active_asset_lock
@@ -81,15 +82,12 @@ class DatabaseExecutor:
         request = directory / "request.json"
         write_json(request, {"operation": operation, "case_id": case_id, "profile": ctx.relative(ctx.profile_path), "directory": ctx.relative(directory)})
         backend = os.environ.get("XGTEST_DB_EXECUTOR", "native")
-        if backend == "wsl" and os.name == "nt":
-            command = ["wsl", "--exec", "env", "PYTHONPATH=artifacts/wsl-runtime/site:artifacts/wsl-runtime/driver:src",
-                       *(f"{key}={os.environ[key]}" for key in keys), "timeout", "600", "python3", "-m", "xgtest.application.db_worker", ctx.relative(request)]
-        elif backend == "native":
-            command = [sys.executable, "-m", "xgtest.application.db_worker", ctx.relative(request)]
-        else:
+        try:
+            command, environment = worker_launch(ctx.relative(request), backend, os.environ, os.name == "nt")
+        except ValueError:
             return {"status": "BLOCKED", "error": "DATABASE_EXECUTOR_UNSUPPORTED"}
         try:
-            completed = subprocess.run(command, cwd=ctx.root, capture_output=True, timeout=610, check=False)
+            completed = subprocess.run(command, cwd=ctx.root, env=environment, capture_output=True, timeout=610, check=False)
             result_path = request.with_suffix(".result.json")
             if completed.returncode or not result_path.is_file():
                 return {"status": "BLOCKED", "error": "DATABASE_WORKER_FAILED"}
@@ -100,11 +98,28 @@ class DatabaseExecutor:
             return {"status": "BLOCKED", "error": "DATABASE_WORKER_UNAVAILABLE"}
 
 
+def worker_launch(request_ref, backend, environ, windows):
+    environment = dict(environ)
+    if backend == "wsl" and windows:
+        keys = {"XGTEST_DB_HOST", "XGTEST_DB_PORT", "XGTEST_DB_NAME", "XGTEST_DB_USER", "XGTEST_DB_PASSWORD", "PYTHONPATH"}
+        entries = [entry for entry in environment.get("WSLENV", "").split(":")
+                   if entry and entry.split("/", 1)[0].upper() not in keys]
+        environment["WSLENV"] = ":".join([*entries, *(f"{key}/u" for key in sorted(keys))])
+        environment["PYTHONPATH"] = "artifacts/wsl-runtime/site:artifacts/wsl-runtime/driver:src"
+        command = ["wsl", "--exec", "timeout", "600", "python3", "-m", "xgtest.application.db_worker", request_ref]
+    elif backend == "native":
+        command = [sys.executable, "-m", "xgtest.application.db_worker", request_ref]
+    else:
+        raise ValueError("DATABASE_EXECUTOR_UNSUPPORTED")
+    return command, environment
+
+
 class ProjectService:
     def __init__(self, ctx, db): self.ctx, self.db = ctx, db
 
     def inspect(self):
-        cid = build_contract_descriptor(self.ctx.root)["contract_set_id"]
+        descriptor = build_contract_descriptor(self.ctx.root)
+        cid = descriptor["contract_set_id"]
         blockers = []
         profile_id = None
         try:
@@ -114,10 +129,11 @@ class ProjectService:
                 blockers.append("RUNTIME_PROFILE_STALE")
         except (OSError, ValueError):
             blockers.append("RUNTIME_PROFILE_UNAVAILABLE")
-        commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.ctx.root, capture_output=True, check=False)
-        dirty = subprocess.run(["git", "status", "--porcelain"], cwd=self.ctx.root, capture_output=True, check=False)
+        commit = git_output(self.ctx.root, ["rev-parse", "HEAD"])
+        dirty = git_output(self.ctx.root, ["status", "--porcelain"])
         return {"ready": not blockers, "database": "Xugu", "execution_contract_id": cid, "runtime_profile_id": profile_id,
-                "git_commit": commit.stdout.decode().strip(), "source_dirty": bool(dirty.stdout), "blockers": blockers}
+                "control_plane_layer_id": descriptor["layers"]["control_plane"]["id"],
+                "git_commit": commit.decode("ascii", errors="ignore").strip() or None, "source_dirty": bool(dirty), "blockers": blockers}
 
     def preflight(self):
         state = self.inspect()
@@ -207,7 +223,10 @@ class CandidateService:
                 try:
                     FEATURE_PLUGINS.for_case(case).static_validate(self.ctx.candidate(case_id), self.ctx.scope.load_model(self.ctx.root)); static = True
                 except ValueError: pass
-            items.append({**item, "static_valid": static, "mutation_valid": self.mutation_valid(case_id), "technical_review_valid": self.review_valid(case_id)})
+            review = self.review_state(case_id)
+            items.append({**item, "static_valid": static, "mutation_valid": self.mutation_valid(case_id),
+                "technical_review_valid": review["valid"], "technical_review_accepted": review["accepted"],
+                "technical_review_decision": review["decision"], "technical_review_blocker": review["blocker"]})
         return items
 
     def generate(self):
@@ -262,12 +281,20 @@ class CandidateService:
                 "mutation": json.loads(self.ctx.reader.candidate_artifact(case_id, "mutation")), "runtime_profile": load_profile(self.ctx.profile_path)}
 
     def review_valid(self, case_id):
+        return self.review_state(case_id)["valid"]
+
+    def review_state(self, case_id):
         path = self.ctx.job_dir / "technical-reviews" / f"{case_id}.json"
         try:
             payload = read_json(path)
-            TechnicalReview.model_validate(payload["review"])
-            return payload["input_hash"] == context_hash(self.review_context(case_id))
-        except (ValueError, OSError, KeyError, TypeError): return False
+            review = TechnicalReview.model_validate(payload["review"])
+            valid = payload["input_hash"] == context_hash(self.review_context(case_id))
+            accepted = valid and review.decision == "PASS" and review.recommendation == "READY_FOR_HUMAN_REVIEW"
+            blocker = None if not valid or accepted else (
+                "AI_TECHNICAL_REVIEW_FAILED" if review.decision == "FAIL" else "AI_TECHNICAL_REVIEW_NEEDS_HUMAN_CHECK")
+            return {"valid": valid, "accepted": accepted, "decision": review.decision if valid else None, "blocker": blocker}
+        except (ValueError, OSError, KeyError, TypeError):
+            return {"valid": False, "accepted": False, "decision": None, "blocker": None}
 
     def technical_review(self, case_id, review, expected_context_id):
         if not self.mutation_valid(case_id) or self.ctx.reader.get_candidate(case_id)["trial_evidence_status"] != "verified":
@@ -278,7 +305,12 @@ class CandidateService:
         review = TechnicalReview.model_validate(review.model_dump(mode="json"))
         path = self.ctx.job_dir / "technical-reviews" / f"{case_id}.json"
         write_json(path, {"input_hash": context_hash(context), "review": review.model_dump(mode="json")})
-        return ActionResult(action="candidate.technical_review", case_id=case_id, status="PASS", outputs={"ai_technical_review": review.model_dump(mode="json"), "does_not_satisfy_human_gate": True}, evidence_refs=[self.ctx.relative(path)])
+        accepted = review.decision == "PASS" and review.recommendation == "READY_FOR_HUMAN_REVIEW"
+        blocker = "AI_TECHNICAL_REVIEW_FAILED" if review.decision == "FAIL" else "AI_TECHNICAL_REVIEW_NEEDS_HUMAN_CHECK"
+        return ActionResult(action="candidate.technical_review", case_id=case_id, status="PASS" if accepted else "BLOCKED",
+            outputs={"ai_technical_review": review.model_dump(mode="json"), "technical_review_valid": True,
+                "technical_review_accepted": accepted, "does_not_satisfy_human_gate": True},
+            blockers=[] if accepted else [blocker], evidence_refs=[self.ctx.relative(path)])
 
 
 class AcceptanceService:

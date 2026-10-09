@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { api } from '../api/client'
+import StructuredTable from '../components/StructuredTable.vue'
 type Result = { action: string; status: string; case_id?: string; blockers: string[]; evidence_refs: string[]; outputs: Record<string, unknown> }
 type Job = { job_id: string; plan: { goal: string }; state: string; revision: number; blockers: string[]; explanation: string; current_action?: { action: string }; action_results: Result[]; failure_analysis?: Record<string, unknown> }
 const props = defineProps<{ jobId: string }>()
@@ -29,18 +30,19 @@ watch(() => props.jobId, refresh, { immediate: true })
       <div v-if="job.blockers.length" class="error-banner"><strong>待处理事项</strong><ul><li v-for="item in job.blockers" :key="item">{{ item }}</li></ul></div>
     </section>
     <section v-if="job.explanation" class="surface job-section"><h2>Agent 分析</h2><p class="narrative">{{ job.explanation }}</p><p>以下动作结果与证据是复核依据。</p></section>
-    <section v-if="job.failure_analysis" class="surface job-section"><h2>失败分析（建议）</h2><pre>{{ JSON.stringify(job.failure_analysis, null, 2) }}</pre></section>
+    <section v-if="job.failure_analysis" class="surface job-section"><h2>失败分析（建议）</h2><StructuredTable :value="job.failure_analysis" /></section>
     <section class="surface job-section"><h2>动作记录</h2><p v-if="!job.action_results.length">等待 Agent 选择下一步动作。</p>
       <details v-for="(result, index) in job.action_results" :key="index"><summary>{{ index + 1 }}. {{ result.action }} · {{ result.status }} {{ result.case_id || '' }}</summary>
         <p v-if="result.case_id"><RouterLink class="link" :to="`/candidates/${result.case_id}`">查看候选与原始结果</RouterLink></p>
         <ul v-if="result.blockers.length"><li v-for="blocker in result.blockers" :key="blocker">{{ blocker }}</li></ul>
-        <p v-for="evidence in result.evidence_refs" :key="evidence" class="evidence">证据：{{ evidence }}</p><pre>{{ JSON.stringify(result.outputs, null, 2) }}</pre>
+        <p v-for="evidence in result.evidence_refs" :key="evidence" class="evidence">证据：{{ evidence }}</p><StructuredTable :value="result.outputs" />
       </details>
     </section>
   </template>
 </template>
 <style scoped>
 .job-section { padding: 24px; margin-bottom: 18px; } h2 { font-size: 18px; overflow-wrap: anywhere; } .refresh-button { width: auto; cursor: pointer; }
-details { border-top: 1px solid #e4e8ef; padding: 14px 0; } summary { cursor: pointer; overflow-wrap: anywhere; } pre { overflow: auto; max-height: 440px; font-size: 12px; }
+details { border-top: 1px solid #e4e8ef; padding: 14px 0; } summary { cursor: pointer; overflow-wrap: anywhere; }
+.job-section { min-width: 0; }
 .narrative { white-space: pre-wrap; } .evidence, .narrative { overflow-wrap: anywhere; }
 </style>

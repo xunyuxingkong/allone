@@ -9,6 +9,7 @@ from xgtest.generator.lifecycle import validate_candidate_mutations, record_cand
 from xgtest.generator.scope import resolve_scope
 from xgtest.query.runner import run_query_cases
 from xgtest.runtime.profile import load_profile, validate_profile, observe_database_build
+from xgtest.application.worker_results import safe_worker_error, failure_projection
 
 
 def execute(root: Path, request: dict) -> dict:
@@ -39,8 +40,7 @@ def execute(root: Path, request: dict) -> dict:
         after = observe_database_build(config, profile)
         (directory / "regression-build.json").write_text(json.dumps({"before": before, "after": after}, indent=2), encoding="utf-8")
         return {"status": report["status"], "case_count": len(report["cases"]),
-                "failures": [{"case_id": case["case_id"], "failure_type": case.get("failure_type"), "steps": case.get("steps"), "error": case.get("error")}
-                             for case in report["cases"] if case["status"] != "PASS"]}
+                "failures": failure_projection(report, (directory / "regression.json").relative_to(root).as_posix())}
     import re
     case_id = request.get("case_id", "")
     if not re.fullmatch(r"QUERY\.JOIN\.[A-Z0-9]+", case_id):
@@ -66,8 +66,10 @@ def main():
     try:
         result = execute(root, json.loads(path.read_text(encoding="utf-8")))
     except (ValueError, RuntimeError, ImportError, OSError) as error:
-        from xgtest.adapter.xugu import extract_error
-        result = {"status": "BLOCKED", "error": extract_error(error)["message"]}
+        result = safe_worker_error(error)
+    except Exception as error:
+        # DB-API driver exceptions need not inherit the standard runtime exceptions.
+        result = safe_worker_error(error)
     path.with_suffix(".result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

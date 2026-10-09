@@ -76,6 +76,8 @@ class TestJob(StrictModel):
     revision: int = 0
     completed_requests: dict[str, str] = Field(default_factory=dict)
     preflight_required: bool = True
+    control_plane_layer_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    git_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{40,64}$")
 
 
 class ActionRequest(StrictModel):

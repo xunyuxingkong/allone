@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import StructuredTable from '../components/StructuredTable.vue'
+import ResultRowsTable from '../components/ResultRowsTable.vue'
 import { getCandidate, getTrialRows, trialEvidenceLabel, type CandidateDetail, type TrialRowsPage } from '../api/generation'
 
 const props = defineProps<{ caseId: string }>()
@@ -67,13 +69,13 @@ const artifactUrl = (kind: 'trial' | 'mutation') => `/api/candidates/${encodeURI
     <section v-for="step in candidate.steps" :key="step.id" class="surface">
       <h2 class="surface-title">{{ step.id }} · SQL / Expected / Xugu 原始结果</h2>
       <pre class="code-block">{{ step.sql }}</pre>
-      <div class="detail-body"><h3>Expected</h3><pre class="code-block">{{ pretty(step.expected) }}</pre><p class="muted">比较方式：{{ pretty(step.comparison) }}</p></div>
+      <div class="detail-body"><h3>预期结果（Expected）</h3><StructuredTable :value="step.expected" /><h4>比较方式</h4><StructuredTable :value="step.comparison" /></div>
       <div v-for="run in (['run1', 'run2'] as const)" :key="run" class="detail-body">
         <h3>{{ run }} · 实际结果</h3>
         <p v-if="rowErrors[rowKey(run, step.id)]" class="error-banner">{{ rowErrors[rowKey(run, step.id)] }}</p>
         <template v-if="rowPages[rowKey(run, step.id)]">
           <p class="muted">共 {{ rowPage(run, step.id).row_count }} 行；当前显示 {{ rowPage(run, step.id).rows.length ? rowPage(run, step.id).offset + 1 : 0 }}–{{ Math.min(rowPage(run, step.id).offset + rowPage(run, step.id).rows.length, rowPage(run, step.id).row_count) }} 行</p>
-          <pre class="code-block">{{ pretty({ columns: rowPage(run, step.id).columns, column_types: rowPage(run, step.id).column_types, rows: rowPage(run, step.id).rows }) }}</pre>
+          <ResultRowsTable :rows="rowPage(run, step.id).rows" :columns="rowPage(run, step.id).columns" :column-types="rowPage(run, step.id).column_types" :offset="rowPage(run, step.id).offset" />
           <button :disabled="rowPage(run, step.id).offset === 0" @click="loadRows(run, step.id, Math.max(0, rowPage(run, step.id).offset - 50))">上一页</button>
           <button :disabled="rowPage(run, step.id).offset + 50 >= rowPage(run, step.id).row_count" @click="loadRows(run, step.id, rowPage(run, step.id).offset + 50)">下一页</button>
         </template>

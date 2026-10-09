@@ -5,6 +5,7 @@ import uuid
 from pathlib import Path
 from xgtest.ai.models import ActionRequest, ActionResult, FailureAnalysis, TestIntent, TestJob, TestPlan
 from xgtest.ai.store import JobStore, write_json
+from xgtest.ai.identity import job_source_identity
 from xgtest.application.services import (ServiceContext, DatabaseExecutor, ProjectService,
     ModuleService, CandidateService, AcceptanceService, context_hash)
 from xgtest.core.canonical import xgmj1_sha256
@@ -26,17 +27,44 @@ class JobController:
         return ProjectService(ctx, self.db), ModuleService(ctx, self.db), CandidateService(ctx, self.db), AcceptanceService(ctx)
 
     def create(self, goal, intent):
-        job = TestJob(job_id=uuid.uuid4().hex, intent=TestIntent.model_validate(intent), plan=TestPlan(goal=goal))
-        with self.store.lock(job.job_id):
-            job = self.store.save(job, "CREATED")
+        intent = TestIntent.model_validate(intent)
+        with self.store.execution_lock():
+            if intent.intent != "query.status": self.assert_mutable_slot()
+            job = TestJob(job_id=uuid.uuid4().hex, intent=intent, plan=TestPlan(goal=goal), **job_source_identity(self.root))
+            with self.store.lock(job.job_id):
+                job = self.store.save(job, "CREATED")
         return job.model_dump(mode="json")
+
+    def assert_mutable_slot(self, current_job_id=None):
+        for item in self.store.list():
+            if item["job_id"] == current_job_id: continue
+            if item.get("error"): raise ValueError("MUTABLE_JOB_STATE_INVALID")
+            existing = self.store.load(item["job_id"])
+            if existing.intent.intent != "query.status" and (
+                existing.state not in {"COMPLETED", "FAILED"} or existing.current_action is not None):
+                raise ValueError("MUTABLE_JOB_ALREADY_EXISTS")
+
+    def identity_error(self, job):
+        if job.control_plane_layer_id is None: return "JOB_CONTROL_PLANE_IDENTITY_MISSING"
+        if job.control_plane_layer_id != job_source_identity(self.root)["control_plane_layer_id"]:
+            return "JOB_CONTROL_PLANE_CHANGED"
+        return None
+
+    def guard_job(self, job):
+        error = self.identity_error(job)
+        if error:
+            if job.state != "BLOCKED" or job.blockers != [error]:
+                job = self.store.save(job.model_copy(update={"state": "BLOCKED", "blockers": [error]}), "PAUSED")
+                self.report(job)
+            raise ValueError(error)
+        if job.intent.intent != "query.status": self.assert_mutable_slot(job.job_id)
 
     @staticmethod
     def last(job, action):
         return next((result for result in reversed(job.action_results) if result.action == action), None)
 
     def eligible(self, job):
-        if job.current_action is not None:
+        if job.current_action is not None or self.identity_error(job):
             return []
         project, module, candidates, acceptance = self.services(job.job_id)
         def option(action, case_id=None):
@@ -75,7 +103,7 @@ class JobController:
                 if job.intent.allow_trial: pending.append(option("candidate.mutation", case_id))
             elif not item["trial_verified"]:
                 if job.intent.allow_trial: pending.append(option("candidate.trial", case_id))
-            elif not item["technical_review_valid"]:
+            elif not item["technical_review_accepted"]:
                 pending.append(option("candidate.technical_review", case_id))
         if pending:
             return reads + pending
@@ -93,12 +121,15 @@ class JobController:
 
     def status(self, job_id):
         job = self.store.load(job_id)
+        identity_error = self.identity_error(job)
         try:
             eligible = self.eligible(job)
             policy_error = None
         except (OSError, ValueError, KeyError) as error:
             eligible, policy_error = [], type(error).__name__
-        return {**job.model_dump(mode="json"), "eligible_actions": eligible, "policy_error": policy_error,
+        return {**job.model_dump(mode="json"), "state": "BLOCKED" if identity_error and job.state != "COMPLETED" else job.state,
+                "blockers": list(dict.fromkeys([*job.blockers, *([identity_error] if identity_error else [])])),
+                "eligible_actions": eligible, "policy_error": policy_error,
                 "agent_mode": "external", "module_completion": "MODULE_FULL_INCOMPLETE"}
 
     def review_context(self, job_id, case_id):
@@ -112,6 +143,7 @@ class JobController:
         fingerprint = xgmj1_sha256(request.model_dump(mode="json", exclude={"expected_revision"}))
         with self.store.execution_lock(), self.store.lock(job_id):
             job = self.store.load(job_id)
+            self.guard_job(job)
             previous_state, previous_blockers = job.state, job.blockers
             previous = job.completed_requests.get(request.request_id)
             if previous is not None:
@@ -143,6 +175,9 @@ class JobController:
                 if coverage.get("active_missing") == 0 and not candidates.readiness():
                     state = "COMPLETED"
             recovery_action = request.action if request.action.action == "acceptance.promote" and result.status == "BLOCKED" else None
+            identity_error = self.identity_error(job)
+            if identity_error:
+                state, blockers = "BLOCKED", list(dict.fromkeys([*blockers, identity_error]))
             job = self.store.save(job.model_copy(update={"state": state, "current_action": recovery_action,
                 "action_results": results, "blockers": blockers,
                 "preflight_required": False if result.action == "project.preflight" and result.status == "PASS" else job.preflight_required,
@@ -172,6 +207,7 @@ class JobController:
             job = self.store.load(job_id)
             if job.revision != expected_revision: raise ValueError("JOB_REVISION_CONFLICT")
             if job.state == "COMPLETED": return job.model_dump(mode="json")
+            self.guard_job(job)
             if job.current_action and job.current_action.action == "acceptance.promote":
                 result = self.services(job_id)[3].promote()
                 state = "PLANNED" if result.status == "PASS" else "WAITING_APPROVAL"
@@ -200,6 +236,7 @@ class JobController:
     def report(self, job):
         write_json(self.store.directory(job.job_id) / "final-report.json", {
             "job_id": job.job_id, "state": job.state, "revision": job.revision,
+            "control_plane_layer_id": job.control_plane_layer_id, "git_commit": job.git_commit,
             "results": [result.model_dump(mode="json") for result in job.action_results],
             "blockers": job.blockers, "agent_explanation": job.explanation,
             "human_approval": "ONLY_CORE_ACCEPTANCE_CAN_VERIFY", "module_completion": "MODULE_FULL_INCOMPLETE"})

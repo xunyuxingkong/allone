@@ -5,6 +5,7 @@ import { getCase } from '../api/runs'
 import type { CaseDetailResponse } from '../types'
 import StatusTag from '../components/StatusTag.vue'
 import SqlViewer from '../components/SqlViewer.vue'
+import StructuredTable from '../components/StructuredTable.vue'
 import { formatDuration, shortId } from '../utils'
 
 const props = defineProps<{ runId: string; caseId: string }>()
@@ -67,7 +68,7 @@ watch(() => [props.runId, props.caseId], load)
             <div class="detail-body detail-kv">
               <span class="key">Comparison Mode</span><span class="mono">{{ step.comparison.mode }}</span>
               <span class="key">Expected</span>
-              <pre class="code-block expected-block">{{ JSON.stringify(step.expected, null, 2) }}</pre>
+              <StructuredTable :value="step.expected" />
             </div>
           </section>
         </template>
@@ -134,7 +135,6 @@ watch(() => [props.runId, props.caseId], load)
 .result-grid div { display: grid; gap: 5px; }
 .result-grid span { color: var(--muted); }
 .result-grid b { font-weight: 500; }
-.expected-block { max-height: 190px; }
 .error-detail {
   margin: 12px 18px;
   padding: 13px;
