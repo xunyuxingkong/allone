@@ -63,6 +63,10 @@ def build_contract_descriptor(root: Path) -> dict[str, object]:
         "generator": (("generators",), ("src/xgtest/generator/candidate.py", "src/xgtest/generator/template.py", "src/xgtest/generator/plugins.py")),
         "governance": (("src/xgtest/generator", "registry"), ("src/xgtest/core/evidence_models.py", "src/xgtest/core/governance_models.py", "src/xgtest/core/control_models.py", "src/xgtest/core/admission.py", "src/xgtest/core/manifest.py", "src/xgtest/core/identity.py", "src/xgtest/core/metadata.py", "src/xgtest/core/yaml_loader.py", "src/xgtest/core/asset_lock.py", "src/xgtest/query/loader.py")),
         "control_plane": (("src/xgtest/web", "src/xgtest/ai", "src/xgtest/application", "webui/src"), ("src/xgtest/cli.py", "webui/vite.config.ts")),
+        # Job logic identity: everything a durable job actually executes, but not display-only UI.
+        # Deliberately narrower than control_plane (no webui/web/cli) so a CSS or page edit cannot
+        # invalidate a running job; broader in governance so workflow code is covered.
+        "mission_logic": (("src/xgtest/ai", "src/xgtest/application", "src/xgtest/product", "src/xgtest/generator"), ()),
         "suite": (("framework_tests",), ()),
     }
     layers = {}

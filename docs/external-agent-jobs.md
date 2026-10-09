@@ -48,6 +48,40 @@ tool_timeout_sec = 660
 .venv/Scripts/xgtest.exe ai abandon <job_id> --revision <current_revision> --reason "legacy job before control-plane identity"
 ```
 
+## Test Mission（产品层）
+
+产品层回答“为什么测、测什么、不测什么”，不重算 Core 事实。Mission 是独立于 Job 的持久记录：先定义 Mission，再由操作者显式启动为 Job。
+
+```powershell
+.venv/Scripts/xgtest.exe mission create --request artifacts/mission.json
+.venv/Scripts/xgtest.exe mission list
+.venv/Scripts/xgtest.exe mission show <mission_id>
+.venv/Scripts/xgtest.exe mission start <mission_id>
+```
+
+`mission.json` 示例：
+
+```json
+{
+  "name": "Query 语义正确性标准测试",
+  "purpose": "验证当前 Xugu Build 下 Query 模块核心语义正确性",
+  "features": ["join"],
+  "strategy": "STANDARD",
+  "risk_focus": ["null", "duplicate", "boundary"],
+  "excluded_scope": ["performance", "concurrency", "transaction", "window", "cte"]
+}
+```
+
+字段：`name`、`purpose`、`features`、`strategy`（SMOKE/STANDARD/FULL/AI_EXPLORATORY）、`data_scale`、`risk_focus`、`acceptance_goal`、`excluded_scope`、`created_by`。仅接受 Core 当前能建模并度量覆盖的 feature（当前为 `join`）；声明未支持 feature 返回 `MISSION_FEATURE_UNAVAILABLE`，不创建虚假覆盖。`create` 产出 `state=READY` 的任务并给出规模区间预估；`start` 复用 JobController 创建 `query.full_test`/`query.join.verify` 并绑定 `job_id`，因此仍受“单一可修改任务”策略约束。任务状态（READY/RUNNING/WAITING_APPROVAL/BLOCKED/COMPLETED）由 Job 状态纯投影得到，产品层不新增事实、不修改 PASS/FAIL、Coverage 或验收。HTTP：`GET/POST /api/missions`、`GET /api/missions/{id}`、`POST /api/missions/{id}/start`。
+
+Mission 记录存于 `artifacts/missions/<mission_id>/mission.json`（原子写）。`tested_scope`/`untested_scope` 只做展示，不改变 Core 判定。
+
+## Job 逻辑身份（mission_logic，已定义未强制）
+
+契约描述符新增 `mission_logic` 层，只覆盖真正影响工作流语义的 AI/Application/Product/Generator 代码，**排除**展示层（`webui/src`、`src/xgtest/web`、`cli.py`）。因此改页面或样式不会移动任务逻辑身份，而治理逻辑变更会。`control_plane` 层保留为更宽的冻结身份，两者互不替代。
+
+当前 Durable Job 仍只冻结 `control_plane_layer_id`；`mission_logic` 身份已定义并测试，但**尚未**冻结到 Job、也未在 Action/Resume 时强制校验。按审核意见（§7），把 Job 身份从过宽的 control_plane 收敛到 mission_logic 属于后续收敛项，可在真实 E2E 跑通后再启用，以免再次将既有 Job 置于身份缺失的 BLOCKED。
+
 `action.json` 示例：
 
 ```json

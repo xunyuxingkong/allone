@@ -572,5 +572,7 @@ def main() -> None:
         command.set_defaults(handler=_acceptance_release_checks)
     from xgtest.ai.cli import register as register_ai
     register_ai(commands, root)
+    from xgtest.product.cli import register as register_mission
+    register_mission(commands, root)
     args = parser.parse_args()
     raise SystemExit(args.handler(args))

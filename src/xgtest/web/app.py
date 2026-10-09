@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from fastapi import Depends, FastAPI, HTTPException, Query, Response
+from fastapi import Body, Depends, FastAPI, HTTPException, Query, Response
 
 from .service import QueryReadService
 
@@ -13,6 +13,38 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
 
     def get_service() -> QueryReadService:
         return service or QueryReadService.from_environment()
+
+    def get_missions(current: QueryReadService) -> "MissionService":
+        from xgtest.ai.controller import JobController
+        from xgtest.product.mission_service import MissionService
+        return MissionService(current.project_root, JobController(current.project_root))
+
+    @app.get("/api/missions")
+    def list_missions(current: QueryReadService = Depends(get_service)) -> dict:
+        return {"items": get_missions(current).store.list()}
+
+    @app.post("/api/missions")
+    def create_mission(definition: dict = Body(...), current: QueryReadService = Depends(get_service)) -> dict:
+        try:
+            return get_missions(current).create(definition)
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.get("/api/missions/{mission_id}")
+    def get_mission(mission_id: str, current: QueryReadService = Depends(get_service)) -> dict:
+        try:
+            return get_missions(current).view(mission_id)
+        except FileNotFoundError as error:
+            raise HTTPException(status_code=404, detail="MISSION_NOT_FOUND") from error
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.post("/api/missions/{mission_id}/start")
+    def start_mission(mission_id: str, current: QueryReadService = Depends(get_service)) -> dict:
+        try:
+            return get_missions(current).start(mission_id)
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
 
     @app.get("/api/jobs")
     def list_jobs(current: QueryReadService = Depends(get_service)) -> dict:
