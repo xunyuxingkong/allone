@@ -9,10 +9,15 @@ import CandidateListView from './views/CandidateListView.vue'
 import CandidateDetailView from './views/CandidateDetailView.vue'
 import JobsView from './views/JobsView.vue'
 import JobDetailView from './views/JobDetailView.vue'
+import MissionListView from './views/MissionListView.vue'
+import MissionCreateView from './views/MissionCreateView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/tests', name: 'missions', component: MissionListView },
+    { path: '/tests/new', name: 'mission-create', component: MissionCreateView },
+    { path: '/tests/:missionId', name: 'mission-detail', component: MissionListView },
     { path: '/jobs', name: 'jobs', component: JobsView },
     { path: '/jobs/:jobId', name: 'job-detail', component: JobDetailView, props: true },
     { path: '/', name: 'dashboard', component: DashboardView },

@@ -2,7 +2,7 @@
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { computed } from 'vue'
 const route = useRoute()
-const section = computed(() => route.path === '/' ? '概览' : route.path.startsWith('/jobs') ? '测试任务' : route.path.startsWith('/runs') ? '运行记录' : route.path.startsWith('/coverage') ? '覆盖情况' : route.path.startsWith('/candidates') ? '候选用例' : '运行环境')
+const section = computed(() => route.path === '/' ? '概览' : route.path.startsWith('/tests') ? '测试目标' : route.path.startsWith('/jobs') ? '测试任务' : route.path.startsWith('/runs') ? '运行记录' : route.path.startsWith('/coverage') ? '覆盖情况' : route.path.startsWith('/candidates') ? '候选用例' : '运行环境')
 </script>
 
 <template>
@@ -10,6 +10,7 @@ const section = computed(() => route.path === '/' ? '概览' : route.path.starts
     <aside class="sidebar">
       <RouterLink class="brand" to="/" aria-label="XG DB Test 首页"><span class="brand-mark">XG</span><span><b>XG DB Test</b><small>Query QA</small></span></RouterLink>
       <nav aria-label="主导航">
+        <RouterLink to="/tests" :class="{ active: route.path.startsWith('/tests') }"><span class="nav-glyph">✦</span>测试目标</RouterLink>
         <RouterLink to="/jobs" :class="{ active: route.path.startsWith('/jobs') }"><span class="nav-glyph">▷</span>测试任务</RouterLink>
         <RouterLink to="/" :class="{ active: route.path === '/' }"><span class="nav-glyph">◫</span>仪表盘</RouterLink>
         <RouterLink to="/runs" :class="{ active: route.path.startsWith('/runs') }"><span class="nav-glyph">≡</span>运行记录</RouterLink>
@@ -28,6 +29,6 @@ const section = computed(() => route.path === '/' ? '概览' : route.path.starts
 
 <style scoped>
 @media (max-width: 600px) {
-  .sidebar nav { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .sidebar nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 }
 </style>
