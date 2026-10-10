@@ -23,6 +23,7 @@ class FeatureKey(StrEnum):
     QUERY = "query"
     FILTER = "filter"
     AGGREGATE = "aggregate"
+    SUBQUERY = "subquery"
 
 class IsolationScope(StrEnum):
     SESSION = "session"

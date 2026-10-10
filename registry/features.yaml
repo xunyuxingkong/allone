@@ -13,3 +13,5 @@ items:
     phase: query_mvp
   - key: aggregate
     phase: query_mvp
+  - key: subquery
+    phase: query_mvp

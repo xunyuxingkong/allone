@@ -1,0 +1,38 @@
+model_id: query.subquery
+model_version: "1"
+module: query
+feature: query
+subfeature: subquery
+dimensions:
+  predicate:
+    values: [in, not_in, exists, not_exists, scalar, any, all]
+  correlation:
+    values: [uncorrelated, correlated]
+  subquery_result:
+    values: [matching, non_matching, with_null, empty]
+  datatype:
+    values: [int, varchar, date]
+coverage:
+  strategies:
+    - type: all_values
+    - type: pairwise
+      strength: 2
+constraints:
+  # Scalar subqueries return a single value, so ANY/ALL quantifiers do not apply.
+  - if: {predicate: scalar}
+    exclude: {correlation: [correlated]}
+  # The quantified predicates only discriminate per row when correlated; an
+  # uncorrelated EXISTS/ANY/ALL over a constant inner set is all-or-nothing and
+  # cannot yield a partial, mutation-observable result.
+  - if: {predicate: exists}
+    then: {correlation: correlated}
+  - if: {predicate: not_exists}
+    then: {correlation: correlated}
+  - if: {predicate: any}
+    then: {correlation: correlated}
+  - if: {predicate: all}
+    then: {correlation: correlated}
+  # A scalar subquery over an empty result is the three-valued NULL case, kept
+  # distinct from an ordinary empty result.
+  - if: {predicate: scalar}
+    exclude: {subquery_result: [with_null]}

@@ -204,6 +204,52 @@ class AggregatePlugin:
         return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
 
 
+@dataclass(frozen=True)
+class SubqueryPlugin:
+    model_id: str = "query.subquery"
+    template_id: str = "query.subquery.default"
+    template_version: str = "1"
+    id_prefix: str = "QUERY.SUBQUERY"
+    generator_id: str = "query_template_generator"
+    generator_version: str = "1"
+    mutation_id: str = "flip_in_negation"
+    mutation_policy: MutationPolicy = MutationPolicy()
+    scope: AcceptanceScope = AcceptanceScope(module="query", feature="subquery", candidate_root="candidates/query/subquery", active_root="cases/query/subquery", active_suite_root="cases/query", model_ref="models/query/subquery.yaml", legacy_feature_assets=("cases/query/subquery_01_scalar.yaml", "cases/query/subquery_02_in.yaml", "cases/query/subquery_03_derived.yaml"))
+
+    def static_validate(self, path: Any, model: Any) -> dict[str, Any]:
+        from xgtest.generator.candidate import static_validate_candidate
+        return static_validate_candidate(path, model)
+
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+        from xgtest.generator.candidate import generate_candidates
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+
+    def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
+        from xgtest.generator.subquery_template import render_subquery
+        return render_subquery(model, assignment)
+
+    def mutation_applies(self, case: Any) -> bool:
+        # Flip IN <-> NOT IN only where the result is partial, so the flip changes
+        # the observable rows. IN over matching/with_null discriminates, and
+        # NOT IN over matching is its complement; the other shapes are
+        # all-or-nothing (e.g. NOT IN with a NULL set is UNKNOWN for every row).
+        return any(
+            (claim.assignment.get("predicate") == "in" and claim.assignment.get("subquery_result") in {"matching", "with_null"})
+            or (claim.assignment.get("predicate") == "not_in" and claim.assignment.get("subquery_result") == "matching")
+            for claim in case.coverage
+        )
+
+    def mutation_specs(self) -> tuple[MutationSpec, ...]:
+        return (MutationSpec(self.mutation_id, "1", self.mutation_applies, self.mutated_sql),)
+
+    def mutated_sql(self, sql: str) -> str:
+        # Swap the set-membership operator; the outer key tests change membership.
+        return sql.replace(" NOT IN ", " IN ").replace(" IN ", " NOT IN ")
+
+    def expected_id(self, model: Any, assignment: dict[str, str]) -> str:
+        return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
+
+
 class PluginRegistry:
     def __init__(self, plugins: tuple[FeaturePlugin, ...], default_model_id: str | None = None):
         self._plugins = {plugin.model_id: plugin for plugin in plugins}
@@ -251,4 +297,4 @@ class PluginRegistry:
         return matches[0]
 
 
-FEATURE_PLUGINS = PluginRegistry((JoinPlugin(), FilterPlugin(), AggregatePlugin()), default_model_id="query.join")
+FEATURE_PLUGINS = PluginRegistry((JoinPlugin(), FilterPlugin(), AggregatePlugin(), SubqueryPlugin()), default_model_id="query.join")

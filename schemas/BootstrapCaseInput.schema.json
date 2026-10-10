@@ -414,7 +414,8 @@
         "string_function",
         "query",
         "filter",
-        "aggregate"
+        "aggregate",
+        "subquery"
       ],
       "title": "FeatureKey",
       "type": "string"

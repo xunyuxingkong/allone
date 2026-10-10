@@ -267,11 +267,18 @@ class QueryReadService:
             "cardinality": {"empty": "空集", "single": "单值", "duplicates": "重复值", "multiple_groups": "多分组"},
             "datatype": {"int": "INTEGER", "varchar": "VARCHAR", "date": "DATE"},
         },
+        "subquery": {
+            "predicate": {"in": "IN", "not_in": "NOT IN", "exists": "EXISTS", "not_exists": "NOT EXISTS", "scalar": "标量子查询", "any": "ANY", "all": "ALL"},
+            "correlation": {"uncorrelated": "非相关子查询", "correlated": "相关子查询"},
+            "subquery_result": {"matching": "有匹配", "non_matching": "无匹配", "with_null": "含 NULL", "empty": "空结果"},
+            "datatype": {"int": "INTEGER", "varchar": "VARCHAR", "date": "DATE"},
+        },
     }
     _DIMENSION_ORDER = {
         "join": ("join_type", "predicate", "datatype", "null_side", "interaction"),
         "filter": ("predicate", "operator", "null_handling", "datatype", "interaction"),
         "aggregate": ("function", "grouping", "null_handling", "cardinality", "datatype"),
+        "subquery": ("predicate", "correlation", "subquery_result", "datatype"),
     }
 
     def _case_origin(self, case, assignment: dict[str, str]) -> dict[str, Any]:

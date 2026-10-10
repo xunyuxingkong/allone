@@ -19,7 +19,7 @@ class TestIntent(StrictModel):
     allow_trial: bool = True
     allow_promotion: bool = True
     # Which query feature the job drives. The first entry selects the job's scope.
-    features: list[Literal["join", "filter", "aggregate"]] = Field(default_factory=lambda: ["join"], min_length=1)
+    features: list[Literal["join", "filter", "aggregate", "subquery"]] = Field(default_factory=lambda: ["join"], min_length=1)
 
 
 class SemanticAction(StrictModel):
