@@ -42,7 +42,7 @@ const selectionText = (item: Record<string, string>) => Object.entries(item).map
 
 <template>
   <div class="page-heading">
-    <div><h1>覆盖情况</h1><p>查看 JOIN 模型的正式覆盖与待评审候选可补齐的组合。</p></div>
+    <div><h1>覆盖情况</h1><p>查看 {{ coverage?.model_id ?? '当前模型' }} 的正式覆盖与待评审候选可补齐的组合。</p></div>
     <span class="heading-meta">Model {{ coverage?.model_version ?? '—' }}</span>
   </div>
   <div v-if="error" class="error-banner">{{ error }}</div>
@@ -71,7 +71,7 @@ const selectionText = (item: Record<string, string>) => Object.entries(item).map
     </tbody></table></div>
   </section>
   <section v-if="coverage" class="surface model-detail">
-    <details><summary>JOIN 模型详情 · v{{ coverage.model_version }}</summary>
+    <details><summary>{{ coverage.model_id }} 模型详情 · v{{ coverage.model_version }}</summary>
       <div class="table-scroll"><table class="data-table"><thead><tr><th>维度</th><th>可选值</th></tr></thead><tbody>
         <tr v-for="(values, name) in coverage.dimensions" :key="name"><td class="mono">{{ name }}</td><td>{{ values.join(' · ') }}</td></tr>
       </tbody></table></div>

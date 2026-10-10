@@ -26,7 +26,7 @@ watch(() => props.jobId, refresh, { immediate: true })
   <p v-if="loading" class="empty-state">正在读取任务…</p>
   <template v-if="job">
     <section class="surface job-section"><h2>{{ job.plan.goal }}</h2><p>状态：<strong>{{ job.state }}</strong> · 记录版本：{{ job.revision }}</p><p v-if="job.current_action">正在执行：{{ job.current_action.action }}</p>
-      <p>AI 技术评审与人工批准分别记录。JOIN 任务完成不代表 Query 全模块验收完成。</p>
+      <p>AI 技术评审与人工批准分别记录。单个任务完成不代表 Query 全模块验收完成。</p>
       <div v-if="job.blockers.length" class="error-banner"><strong>待处理事项</strong><ul><li v-for="item in job.blockers" :key="item">{{ item }}</li></ul></div>
     </section>
     <section v-if="job.explanation || job.failure_analysis" class="surface job-section ai-section">

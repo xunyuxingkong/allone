@@ -49,6 +49,7 @@ class ServiceContext:
     approval_path: Path | None = None
     allowed_signers_path: Path | None = None
     revoked_path: Path | None = None
+    features: list[str] | None = None
 
     def __post_init__(self):
         self.root = self.root.resolve()
@@ -56,8 +57,14 @@ class ServiceContext:
         self.profile_path = self.profile_path.resolve()
         if not self.job_dir.is_relative_to((self.root / "artifacts/jobs").resolve()) or not self.profile_path.is_relative_to(self.root):
             raise ValueError("SERVICE_PATH_INVALID")
-        self.scope = resolve_scope()
+        self.scope = self._resolve_scope()
         self.reader = QueryReadService(self.root / "artifacts/runs", self.scope.path(self.root, "active_suite_root"), project_root=self.root, profile_path=self.profile_path)
+
+    def _resolve_scope(self):
+        if not self.features:
+            return resolve_scope()
+        from xgtest.generator.plugins import FEATURE_PLUGINS
+        return resolve_scope(scope=FEATURE_PLUGINS.for_model(f"query.{self.features[0]}").scope)
 
     def relative(self, path):
         return path.resolve().relative_to(self.root).as_posix()
@@ -158,7 +165,8 @@ class ModuleService:
     def inspect(self, module_id="query"):
         if module_id != "query": raise ValueError("MODULE_UNSUPPORTED")
         coverage = self.ctx.reader.coverage()
-        return {"module": "query", "features": {"join": coverage}, "module_completion": "MODULE_FULL_INCOMPLETE",
+        # Report the job's active feature, not a hardcoded one.
+        return {"module": "query", "features": {self.ctx.scope.feature: coverage}, "module_completion": "MODULE_FULL_INCOMPLETE",
                 "active_input_identity": self.input_identity(), "candidates": self.ctx.reader.list_candidates()["items"]}
 
     def run_regression(self, module_id="query"):
@@ -185,8 +193,9 @@ class ModuleService:
                 for case in report.cases)
         except (ValueError, OSError, KeyError, IndexError): return False
 
-    def inspect_coverage(self, feature_id="query.join"):
-        if feature_id != "query.join": raise ValueError("FEATURE_UNSUPPORTED")
+    def inspect_coverage(self, feature_id=None):
+        feature_id = feature_id or self.ctx.scope.model_id
+        if feature_id != self.ctx.scope.model_id: raise ValueError("FEATURE_UNSUPPORTED")
         return ActionResult(action="feature.coverage", status="PASS", outputs=self.ctx.reader.coverage())
 
 

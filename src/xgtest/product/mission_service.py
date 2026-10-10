@@ -40,10 +40,9 @@ class MissionService:
         mission = self.store.load(mission_id)
         if mission.state != "READY":
             raise ValueError("MISSION_NOT_READY")
-        # Resolve the mission to an internal Job intent. Adding a feature needs a matching intent.
-        intent = "query.full_test"
+        # Reuse query.full_test; the mission's feature selects the job's scope.
         goal = f"{mission.name}｜{mission.purpose}"
-        job = self.controller.create(goal, {"intent": intent})
+        job = self.controller.create(goal, {"intent": "query.full_test", "features": list(mission.features)})
         with self.store.lock(mission_id):
             current = self.store.load(mission_id)
             self.store.save(current.model_copy(update={"job_id": job["job_id"], "state": "RUNNING"}))

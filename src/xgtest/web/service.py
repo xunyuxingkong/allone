@@ -243,21 +243,39 @@ class QueryReadService:
         }
 
     # Human-readable meaning of the model dimension values, for the semantic path view.
+    # Keyed by feature then dimension, because a dimension name (e.g. predicate) can
+    # mean different things across features. Unknown values fall back to the raw value.
     _VALUE_LABELS = {
-        "join_type": {"inner": "INNER JOIN", "left": "LEFT JOIN", "right": "RIGHT JOIN", "full": "FULL JOIN", "cross": "CROSS JOIN"},
-        "predicate": {"none": "无连接谓词", "equality": "等值谓词", "inequality": "不等谓词", "less_equal": "≤ 谓词"},
-        "datatype": {"int": "INTEGER 键", "varchar": "VARCHAR 键", "date": "DATE 键"},
-        "null_side": {"none": "无 NULL 键", "left": "左表 NULL 键", "right": "右表 NULL 键", "both": "两侧 NULL 键"},
-        "interaction": {"none": "无附加交互", "where": "附加 WHERE", "group_by": "附加 GROUP BY", "subquery": "附加子查询"},
+        "join": {
+            "join_type": {"inner": "INNER JOIN", "left": "LEFT JOIN", "right": "RIGHT JOIN", "full": "FULL JOIN", "cross": "CROSS JOIN"},
+            "predicate": {"none": "无连接谓词", "equality": "等值谓词", "inequality": "不等谓词", "less_equal": "≤ 谓词"},
+            "datatype": {"int": "INTEGER 键", "varchar": "VARCHAR 键", "date": "DATE 键"},
+            "null_side": {"none": "无 NULL 键", "left": "左表 NULL 键", "right": "右表 NULL 键", "both": "两侧 NULL 键"},
+            "interaction": {"none": "无附加交互", "where": "附加 WHERE", "group_by": "附加 GROUP BY", "subquery": "附加子查询"},
+        },
+        "filter": {
+            "predicate": {"comparison": "比较谓词", "between": "BETWEEN", "in_list": "IN 列表", "like": "LIKE", "is_null": "IS NULL", "arithmetic": "算术谓词", "conversion": "类型转换", "boolean_combination": "布尔组合"},
+            "operator": {"equals": "=", "not_equals": "≠", "less_than": "<", "less_equal": "≤", "greater_than": ">", "greater_equal": "≥", "none": "无运算符"},
+            "null_handling": {"none": "无 NULL 行", "filtered_null": "含 NULL 行（被过滤）", "three_valued_unknown": "三值逻辑"},
+            "datatype": {"int": "INTEGER", "varchar": "VARCHAR", "date": "DATE"},
+            "interaction": {"none": "无布尔交互", "and": "AND", "or": "OR", "not": "NOT"},
+        },
     }
-    _DIMENSION_ORDER = ("join_type", "predicate", "datatype", "null_side", "interaction")
+    _DIMENSION_ORDER = {
+        "join": ("join_type", "predicate", "datatype", "null_side", "interaction"),
+        "filter": ("predicate", "operator", "null_handling", "datatype", "interaction"),
+    }
 
     def _case_origin(self, case, assignment: dict[str, str]) -> dict[str, Any]:
         """Explain a case in user terms: its semantic path, why it exists and where it came from."""
+        feature = self.scope.feature
+        labels = self._VALUE_LABELS.get(feature, {})
+        order = self._DIMENSION_ORDER.get(feature, ())
+        # Unknown dimensions keep their stable name order instead of being forced last.
         path = []
-        for name in sorted(assignment, key=lambda item: self._DIMENSION_ORDER.index(item) if item in self._DIMENSION_ORDER else 99):
+        for name in sorted(assignment, key=lambda item: order.index(item) if item in order else len(order)):
             value = assignment[name]
-            path.append({"dimension": name, "value": value, "label": self._VALUE_LABELS.get(name, {}).get(value, value)})
+            path.append({"dimension": name, "value": value, "label": labels.get(name, {}).get(value, value)})
         generation = case.generation
         source = "AI 生成" if generation is not None else "人工定义"
         if generation is None:

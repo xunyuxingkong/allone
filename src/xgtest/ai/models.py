@@ -18,6 +18,8 @@ class TestIntent(StrictModel):
     allow_candidate_generation: bool = True
     allow_trial: bool = True
     allow_promotion: bool = True
+    # Which query feature the job drives. The first entry selects the job's scope.
+    features: list[Literal["join", "filter"]] = Field(default_factory=lambda: ["join"], min_length=1)
 
 
 class SemanticAction(StrictModel):

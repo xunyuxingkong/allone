@@ -23,11 +23,13 @@ DEFINITION = {"name": "Query 语义正确性标准测试", "purpose": "验证 Qu
 def test_mission_contract_validates_and_estimates():
     mission = TestMission.model_validate({**DEFINITION, "mission_id": "0" * 32, "state": "READY"})
     assert mission.state == "READY" and mission.module == "query" and mission.features == ["join"]
+    # Filter is now a modelled feature and is accepted.
+    assert TestMission.model_validate({**DEFINITION, "mission_id": "0" * 32, "features": ["filter"]}).features == ["filter"]
     assert strategy_estimate("STANDARD") == {"strategy": "STANDARD", "case_min": 150, "case_max": 300,
         "sql_min": 150, "sql_max": 600, "unit": "cases"}
-    # The Core cannot model these yet; a mission must not claim coverage it cannot deliver.
+    # A feature the Core cannot model yet is still rejected; the fail-closed rule stays live.
     with pytest.raises(ValueError, match="MISSION_FEATURE_UNAVAILABLE"):
-        TestMission.model_validate({**DEFINITION, "mission_id": "0" * 32, "features": ["filter"]})
+        TestMission.model_validate({**DEFINITION, "mission_id": "0" * 32, "features": ["window"]})
     with pytest.raises(ValueError, match="MISSION_FEATURE_DUPLICATE"):
         TestMission.model_validate({**DEFINITION, "mission_id": "0" * 32, "features": ["join", "join"]})
 
@@ -84,6 +86,21 @@ def test_ai_summary_reflects_recorded_explanation_and_failure(service):
     assert stored.failure_analysis == FailureAnalysis.model_validate(summary["failure_analysis"])
 
 
+def test_filter_mission_starts_a_job_scoped_to_filter(service):
+    created = service.create({**DEFINITION, "features": ["filter"]})
+    mission_id = created["mission"]["mission_id"]
+    assert created["tested_scope"] == ["filter"]
+    started = service.start(mission_id)
+    job_id = started["mission"]["job_id"]
+    job = service.controller.store.load(job_id)
+    # The intent stays query.full_test, but the feature selects the job scope.
+    assert job.intent.intent == "query.full_test" and job.intent.features == ["filter"]
+    assert service.controller.services(job_id)[0].ctx.scope.feature == "filter"
+    # The JOIN default is untouched: a default job still scopes to join.
+    join_job = service.controller.create("default", {"intent": "query.status"})["job_id"]
+    assert service.controller.services(join_job)[0].ctx.scope.feature == "join"
+
+
 def test_mission_start_requires_ready(service):
     mission_id = service.create(DEFINITION)["mission"]["mission_id"]
     service.start(mission_id)
@@ -110,7 +127,7 @@ def test_missions_web_api_create_list_get_start(tmp_path):
     assert client.get(f"/api/missions/{mission_id}").json()["state"] == "READY"
     assert client.post(f"/api/missions/{mission_id}/start").json()["state"] == "RUNNING"
     assert client.get("/api/missions/invalid").status_code == 400
-    assert client.post("/api/missions", json={**DEFINITION, "features": ["filter"]}).status_code == 400
+    assert client.post("/api/missions", json={**DEFINITION, "features": ["window"]}).status_code == 400
 
 
 def test_scope_matrix_separates_requirement_case_and_execution_counts():

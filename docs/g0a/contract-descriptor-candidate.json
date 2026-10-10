@@ -68,25 +68,25 @@
       }
     },
     "control_plane": {
-      "id": "097c448ce8f1d47e7aa59dae946ab7f3010b567c38bc2fec655a7b0d38f62f8b",
+      "id": "004ff5ec612dbba402df455dbd0f35418c0f53966b587d30770689ec7979fcd1",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
         "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
         "src/xgtest/ai/cli.py": "f9adb091fd2606fbbec0782e813b50c22c29af3778c166aa934b89df95efdc60",
-        "src/xgtest/ai/controller.py": "5c537ef6b16cd3413ce18f6032429a9d9fe88f7f7d17f257afc9775889416ec1",
+        "src/xgtest/ai/controller.py": "d28c9a43211e5695157e098447e6ee851e61d8861388e3ebcf8ac145fb5d32ab",
         "src/xgtest/ai/identity.py": "3fb026188922f11f2ebc67798e949f76c1f75c186a787c337fa438735b62715a",
         "src/xgtest/ai/mcp_server.py": "65380106e45e768812621ddd9a269eea5a10b8da0d8ef40b29e1b41c4021fa4a",
-        "src/xgtest/ai/models.py": "bebfbe712bc808055bfeaa69d3dabdaece80abcdf10a78d8c8d1128ae5517a35",
+        "src/xgtest/ai/models.py": "40e94e72e0792d44e8ebf49533ea1192e2efbb038a41bccf5c269291dc8748d6",
         "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
         "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
         "src/xgtest/application/db_worker.py": "94c755450111b4c81371aa22621d46207187a15fdb84bcf826610c1788da8700",
-        "src/xgtest/application/services.py": "65cc865f2fb16312bce3e52433b026db88843423a555526b51b25487e303065c",
+        "src/xgtest/application/services.py": "7916820f742c49585e3a0941a660404eacda4d8738a9bae3c47cd13108e5d597",
         "src/xgtest/application/worker_results.py": "47d1a65cf267a2849cdf0981af77a9305d880f96b0876e1e03b5ab7df38ecc9b",
         "src/xgtest/cli.py": "8830f916c7282f9fe36942ae7cbcb3b81713126d5cdb23994532198a044691a2",
         "src/xgtest/web/__init__.py": "cb31bfb4bd485de552392442d54a7512d36eaded1686adb53d3fa374d655f14b",
         "src/xgtest/web/app.py": "1cb8fbff2f39b6c3c9cd2aeeff879b4f694a2ca24f6661f968d580b19576f1cf",
-        "src/xgtest/web/service.py": "ff817660b79677bd2be091a03e5f10771cff8766e3f8edf25c9a7aea4fae0557",
+        "src/xgtest/web/service.py": "434a3f9fc463bc582358342e999344854e02c2aeb55ebaac71ca702331aff5a6",
         "webui/src/App.vue": "97a69a1543a877cb020efcab16db6db1276cb6119eb379617d377344fbd50826",
         "webui/src/api/cases.ts": "fc925b0f1a8660585d39331e609cd1ee182344b206ba84bfc2680d7e9ce8802b",
         "webui/src/api/client.ts": "f7ba468f903f6f4bb46e8ba8d0ce192e0687a33586f3c764a50571d90286b4a5",
@@ -110,11 +110,11 @@
         "webui/src/views/CandidateDetailView.vue": "a8fed5a83948af2d409d4d1601fc0f2fc21a8991a4e5a7baaad016f535c64a1d",
         "webui/src/views/CandidateListView.vue": "8054594e29ef5e16ceaeb5f017e3211a70c004fac2d21a69b731dffe30e92c77",
         "webui/src/views/CaseDetailView.vue": "a47718f3336b8701cba1d56a0eac0af540c35c06d06bc011ae0c149e6cec11b2",
-        "webui/src/views/CoverageView.vue": "daa456785087334d4c5e9bc437ccf1ac571e3020cb54f29e66d79e052f32f652",
+        "webui/src/views/CoverageView.vue": "f671036a5e684c02a7164e4c5fd5c00dec942b20b83dd89fd67ee4224136a728",
         "webui/src/views/DashboardView.vue": "d33909cca659eb83108b8462b7b1c88cd7b866cf6acab57a193ec1e7278266b2",
-        "webui/src/views/JobDetailView.vue": "b0655bfee5ac18e0a2f9ed88fb2eda467026e3c63ada75d0d07c04715b712968",
+        "webui/src/views/JobDetailView.vue": "2f2e282498768d4f820a70890a72844714080a477f623e64db305ad7332f7aba",
         "webui/src/views/JobsView.vue": "e98ae1e0784afe398a2e0e2630f816eb18cbafbb647e60357d653fafbda85960",
-        "webui/src/views/MissionCreateView.vue": "01ae8559baebf51192a480327d7163f433e3ed01e171391ff692ae5ebb9712e5",
+        "webui/src/views/MissionCreateView.vue": "08f13427ffe2463fb68b78316e75d2d3552c86cb0f111f90907c02ba3d6f59c5",
         "webui/src/views/MissionListView.vue": "5f7fb5c4d5f34269b6c7a9c77c3e9b9cacb493085e56ca26bc372720c8f5029d",
         "webui/src/views/RunDetailView.vue": "0ffd1610316e07797a8a5dbc2c37d641f96e58df985eeaf29f011d20f159620d",
         "webui/src/views/RunListView.vue": "cf25c311efffba1a160ca33bdada0867cb40a7255bbee6a8e7b20b78441ec788",
@@ -206,20 +206,20 @@
       }
     },
     "mission_logic": {
-      "id": "c2dd48213b8fc02cf8ae3f738dc7690eaaaf8cafe1fabd4901412f7e6e5b8b12",
+      "id": "10e6c889fdb51351a219e30c71deb4a455157c8175a17dff65ac9ee7c3f9c843",
       "layer": "mission_logic",
       "schema_version": "1",
       "sources": {
         "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
         "src/xgtest/ai/cli.py": "f9adb091fd2606fbbec0782e813b50c22c29af3778c166aa934b89df95efdc60",
-        "src/xgtest/ai/controller.py": "5c537ef6b16cd3413ce18f6032429a9d9fe88f7f7d17f257afc9775889416ec1",
+        "src/xgtest/ai/controller.py": "d28c9a43211e5695157e098447e6ee851e61d8861388e3ebcf8ac145fb5d32ab",
         "src/xgtest/ai/identity.py": "3fb026188922f11f2ebc67798e949f76c1f75c186a787c337fa438735b62715a",
         "src/xgtest/ai/mcp_server.py": "65380106e45e768812621ddd9a269eea5a10b8da0d8ef40b29e1b41c4021fa4a",
-        "src/xgtest/ai/models.py": "bebfbe712bc808055bfeaa69d3dabdaece80abcdf10a78d8c8d1128ae5517a35",
+        "src/xgtest/ai/models.py": "40e94e72e0792d44e8ebf49533ea1192e2efbb038a41bccf5c269291dc8748d6",
         "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
         "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
         "src/xgtest/application/db_worker.py": "94c755450111b4c81371aa22621d46207187a15fdb84bcf826610c1788da8700",
-        "src/xgtest/application/services.py": "65cc865f2fb16312bce3e52433b026db88843423a555526b51b25487e303065c",
+        "src/xgtest/application/services.py": "7916820f742c49585e3a0941a660404eacda4d8738a9bae3c47cd13108e5d597",
         "src/xgtest/application/worker_results.py": "47d1a65cf267a2849cdf0981af77a9305d880f96b0876e1e03b5ab7df38ecc9b",
         "src/xgtest/generator/__init__.py": "9047feb438f372a64ff35b24e991d3a48decdd18993f896f2362b922ca445c38",
         "src/xgtest/generator/acceptance.py": "1f9664d8c40458f1e5e326537e0618a7e9b8727141ebd2148b4314c3b6b51ce4",
@@ -241,8 +241,8 @@
         "src/xgtest/generator/template.py": "eba4c030ad33e26256e4e8d71870908b09785c4ad7bf1e7422e994ea373f6f2a",
         "src/xgtest/product/__init__.py": "4ecd3ad8cc1641351431822e2fffe874162ba7f5d7a22a1c12d5d14b00881db5",
         "src/xgtest/product/cli.py": "44fcb8a5afb0c23cfeca006e2f8693ee664641545bce0b6766dab0c0d39a3002",
-        "src/xgtest/product/contracts.py": "28cf28d3949118daf0d7d233b368c0f969e4cec16cbc25cb4ef2476aca1bc48c",
-        "src/xgtest/product/mission_service.py": "76d077857b929036d8ff93a687e1b487421b34a3d31a908d7b451cb8a06b7085",
+        "src/xgtest/product/contracts.py": "f9cf33cfe9fe129699ee0c2097b17d19fd498b478fd78418306f60bca9439e52",
+        "src/xgtest/product/mission_service.py": "b3b30910fae99090e80009ef885fcc5fe91bd7431398333224fdded3dc0b78c7",
         "src/xgtest/product/store.py": "eb7732aeb8b93ec27c83a24a3b2342c2f63ea7cbe4cec07cdaad5caeb63ee602"
       }
     },
@@ -257,7 +257,7 @@
       }
     },
     "suite": {
-      "id": "317c9fcc7634e869c214123a961aa714b78d128a0397e775d1215caba8996dec",
+      "id": "0a40d6a8bef9b09635316d89ccb0f77ecaa341e373f46475b69b8dc1899e0a6a",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -311,7 +311,7 @@
         "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de",
         "framework_tests/test_ai_jobs.py": "11767d64e95e4c11d0ab0e89c2cca299af69bb668843ec5a353c293b01e56f1a",
         "framework_tests/test_ai_review_fixes.py": "86313f673c434afe793e800fbece7b8a48cbe991ec305b1911a006eac7e88268",
-        "framework_tests/test_product_missions.py": "a1ffc554187e66702d5b612d7abeae5a6cfdbeb12a3761588c52af0bda43add2"
+        "framework_tests/test_product_missions.py": "266f35ea46fc742a578764886ecf5d9b6f52b13ffba7b59cde2991623163e26a"
       }
     }
   },
