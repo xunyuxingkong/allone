@@ -57,6 +57,45 @@ class MissionService:
         except (ValueError, OSError):
             return "BLOCKED"
 
+    def _job(self, mission: TestMission):
+        if mission.job_id is None:
+            return None
+        try:
+            return self.controller.store.load(mission.job_id)
+        except (ValueError, OSError):
+            return None
+
+    def ai_summary(self, mission_id: str) -> dict:
+        """Present what the external AI actually produced for this mission's job.
+
+        Advisory only: this layer never invents findings, statuses or coverage. Every
+        item below is copied from a recorded AI artifact or Core result.
+        """
+        mission = self.store.load(mission_id)
+        job = self._job(mission)
+        if job is None:
+            return {"mission_id": mission_id, "job_id": mission.job_id, "available": False,
+                    "note": "尚未启动测试任务，AI 尚无产出。"}
+        generated = [result for result in job.action_results if result.action == "candidate.generate"]
+        reviews = [result for result in job.action_results if result.action == "candidate.technical_review"]
+        review_decisions = [result.outputs.get("ai_technical_review", {}).get("decision")
+                            for result in reviews if isinstance(result.outputs.get("ai_technical_review"), dict)]
+        explanations = [{"reason": result.outputs.get("reason")} for result in job.action_results
+                        if result.action.startswith("candidate.") and result.outputs.get("reason")]
+        return {
+            "mission_id": mission_id, "job_id": job.job_id, "available": True,
+            "advisory_only": True,
+            "summary": job.explanation or None,
+            "failure_analysis": job.failure_analysis.model_dump(mode="json") if job.failure_analysis else None,
+            "generated_candidate_count": len(generated),
+            "technical_review_count": len(reviews),
+            "technical_review_decisions": {"PASS": review_decisions.count("PASS"),
+                                           "CONCERNS": review_decisions.count("CONCERNS"),
+                                           "FAIL": review_decisions.count("FAIL")},
+            "reused_evidence": explanations,
+            "does_not_change_core": True,
+        }
+
     def view(self, mission_id: str) -> dict:
         mission = self.store.load(mission_id)
         state = self._job_state(mission)
@@ -66,5 +105,6 @@ class MissionService:
             "tested_scope": list(mission.features),
             "untested_scope": list(mission.excluded_scope),
             "estimate": strategy_estimate(mission.strategy),
+            "ai_summary": self.ai_summary(mission_id),
             "completeness_note": "MODULE_FULL_INCOMPLETE",
         }

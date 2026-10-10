@@ -29,8 +29,16 @@ watch(() => props.jobId, refresh, { immediate: true })
       <p>AI 技术评审与人工批准分别记录。JOIN 任务完成不代表 Query 全模块验收完成。</p>
       <div v-if="job.blockers.length" class="error-banner"><strong>待处理事项</strong><ul><li v-for="item in job.blockers" :key="item">{{ item }}</li></ul></div>
     </section>
-    <section v-if="job.explanation" class="surface job-section"><h2>Agent 分析</h2><p class="narrative">{{ job.explanation }}</p><p>以下动作结果与证据是复核依据。</p></section>
-    <section v-if="job.failure_analysis" class="surface job-section"><h2>失败分析（建议）</h2><StructuredTable :value="job.failure_analysis" /></section>
+    <section v-if="job.explanation || job.failure_analysis" class="surface job-section ai-section">
+      <h2>AI 测试分析</h2>
+      <p v-if="job.explanation" class="narrative">{{ job.explanation }}</p>
+      <p v-else class="muted">本轮尚未产生 AI 分析文本。</p>
+      <div v-if="job.failure_analysis" class="failure-box">
+        <b>AI 失败分析（建议）</b>
+        <StructuredTable :value="job.failure_analysis" />
+      </div>
+      <p class="hint">以上为 AI 建议，不改变 Core 判定；PASS/FAIL、覆盖与验收仍由 Core 决定。</p>
+    </section>
     <section class="surface job-section"><h2>动作记录</h2><p v-if="!job.action_results.length">等待 Agent 选择下一步动作。</p>
       <details v-for="(result, index) in job.action_results" :key="index"><summary>{{ index + 1 }}. {{ result.action }} · {{ result.status }} {{ result.case_id || '' }}</summary>
         <p v-if="result.case_id"><RouterLink class="link" :to="`/candidates/${result.case_id}`">查看候选与原始结果</RouterLink></p>
@@ -45,4 +53,7 @@ watch(() => props.jobId, refresh, { immediate: true })
 details { border-top: 1px solid #e4e8ef; padding: 14px 0; } summary { cursor: pointer; overflow-wrap: anywhere; }
 .job-section { min-width: 0; }
 .narrative { white-space: pre-wrap; } .evidence, .narrative { overflow-wrap: anywhere; }
+.ai-section .failure-box { display: grid; gap: 10px; margin: 12px 0; padding: 13px 15px; border: 1px solid var(--line); border-radius: 6px; background: #f9fbfe; }
+.ai-section .hint { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.muted { color: var(--muted); }
 </style>

@@ -20,12 +20,36 @@ export interface Mission {
   job_id: string | null
 }
 
+export interface AiFailureAnalysis {
+  category: string
+  failure_summary: string
+  likely_area: string
+  recommended_action: string
+  confidence: number
+}
+
+export interface AiSummary {
+  mission_id: string
+  job_id: string | null
+  available: boolean
+  note?: string
+  advisory_only?: boolean
+  summary?: string | null
+  failure_analysis?: AiFailureAnalysis | null
+  generated_candidate_count?: number
+  technical_review_count?: number
+  technical_review_decisions?: { PASS: number; CONCERNS: number; FAIL: number }
+  reused_evidence?: { reason: string | null }[]
+  does_not_change_core?: boolean
+}
+
 export interface MissionView {
   mission: Mission
   state: MissionState
   tested_scope: string[]
   untested_scope: string[]
   estimate: { strategy: MissionStrategy; case_min: number; case_max: number; sql_min: number; sql_max: number; unit: string }
+  ai_summary: AiSummary
   completeness_note: string
 }
 

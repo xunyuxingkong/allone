@@ -46,6 +46,44 @@ def test_mission_create_start_links_a_job_and_maps_state(service):
     assert [item["mission_id"] for item in service.store.list()] == [mission_id]
 
 
+def test_ai_summary_presents_only_recorded_ai_output(service):
+    created = service.create(DEFINITION)
+    mission_id = created["mission"]["mission_id"]
+    # Before a job exists there is no AI output, and the view says so rather than inventing one.
+    empty = service.ai_summary(mission_id)
+    assert empty["available"] is False and empty["note"]
+    started = service.start(mission_id)
+    job_id = started["mission"]["job_id"]
+    # With a job but no AI artifacts recorded yet, the counts are honestly zero.
+    summary = service.view(mission_id)["ai_summary"]
+    assert summary["available"] is True and summary["job_id"] == job_id
+    assert summary["advisory_only"] is True and summary["does_not_change_core"] is True
+    assert summary["generated_candidate_count"] == 0 and summary["technical_review_count"] == 0
+    assert summary["summary"] is None and summary["failure_analysis"] is None
+
+
+def test_ai_summary_reflects_recorded_explanation_and_failure(service):
+    from xgtest.ai.models import ActionResult, FailureAnalysis
+    mission_id = service.create(DEFINITION)["mission"]["mission_id"]
+    job_id = service.start(mission_id)["mission"]["job_id"]
+    # A failure analysis is only recorded after a real blocked/failed result (Core invariant).
+    controller = service.controller
+    job = controller.store.load(job_id)
+    blocked = ActionResult(action="project.preflight", status="BLOCKED", blockers=["DATABASE_NETWORK_UNREACHABLE"])
+    with controller.store.lock(job_id):
+        controller.store.save(job.model_copy(update={"state": "BLOCKED", "action_results": [blocked]}), "ACTION_FINISHED")
+    controller.annotate(job_id, controller.store.load(job_id).revision, "本轮只做了环境预检，数据库不可达。",
+        {"category": "RUNTIME_ENVIRONMENT", "failure_summary": "数据库端口连接超时",
+         "likely_area": "目标数据库主机不可达", "recommended_action": "确认端口连通后 resume", "confidence": 0.9})
+    summary = service.ai_summary(mission_id)
+    assert summary["summary"] == "本轮只做了环境预检，数据库不可达。"
+    assert summary["failure_analysis"]["category"] == "RUNTIME_ENVIRONMENT"
+    assert summary["failure_analysis"]["confidence"] == 0.9
+    # Presentation is a copy of the recorded artifact; it does not alter the job.
+    stored = controller.store.load(job_id)
+    assert stored.failure_analysis == FailureAnalysis.model_validate(summary["failure_analysis"])
+
+
 def test_mission_start_requires_ready(service):
     mission_id = service.create(DEFINITION)["mission"]["mission_id"]
     service.start(mission_id)

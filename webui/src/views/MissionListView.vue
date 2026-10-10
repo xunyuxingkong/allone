@@ -64,6 +64,31 @@ onMounted(refresh)
       </div>
       <p class="hint">Query / 当前定义范围 与 Query 全模块验收分开；模块层面仍为 {{ detail.completeness_note }}。</p>
     </section>
+
+    <section class="surface mission-block ai-block">
+      <h2 class="surface-title">AI 测试分析</h2>
+      <template v-if="detail.ai_summary.available">
+        <div class="mission-body">
+          <p v-if="detail.ai_summary.summary" class="narrative">{{ detail.ai_summary.summary }}</p>
+          <p v-else class="muted">本轮尚未产生 AI 分析文本。</p>
+          <div class="ai-stats">
+            <span><b>{{ detail.ai_summary.generated_candidate_count ?? 0 }}</b> AI 生成候选</span>
+            <span><b>{{ detail.ai_summary.technical_review_count ?? 0 }}</b> AI 技术评审</span>
+            <span v-if="detail.ai_summary.technical_review_decisions">决策 PASS {{ detail.ai_summary.technical_review_decisions.PASS }} · CONCERNS {{ detail.ai_summary.technical_review_decisions.CONCERNS }} · FAIL {{ detail.ai_summary.technical_review_decisions.FAIL }}</span>
+          </div>
+          <div v-if="detail.ai_summary.failure_analysis" class="ai-failure">
+            <div class="failure-head"><b>AI 失败分析</b><span class="muted">{{ detail.ai_summary.failure_analysis.category }} · 置信度 {{ detail.ai_summary.failure_analysis.confidence }}</span></div>
+            <div class="origin-meta">
+              <div><span>现象</span><b>{{ detail.ai_summary.failure_analysis.failure_summary }}</b></div>
+              <div><span>可能区域</span><b>{{ detail.ai_summary.failure_analysis.likely_area }}</b></div>
+              <div><span>建议动作</span><b>{{ detail.ai_summary.failure_analysis.recommended_action }}</b></div>
+            </div>
+          </div>
+          <p class="hint">以上为 AI 建议，不改变 Core 判定；PASS/FAIL、覆盖与验收仍由 Core 决定。</p>
+        </div>
+      </template>
+      <p v-else class="mission-empty">{{ detail.ai_summary.note }}</p>
+    </section>
   </template>
 
   <section v-else class="surface">
@@ -94,5 +119,15 @@ onMounted(refresh)
 .kv b { color: #23354f; }
 .hint { margin: 0; padding: 0 20px 18px; color: var(--muted); font-size: 12px; }
 .create-link { white-space: nowrap; }
+.ai-block .narrative { white-space: pre-wrap; }
+.ai-stats { display: flex; flex-wrap: wrap; gap: 8px 30px; font-size: 13px; color: #23354f; }
+.ai-stats b { font-size: 18px; font-weight: 700; }
+.ai-failure { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: #f9fbfe; }
+.failure-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.failure-head .muted { font-size: 11px; }
+.origin-meta { display: grid; gap: 8px; font-size: 13px; }
+.origin-meta > div { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 14px; }
+.origin-meta span { color: var(--muted); }
+.origin-meta b { color: #23354f; font-weight: 600; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .mission-two { grid-template-columns: 1fr; } }
 </style>
