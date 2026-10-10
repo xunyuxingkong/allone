@@ -1,0 +1,30 @@
+model_id: query.sort_limit
+model_version: "1"
+module: query
+feature: query
+subfeature: sort_limit
+dimensions:
+  order_direction:
+    values: [none, asc, desc]
+  null_ordering:
+    values: [none, nulls_first, nulls_last]
+  sort_columns:
+    values: [single, multi]
+  limit_kind:
+    values: [none, limit_only, limit_offset]
+  composition:
+    values: [none, with_filter, with_join]
+coverage:
+  strategies:
+    - type: all_values
+    - type: pairwise
+      strength: 2
+constraints:
+  # NULL ordering only applies when there is an ORDER BY to place the NULLs.
+  - if: {null_ordering: nulls_first}
+    exclude: {order_direction: [none]}
+  - if: {null_ordering: nulls_last}
+    exclude: {order_direction: [none]}
+  # Multi-column sort presumes an ORDER BY exists.
+  - if: {sort_columns: multi}
+    exclude: {order_direction: [none]}

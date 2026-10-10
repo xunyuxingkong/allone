@@ -119,6 +119,13 @@ def test_subquery_mission_starts_a_job_scoped_to_subquery(service):
     assert service.controller.services(job_id)[0].ctx.scope.feature == "subquery"
 
 
+def test_sort_limit_mission_starts_a_job_scoped_to_sort_limit(service):
+    created = service.create({**DEFINITION, "features": ["sort_limit"]})
+    job_id = service.start(created["mission"]["mission_id"])["mission"]["job_id"]
+    assert service.controller.store.load(job_id).intent.features == ["sort_limit"]
+    assert service.controller.services(job_id)[0].ctx.scope.feature == "sort_limit"
+
+
 def test_mission_start_requires_ready(service):
     mission_id = service.create(DEFINITION)["mission"]["mission_id"]
     service.start(mission_id)

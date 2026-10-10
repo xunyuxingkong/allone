@@ -15,3 +15,5 @@ items:
     phase: query_mvp
   - key: subquery
     phase: query_mvp
+  - key: sort_limit
+    phase: query_mvp

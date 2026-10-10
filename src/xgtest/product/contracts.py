@@ -13,7 +13,7 @@ MissionDataScale = Literal["SMALL", "MEDIUM", "LARGE"]
 
 # Only features the deterministic Core can actually model and measure coverage for today.
 # Kept narrow on purpose: a mission must never claim coverage the Core cannot deliver.
-SUPPORTED_FEATURES = ("join", "filter", "aggregate", "subquery")
+SUPPORTED_FEATURES = ("join", "filter", "aggregate", "subquery", "sort_limit")
 
 # Rough planning ranges per intensity (cases), mirroring the product roadmap.
 STRATEGY_CASE_RANGE: dict[str, tuple[int, int]] = {

@@ -24,6 +24,7 @@ class FeatureKey(StrEnum):
     FILTER = "filter"
     AGGREGATE = "aggregate"
     SUBQUERY = "subquery"
+    SORT_LIMIT = "sort_limit"
 
 class IsolationScope(StrEnum):
     SESSION = "session"

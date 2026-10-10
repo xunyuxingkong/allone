@@ -250,6 +250,45 @@ class SubqueryPlugin:
         return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
 
 
+@dataclass(frozen=True)
+class SortLimitPlugin:
+    model_id: str = "query.sort_limit"
+    template_id: str = "query.sort_limit.default"
+    template_version: str = "1"
+    id_prefix: str = "QUERY.SORT_LIMIT"
+    generator_id: str = "query_template_generator"
+    generator_version: str = "1"
+    mutation_id: str = "reverse_asc_to_desc"
+    mutation_policy: MutationPolicy = MutationPolicy()
+    scope: AcceptanceScope = AcceptanceScope(module="query", feature="sort_limit", candidate_root="candidates/query/sort_limit", active_root="cases/query/sort_limit", active_suite_root="cases/query", model_ref="models/query/sort_limit.yaml", legacy_feature_assets=("cases/query/ordering_01_distinct.yaml", "cases/query/ordering_02_order.yaml"))
+
+    def static_validate(self, path: Any, model: Any) -> dict[str, Any]:
+        from xgtest.generator.candidate import static_validate_candidate
+        return static_validate_candidate(path, model)
+
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+        from xgtest.generator.candidate import generate_candidates
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+
+    def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
+        from xgtest.generator.sort_limit_template import render_sort_limit
+        return render_sort_limit(model, assignment)
+
+    def mutation_applies(self, case: Any) -> bool:
+        # Flipping ASC -> DESC changes the row order; with exact comparison that
+        # always changes the result, so every ascending case is mutation-observable.
+        return any(claim.assignment.get("order_direction") == "asc" for claim in case.coverage)
+
+    def mutation_specs(self) -> tuple[MutationSpec, ...]:
+        return (MutationSpec(self.mutation_id, "1", self.mutation_applies, self.mutated_sql),)
+
+    def mutated_sql(self, sql: str) -> str:
+        return sql.replace("q.k ASC", "q.k DESC")
+
+    def expected_id(self, model: Any, assignment: dict[str, str]) -> str:
+        return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
+
+
 class PluginRegistry:
     def __init__(self, plugins: tuple[FeaturePlugin, ...], default_model_id: str | None = None):
         self._plugins = {plugin.model_id: plugin for plugin in plugins}
@@ -297,4 +336,4 @@ class PluginRegistry:
         return matches[0]
 
 
-FEATURE_PLUGINS = PluginRegistry((JoinPlugin(), FilterPlugin(), AggregatePlugin(), SubqueryPlugin()), default_model_id="query.join")
+FEATURE_PLUGINS = PluginRegistry((JoinPlugin(), FilterPlugin(), AggregatePlugin(), SubqueryPlugin(), SortLimitPlugin()), default_model_id="query.join")

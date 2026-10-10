@@ -273,12 +273,20 @@ class QueryReadService:
             "subquery_result": {"matching": "有匹配", "non_matching": "无匹配", "with_null": "含 NULL", "empty": "空结果"},
             "datatype": {"int": "INTEGER", "varchar": "VARCHAR", "date": "DATE"},
         },
+        "sort_limit": {
+            "order_direction": {"none": "无排序", "asc": "升序", "desc": "降序"},
+            "null_ordering": {"none": "默认 NULL 位置", "nulls_first": "NULLS FIRST", "nulls_last": "NULLS LAST"},
+            "sort_columns": {"single": "单列排序", "multi": "多列排序"},
+            "limit_kind": {"none": "无裁剪", "limit_only": "LIMIT", "limit_offset": "LIMIT + OFFSET"},
+            "composition": {"none": "纯排序", "with_filter": "排序 + 过滤", "with_join": "排序 + 连接"},
+        },
     }
     _DIMENSION_ORDER = {
         "join": ("join_type", "predicate", "datatype", "null_side", "interaction"),
         "filter": ("predicate", "operator", "null_handling", "datatype", "interaction"),
         "aggregate": ("function", "grouping", "null_handling", "cardinality", "datatype"),
         "subquery": ("predicate", "correlation", "subquery_result", "datatype"),
+        "sort_limit": ("order_direction", "null_ordering", "sort_columns", "limit_kind", "composition"),
     }
 
     def _case_origin(self, case, assignment: dict[str, str]) -> dict[str, Any]:
@@ -332,8 +340,10 @@ class QueryReadService:
 
     def get_candidate(self, case_id: str) -> dict[str, Any] | None:
         from xgtest.generator.plugins import FEATURE_PLUGINS
-        # Derive the accepted prefix set from the registry; never hardcode a length offset.
-        if not FEATURE_PLUGINS.matches_case_id(case_id) or not case_id.replace(".", "").isalnum():
+        # Derive the accepted shape from the registry; never hardcode a length
+        # offset, and allow underscores in feature keys (e.g. QUERY.SORT_LIMIT).
+        import re
+        if not FEATURE_PLUGINS.matches_case_id(case_id) or not re.fullmatch(r"QUERY\.[A-Z0-9_]+\.[A-Z0-9]+", case_id):
             raise ValueError("CANDIDATE_ID_INVALID")
         path = self.candidates_dir / f"{case_id}.yaml"
         if not path.is_file():

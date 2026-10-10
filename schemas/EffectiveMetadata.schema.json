@@ -40,7 +40,8 @@
         "query",
         "filter",
         "aggregate",
-        "subquery"
+        "subquery",
+        "sort_limit"
       ],
       "title": "FeatureKey",
       "type": "string"

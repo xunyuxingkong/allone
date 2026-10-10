@@ -11,6 +11,7 @@ const FEATURES = [
   { value: 'filter', label: 'Filter / WHERE', enabled: true },
   { value: 'aggregate', label: 'Aggregate / GROUP BY', enabled: true },
   { value: 'subquery', label: 'Subquery', enabled: true },
+  { value: 'sort_limit', label: 'Sort / Limit', enabled: true },
   { value: 'window', label: 'Window', enabled: false },
   { value: 'cte', label: 'CTE', enabled: false },
   { value: 'set_operation', label: 'Set Operation', enabled: false },
@@ -94,7 +95,7 @@ async function submit() {
             <em v-if="!feature.enabled">未支持</em>
           </label>
         </div>
-        <p class="hint">当前 Core 已能建模并度量 JOIN、Filter、Aggregate 与 Subquery 的覆盖；其余范围在具备模型前不会创建虚假覆盖。</p>
+        <p class="hint">当前 Core 已能建模并度量 JOIN、Filter、Aggregate、Subquery 与 Sort / Limit 的覆盖；其余范围在具备模型前不会创建虚假覆盖。</p>
       </div>
     </section>
 
