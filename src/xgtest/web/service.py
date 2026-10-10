@@ -298,7 +298,9 @@ class QueryReadService:
         return {"items": items, "total": len(items)}
 
     def get_candidate(self, case_id: str) -> dict[str, Any] | None:
-        if not case_id.startswith("QUERY.JOIN.") or not case_id[11:].isalnum():
+        from xgtest.generator.plugins import FEATURE_PLUGINS
+        # Derive the accepted prefix set from the registry; never hardcode a length offset.
+        if not FEATURE_PLUGINS.matches_case_id(case_id) or not case_id.replace(".", "").isalnum():
             raise ValueError("CANDIDATE_ID_INVALID")
         path = self.candidates_dir / f"{case_id}.yaml"
         if not path.is_file():

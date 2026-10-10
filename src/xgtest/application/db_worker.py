@@ -42,8 +42,9 @@ def execute(root: Path, request: dict) -> dict:
         return {"status": report["status"], "case_count": len(report["cases"]),
                 "failures": failure_projection(report, (directory / "regression.json").relative_to(root).as_posix())}
     import re
+    from xgtest.generator.plugins import FEATURE_PLUGINS
     case_id = request.get("case_id", "")
-    if not re.fullmatch(r"QUERY\.JOIN\.[A-Z0-9]+", case_id):
+    if not FEATURE_PLUGINS.matches_case_id(case_id) or not re.fullmatch(r"[A-Z][A-Z0-9_.-]*", case_id):
         raise ValueError("DB_REQUEST_CASE_ID_INVALID")
     path = scope.path(root, "candidate_root") / f"{case_id}.yaml"
     model = scope.load_model(root)

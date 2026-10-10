@@ -190,4 +190,7 @@ def test_generation_read_api_exposes_coverage_and_candidate_without_mutation(tmp
     assert detail["review_recorded"] is False
     assert api_get(app, "/api/candidates/QUERY.JOIN.MISSING").status_code == 404
     assert api_get(app, "/api/candidates/invalid").status_code == 400
+    # A prefix that is not a registered feature is rejected, not treated as missing.
+    assert api_get(app, "/api/candidates/QUERY.UNKNOWN.AB12CD34").status_code == 400
+    assert api_get(app, "/api/candidates/QUERY.JOIN.bad-dash").status_code == 400
     assert candidate.read_bytes() == before

@@ -22,7 +22,9 @@ class TestIntent(StrictModel):
 
 class SemanticAction(StrictModel):
     action: ActionName
-    case_id: str | None = Field(default=None, pattern=r"^QUERY\.JOIN\.[A-Z0-9]+$")
+    # Generic case-id shape; the strict per-feature prefix is enforced by the
+    # application/db-worker layers against the plugin registry.
+    case_id: str | None = Field(default=None, pattern=r"^QUERY\.[A-Z0-9_]+\.[A-Z0-9]+$")
     reason: str = Field(min_length=1, max_length=4000)
 
     @model_validator(mode="after")

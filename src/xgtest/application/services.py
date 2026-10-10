@@ -64,7 +64,10 @@ class ServiceContext:
 
     def candidate(self, case_id):
         import re
-        if not re.fullmatch(r"QUERY\.JOIN\.[A-Z0-9]+", case_id):
+        from xgtest.generator.plugins import FEATURE_PLUGINS
+        # Validate against this scope's feature prefix, not a hardcoded one.
+        prefix = FEATURE_PLUGINS.for_model(self.scope.model_id).id_prefix
+        if not re.fullmatch(rf"{re.escape(prefix)}\.[A-Z0-9]+", case_id):
             raise ValueError("CANDIDATE_ID_INVALID")
         path = (self.scope.path(self.root, "candidate_root") / f"{case_id}.yaml").resolve()
         if not path.is_relative_to(self.scope.path(self.root, "candidate_root")):
