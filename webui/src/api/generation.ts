@@ -57,8 +57,30 @@ export interface CandidateDetail {
   }
 }
 
+export interface ScopeMatrixRow {
+  dimension: string
+  value: string
+  required: number
+  covered: number
+  cases: number
+  executions: number
+  status: 'covered' | 'partial' | 'missing'
+}
+
+export interface ScopeMatrixView {
+  feature: string
+  model_version: string
+  strategy: 'pairwise' | 'all_values'
+  rows: ScopeMatrixRow[]
+  totals: { requirements: number; covered: number; missing: number; cases: number; executions: number }
+  count_semantics: { requirements: string; cases: string; executions: string }
+  module_completion: string
+}
+
 export const getCoverage = (strategy: 'pairwise' | 'all_values' = 'pairwise') =>
   api<CoverageView>(`/api/coverage?strategy=${strategy}`)
+export const getScopeMatrix = (strategy: 'pairwise' | 'all_values' = 'pairwise') =>
+  api<ScopeMatrixView>(`/api/scope-matrix?strategy=${strategy}`)
 export const getCandidates = (status?: string) =>
   api<{ items: CandidateSummary[]; total: number }>(`/api/candidates${status ? `?status=${encodeURIComponent(status)}` : ''}`)
 export const getCandidate = (caseId: string) =>

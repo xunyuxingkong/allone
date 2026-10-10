@@ -42,7 +42,10 @@ onMounted(refresh)
     <div class="mission-two">
       <section class="surface mission-block">
         <h2 class="surface-title">测试范围（测什么）</h2>
-        <div class="mission-body"><ul class="chips"><li v-for="item in detail.tested_scope" :key="item" class="chip ok">✓ {{ item }}</li><li v-if="!detail.tested_scope.length" class="muted">—</li></ul></div>
+        <div class="mission-body">
+          <ul class="chips"><li v-for="item in detail.tested_scope" :key="item" class="chip ok">✓ {{ item }}</li><li v-if="!detail.tested_scope.length" class="muted">—</li></ul>
+          <RouterLink class="link" :to="`/tests/${detail.mission.mission_id}/scope`">查看测试空间矩阵 →</RouterLink>
+        </div>
       </section>
       <section class="surface mission-block">
         <h2 class="surface-title">明确不测范围</h2>
@@ -79,7 +82,7 @@ onMounted(refresh)
 
 <style scoped>
 .mission-block { overflow: hidden; margin-bottom: 16px; }
-.mission-body { padding: 18px 20px; }
+.mission-body { display: grid; gap: 12px; padding: 18px 20px; }
 .mission-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .narrative { margin: 0; white-space: pre-wrap; font-size: 14px; color: #23354f; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }

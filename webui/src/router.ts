@@ -11,6 +11,7 @@ import JobsView from './views/JobsView.vue'
 import JobDetailView from './views/JobDetailView.vue'
 import MissionListView from './views/MissionListView.vue'
 import MissionCreateView from './views/MissionCreateView.vue'
+import ScopeMatrixView from './views/ScopeMatrixView.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -18,6 +19,7 @@ export const router = createRouter({
     { path: '/tests', name: 'missions', component: MissionListView },
     { path: '/tests/new', name: 'mission-create', component: MissionCreateView },
     { path: '/tests/:missionId', name: 'mission-detail', component: MissionListView },
+    { path: '/tests/:missionId/scope', name: 'mission-scope', component: ScopeMatrixView },
     { path: '/jobs', name: 'jobs', component: JobsView },
     { path: '/jobs/:jobId', name: 'job-detail', component: JobDetailView, props: true },
     { path: '/', name: 'dashboard', component: DashboardView },

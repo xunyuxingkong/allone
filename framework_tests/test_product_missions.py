@@ -75,6 +75,38 @@ def test_missions_web_api_create_list_get_start(tmp_path):
     assert client.post("/api/missions", json={**DEFINITION, "features": ["filter"]}).status_code == 400
 
 
+def test_scope_matrix_separates_requirement_case_and_execution_counts():
+    from xgtest.web.service import QueryReadService
+    matrix = QueryReadService.from_environment().scope_matrix("pairwise")
+    totals = matrix["totals"]
+    # Same Core numbers as coverage(): the product view must not recompute them.
+    coverage = QueryReadService.from_environment().coverage("pairwise")
+    assert totals["requirements"] == coverage["required"]
+    assert totals["covered"] == coverage["active_covered"]
+    assert totals["missing"] == coverage["active_missing"]
+    # Requirement, case and execution counts are distinct scales and must not be conflated.
+    assert totals["cases"] < totals["requirements"]
+    assert totals["executions"] >= totals["cases"]
+    assert set(matrix["count_semantics"]) == {"requirements", "cases", "executions"}
+    assert matrix["rows"] and all(row["status"] in {"covered", "partial", "missing"} for row in matrix["rows"])
+    # Row coverage never exceeds its requirements, and a fully covered row is marked covered.
+    assert all(0 <= row["covered"] <= row["required"] for row in matrix["rows"])
+    with pytest.raises(ValueError, match="COVERAGE_STRATEGY_UNSUPPORTED"):
+        QueryReadService.from_environment().scope_matrix("nope")
+
+
+def test_scope_matrix_is_exposed_over_http():
+    from fastapi.testclient import TestClient
+    from xgtest.web.app import create_app
+    client = TestClient(create_app())
+    response = client.get("/api/scope-matrix?strategy=pairwise")
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body["totals"]) == {"requirements", "covered", "missing", "cases", "executions"}
+    assert body["strategy"] == "pairwise"
+    assert client.get("/api/scope-matrix?strategy=nope").status_code == 400
+
+
 def test_job_logic_identity_is_narrower_than_ui_and_covers_workflow():
     from xgtest.core.contract_set import build_contract_descriptor
     with __import__("tempfile").TemporaryDirectory() as temporary:

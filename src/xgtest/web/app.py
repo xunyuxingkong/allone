@@ -152,6 +152,13 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
 
+    @app.get("/api/scope-matrix")
+    def scope_matrix(current: QueryReadService = Depends(get_service), strategy: str = "pairwise") -> dict:
+        try:
+            return current.scope_matrix(strategy)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
     @app.get("/api/candidates")
     def list_candidates(current: QueryReadService = Depends(get_service), status: str | None = None) -> dict:
         try:

@@ -2,7 +2,7 @@
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { computed } from 'vue'
 const route = useRoute()
-const section = computed(() => route.path === '/' ? '概览' : route.path.startsWith('/tests') ? '测试目标' : route.path.startsWith('/jobs') ? '测试任务' : route.path.startsWith('/runs') ? '运行记录' : route.path.startsWith('/coverage') ? '覆盖情况' : route.path.startsWith('/candidates') ? '候选用例' : '运行环境')
+const section = computed(() => route.path === '/' ? '概览' : route.path.endsWith('/scope') ? '测试空间' : route.path.startsWith('/tests') ? '测试目标' : route.path.startsWith('/jobs') ? '测试任务' : route.path.startsWith('/runs') ? '运行记录' : route.path.startsWith('/coverage') ? '覆盖情况' : route.path.startsWith('/candidates') ? '候选用例' : '运行环境')
 </script>
 
 <template>

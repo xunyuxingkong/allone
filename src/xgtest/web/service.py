@@ -57,6 +57,18 @@ class QueryReadService:
     def _feature_model(self):
         return self.scope.load_model(self.project_root)
 
+    def _feature_scoped_assets(self, assets: list[Any]) -> list[Any]:
+        """Feature assets only: mirrors AcceptanceScope.feature_claims and CandidateService.generate."""
+        feature_root = self.scope.path(self.project_root, "active_root")
+        legacy = {(self.project_root / name).resolve() for name in self.scope.legacy_feature_assets}
+        suite_root = self.scope.path(self.project_root, "active_suite_root")
+        scoped = []
+        for asset in assets:
+            path = (suite_root / asset.source.relative_path).resolve()
+            if path.is_relative_to(feature_root) or path in legacy:
+                scoped.append(asset)
+        return scoped
+
     def _candidate_cases(self) -> list[tuple[Path, Any]]:
         if not self.candidates_dir.is_dir():
             return []
@@ -166,6 +178,58 @@ class QueryReadService:
             "matrix": [matrix[key] for key in sorted(matrix)],
             "dimensions": {name: list(dimension.values) for name, dimension in sorted(model.dimensions.items())},
             "constraints": [rule.model_dump(mode="json", by_alias=True, exclude_none=True) for rule in model.constraints],
+        }
+
+    def scope_matrix(self, strategy: str = "pairwise") -> dict[str, Any]:
+        """Core-derived scope matrix: which scenarios exist, which are covered, and at what size.
+
+        Requirement, Case and Execution counts are deliberately separate: one case can
+        satisfy several requirements and run several SQL steps, so they must never be read
+        as the same number.
+        """
+        if strategy not in {"pairwise", "all_values"}:
+            raise ValueError("COVERAGE_STRATEGY_UNSUPPORTED")
+        model = self._feature_model()
+        assets = self._feature_scoped_assets(load_query_directory_with_sources(self.cases_dir))
+        active_claims = self.scope.feature_claims(self.project_root, model, assets, suite_root=self.cases_dir)
+        current = coverage_gap(model, active_claims, strategy)
+        covered_ids = {item.requirement_id for item in current["requirements"]} - {item.requirement_id for item in current["missing_requirements"]}
+        requirements: dict[tuple[str, str], int] = {}
+        covered: dict[tuple[str, str], int] = {}
+        for requirement in current["requirements"]:
+            for name, value in requirement.selections:
+                requirements[(name, value)] = requirements.get((name, value), 0) + 1
+                if requirement.requirement_id in covered_ids:
+                    covered[(name, value)] = covered.get((name, value), 0) + 1
+        cases: dict[tuple[str, str], int] = {}
+        executions: dict[tuple[str, str], int] = {}
+        active_cases = 0
+        total_executions = 0
+        for asset in assets:
+            case = asset.case
+            if case.metadata.status.value != "active":
+                continue
+            active_cases += 1
+            total_executions += len(case.steps)
+            assignment = case.coverage[0].assignment if case.coverage else {}
+            for name, value in set(assignment.items()):
+                cases[(name, value)] = cases.get((name, value), 0) + 1
+                executions[(name, value)] = executions.get((name, value), 0) + len(case.steps)
+        rows = []
+        for (name, value) in sorted(requirements):
+            required, hit = requirements[(name, value)], covered.get((name, value), 0)
+            rows.append({"dimension": name, "value": value, "required": required, "covered": hit,
+                         "cases": cases.get((name, value), 0), "executions": executions.get((name, value), 0),
+                         "status": "covered" if hit == required else "partial" if hit else "missing"})
+        return {
+            "feature": model.model_id, "model_version": model.model_version, "strategy": strategy,
+            "rows": rows,
+            "totals": {"requirements": current["required"], "covered": current["covered"],
+                       "missing": current["missing"], "cases": active_cases, "executions": total_executions},
+            "count_semantics": {"requirements": "覆盖义务（一个 Case 可覆盖多条）",
+                                "cases": "已定义范围内的可执行用例数",
+                                "executions": "这些用例包含的 SQL 步骤总数"},
+            "module_completion": "MODULE_FULL_INCOMPLETE",
         }
 
     def list_candidates(self, status: str | None = None) -> dict[str, Any]:
