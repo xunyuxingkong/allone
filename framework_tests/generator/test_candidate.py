@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from xgtest.design.coverage import coverage_gap
 from xgtest.design.model import load_test_model
 from xgtest.generator.candidate import generate_candidates
@@ -7,6 +9,15 @@ from xgtest.query.loader import load_query_directory
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_unregistered_model_fails_closed_without_creating_output(tmp_path: Path) -> None:
+    model = load_test_model(ROOT / "models" / "query" / "join.yaml").model_copy(update={"model_id": "query.unknown"})
+    output = tmp_path / "candidates"
+    with pytest.raises(ValueError, match="FEATURE_PLUGIN_UNAVAILABLE"):
+        generate_candidates(model, "pairwise", (), output)
+    # The plugin is resolved before any directory is created.
+    assert not output.exists()
 
 
 def test_pairwise_generation_targets_gap_and_closes_designed_coverage(tmp_path: Path) -> None:

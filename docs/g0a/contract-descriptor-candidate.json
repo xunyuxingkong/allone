@@ -253,7 +253,7 @@
       }
     },
     "suite": {
-      "id": "088c6c11912df1206ea4f59339fa7b7cb13395b5a84449f43c7ed0abe3d9fab8",
+      "id": "01ce8e06ad029fedc4b379e397e55a134383e901017b9c55ec13e89e60eab526",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -279,7 +279,7 @@
         "framework_tests/generator/test_acceptance.py": "8f9b5ba93965152241b3a2f32eeb66c8a05f4a47ccae7db94bcf50a32585631e",
         "framework_tests/generator/test_active_visibility.py": "0136c89c0a055fc1c2059e91973b5e129d1b36debfbe2f8fc5b5be35d7963392",
         "framework_tests/generator/test_approval.py": "368529dc89c044b1436e442c9881181b94b6f5909b3384672d38c47f269816f0",
-        "framework_tests/generator/test_candidate.py": "8f11e1855a6c61052383e4556e54dc1c327554ca66d45fcf14dd502884bc6dfd",
+        "framework_tests/generator/test_candidate.py": "10b4122dfb19785b311f1fcfe020fe3becba72b48805c786bbae24dc5e4dd7c3",
         "framework_tests/generator/test_cli.py": "2e0d7c07c431bc79d4dd742997181d46819f899305e75a5588a0119ba7cb7be1",
         "framework_tests/generator/test_dedup.py": "d961e4908bfcab4d10c82bb4da9b7bee33d1785e2c6b3f3f7c4d8964126d7bc3",
         "framework_tests/generator/test_evidence_gate.py": "7a94cf57a725d790e24970cc313f7408abfffba4600a5cfe8ce9839836c65c96",
