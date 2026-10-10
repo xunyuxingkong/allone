@@ -35,11 +35,29 @@ export interface CandidateSummary {
   trial_verified: boolean
   trial_evidence_status: string
   review_recorded: boolean
+  path_summary: string
+  source_label: string
+}
+
+export interface CaseOrigin {
+  path: { dimension: string; value: string; label: string }[]
+  reason: string
+  source: string
+  source_detail: {
+    generator: string
+    generator_version: string
+    template_id: string
+    template_version: string
+    strategy: string
+    model_id: string
+    model_version: string
+  } | null
 }
 
 export interface CandidateDetail {
   case_id: string
   status: string
+  origin: CaseOrigin
   coverage: { assignment: Record<string, string>; model_id: string; model_version: string }[]
   generation: Record<string, unknown> | null
   steps: { id: string; sql: string; expected: unknown; comparison: unknown }[]

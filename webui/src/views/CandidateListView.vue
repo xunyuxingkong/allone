@@ -6,6 +6,7 @@ import { getCandidates, trialEvidenceLabel, type CandidateSummary } from '../api
 const items = ref<CandidateSummary[]>([])
 const status = ref('')
 const search = ref('')
+const source = ref('')
 const error = ref('')
 const loading = ref(false)
 
@@ -19,22 +20,31 @@ async function refresh() {
 onMounted(refresh)
 const filtered = computed(() => items.value.filter((item) =>
   (!status.value || item.status === status.value) &&
-  (!search.value || item.case_id.toLowerCase().includes(search.value.toLowerCase()))
+  (!source.value || item.source_label === source.value) &&
+  (!search.value || item.case_id.toLowerCase().includes(search.value.toLowerCase()) || item.path_summary.includes(search.value))
 ))
-const assignmentText = (assignment: Record<string, string>) => Object.entries(assignment).map(([key, value]) => `${key}=${value}`).join(' · ')
+const sources = computed(() => [...new Set(items.value.map((item) => item.source_label))].sort())
 </script>
 
 <template>
-  <div class="page-heading"><div><h1>候选用例</h1><p>查看 JOIN 候选的维度、试运行与评审状态。</p></div><span class="heading-meta">{{ items.length }} 条候选</span></div>
+  <div class="page-heading"><div><h1>候选用例</h1><p>每条用例先展示它测的语义场景，再展示编号与状态。</p></div><span class="heading-meta">{{ items.length }} 条候选</span></div>
   <div v-if="error" class="error-banner">{{ error }}</div>
   <section class="surface">
     <div class="filter-row">
-      <div class="filter-field wide"><label for="candidate-search">Case ID</label><input id="candidate-search" v-model="search" class="control" placeholder="搜索候选 ID" /></div>
+      <div class="filter-field wide"><label for="candidate-search">场景 / Case ID</label><input id="candidate-search" v-model="search" class="control" placeholder="搜索场景或候选 ID" /></div>
+      <div class="filter-field"><label for="candidate-source">来源</label><select id="candidate-source" v-model="source" class="control"><option value="">全部</option><option v-for="item in sources" :key="item" :value="item">{{ item }}</option></select></div>
       <div class="filter-field"><label for="candidate-status">状态</label><select id="candidate-status" v-model="status" class="control"><option value="">全部</option><option value="generated">generated</option><option value="draft">draft</option><option value="review">review</option></select></div>
       <button class="control refresh-button" type="button" @click="refresh">刷新</button>
     </div>
-    <div class="table-scroll"><table class="data-table"><thead><tr><th>Case ID</th><th>维度组合</th><th>状态</th><th>双跑证据</th><th>人工评审</th></tr></thead><tbody>
-      <tr v-for="item in filtered" :key="item.case_id"><td><RouterLink class="link mono" :to="`/candidates/${item.case_id}`">{{ item.case_id }}</RouterLink></td><td>{{ assignmentText(item.assignment) }}</td><td>{{ item.status }}</td><td>{{ trialEvidenceLabel(item.trial_evidence_status) }}</td><td>{{ item.review_recorded ? '已记录' : '待评审' }}</td></tr>
+    <div class="table-scroll"><table class="data-table"><thead><tr><th>语义场景</th><th>Case ID</th><th>来源</th><th>状态</th><th>双跑证据</th><th>人工评审</th></tr></thead><tbody>
+      <tr v-for="item in filtered" :key="item.case_id">
+        <td><RouterLink class="link" :to="`/candidates/${item.case_id}`">{{ item.path_summary || '（未记录维度）' }}</RouterLink></td>
+        <td class="mono">{{ item.case_id }}</td>
+        <td>{{ item.source_label }}</td>
+        <td>{{ item.status }}</td>
+        <td>{{ trialEvidenceLabel(item.trial_evidence_status) }}</td>
+        <td>{{ item.review_recorded ? '已记录' : '待评审' }}</td>
+      </tr>
     </tbody></table></div>
     <div v-if="loading" class="empty-state">正在读取候选…</div><div v-else-if="!filtered.length" class="empty-state">当前筛选下没有候选</div>
   </section>

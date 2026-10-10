@@ -57,6 +57,22 @@ const artifactUrl = (kind: 'trial' | 'mutation') => `/api/candidates/${encodeURI
   <div class="page-heading"><div><h1>候选详情</h1><p class="mono">{{ caseId }}</p></div><RouterLink class="link" to="/candidates">← 返回候选列表</RouterLink></div>
   <div v-if="error" class="error-banner">{{ error }}</div><div v-if="loading" class="surface empty-state">正在读取候选…</div>
   <div v-if="candidate" class="detail-stack">
+    <section class="surface origin-block">
+      <h2 class="surface-title">这条用例测什么</h2>
+      <div class="detail-body">
+        <ol class="semantic-path">
+          <li v-for="(step, index) in candidate.origin.path" :key="step.dimension">
+            <span class="path-label">{{ step.label }}</span><span class="path-dim">{{ step.dimension }}</span>
+            <span v-if="index < candidate.origin.path.length - 1" class="path-arrow">└─</span>
+          </li>
+        </ol>
+        <div class="origin-meta">
+          <div><span>为什么测</span><b>{{ candidate.origin.reason }}</b></div>
+          <div><span>来源</span><b>{{ candidate.origin.source }}</b></div>
+          <div v-if="candidate.origin.source_detail"><span>生成器</span><b class="mono">{{ candidate.origin.source_detail.generator }} v{{ candidate.origin.source_detail.generator_version }} · 模板 {{ candidate.origin.source_detail.template_id }} v{{ candidate.origin.source_detail.template_version }} · {{ candidate.origin.source_detail.strategy }}</b></div>
+        </div>
+      </div>
+    </section>
     <section class="surface"><h2 class="surface-title">状态与证据</h2><div class="detail-body detail-kv">
       <span class="key">生命周期状态</span><span>{{ candidate.status }}</span>
       <span class="key">评审绑定状态</span><span>{{ candidate.review_binding_status === 'binding_valid' ? '记录与当前输入一致；仍需核实批准者' : candidate.review_binding_status === 'missing' ? '待评审' : '评审记录已过期或无效' }}</span>
@@ -104,4 +120,14 @@ const artifactUrl = (kind: 'trial' | 'mutation') => `/api/candidates/${encodeURI
 .detail-stack > .surface { min-width: 0; }
 .detail-kv > span, .detail-body > .muted { overflow-wrap: anywhere; }
 .table-scroll { overflow-x: auto; }
+.origin-block .detail-body { display: grid; gap: 16px; }
+.semantic-path { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.semantic-path li { display: flex; align-items: baseline; gap: 10px; font-size: 14px; }
+.path-label { font-weight: 700; color: #1e4fae; }
+.path-dim { color: var(--muted); font: 11px ui-monospace, Consolas, monospace; }
+.path-arrow { margin-left: 2px; color: #b4c0d0; }
+.origin-meta { display: grid; gap: 9px; padding-top: 4px; border-top: 1px solid var(--line); font-size: 13px; }
+.origin-meta > div { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 14px; }
+.origin-meta span { color: var(--muted); }
+.origin-meta b { color: #23354f; font-weight: 600; overflow-wrap: anywhere; }
 </style>

@@ -107,6 +107,24 @@ def test_scope_matrix_is_exposed_over_http():
     assert client.get("/api/scope-matrix?strategy=nope").status_code == 400
 
 
+def test_case_origin_explains_why_and_where_a_case_came_from():
+    from xgtest.web.service import QueryReadService
+    service = QueryReadService.from_environment()
+    items = service.list_candidates()["items"]
+    if not items:
+        pytest.skip("no candidates in the active workspace")
+    # The list leads with the semantic path and a source label, not a bare id.
+    assert all(item["path_summary"] and item["source_label"] in {"AI 生成", "人工定义"} for item in items)
+    detail = service.get_candidate(items[0]["case_id"])
+    origin = detail["origin"]
+    assert origin["reason"] and origin["source"]
+    assert origin["path"] and all(step["label"] and step["dimension"] for step in origin["path"])
+    # A template-generated case must expose its provenance and be labelled as AI generated.
+    if origin["source_detail"]:
+        assert origin["source"] == "AI 生成"
+        assert {"generator", "template_id", "strategy"} <= set(origin["source_detail"])
+
+
 def test_job_logic_identity_is_narrower_than_ui_and_covers_workflow():
     from xgtest.core.contract_set import build_contract_descriptor
     with __import__("tempfile").TemporaryDirectory() as temporary:

@@ -68,7 +68,7 @@
       }
     },
     "control_plane": {
-      "id": "f39f9abadd8a7f92bb58ae3fccb17465c5390309c525c1bab5acd9696e576ea4",
+      "id": "08bf38f4aaab839ce38285983b444e3c142378c4005766cba4682ac9637fa98b",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
@@ -86,11 +86,11 @@
         "src/xgtest/cli.py": "8830f916c7282f9fe36942ae7cbcb3b81713126d5cdb23994532198a044691a2",
         "src/xgtest/web/__init__.py": "cb31bfb4bd485de552392442d54a7512d36eaded1686adb53d3fa374d655f14b",
         "src/xgtest/web/app.py": "1cb8fbff2f39b6c3c9cd2aeeff879b4f694a2ca24f6661f968d580b19576f1cf",
-        "src/xgtest/web/service.py": "4525360fc085c83bd524941695441d71a6fbaa3519853430febeb979a058f6f4",
+        "src/xgtest/web/service.py": "38ff07ae58fbb354f173f79fb13059b3a6391a77e417851b287869d75dd49020",
         "webui/src/App.vue": "97a69a1543a877cb020efcab16db6db1276cb6119eb379617d377344fbd50826",
         "webui/src/api/cases.ts": "fc925b0f1a8660585d39331e609cd1ee182344b206ba84bfc2680d7e9ce8802b",
         "webui/src/api/client.ts": "f7ba468f903f6f4bb46e8ba8d0ce192e0687a33586f3c764a50571d90286b4a5",
-        "webui/src/api/generation.ts": "965f6b23693bc6c2b9589fd784c5d760dd033cd24bfe1477408aed48083f94e2",
+        "webui/src/api/generation.ts": "9035b6bd9ba5e5a828a53e501963345446a6b7cf46a29725df827caec3804b57",
         "webui/src/api/missions.ts": "cac7a4cc0eaff15681906d477b6b58a2f85bffe7085234998e6f7ad9cb309470",
         "webui/src/api/runs.ts": "63288a3a28b61df1bac2879e2fb1f3643c071aacad94dcee897cda01f78354e7",
         "webui/src/api/runtime.ts": "36badc779e28158ba5c5de133fa4200f6e253bc096adedfa5fe48fbebbebcbd0",
@@ -107,8 +107,8 @@
         "webui/src/style.css": "fb7189e5400c83f7f2da51993b8730fa9e3832ae5aa3a51682414e44c8a1e05a",
         "webui/src/types.ts": "8df646300059ea925cbb4f1f86e5de3a7b807d051ac0039e9442da0a4215c47a",
         "webui/src/utils.ts": "0f802be3431b152c61c4ce69da64d1219addd6e9bff491ad461a318c2dc050b0",
-        "webui/src/views/CandidateDetailView.vue": "a8c7344b662ea9398241d86a33d10f54f75f4bde152f4969eaa267fed698028f",
-        "webui/src/views/CandidateListView.vue": "2c206d576d89fb3e29517cfd5855affc892aeca44de8843dd7a16dd9138a62a4",
+        "webui/src/views/CandidateDetailView.vue": "a8fed5a83948af2d409d4d1601fc0f2fc21a8991a4e5a7baaad016f535c64a1d",
+        "webui/src/views/CandidateListView.vue": "8054594e29ef5e16ceaeb5f017e3211a70c004fac2d21a69b731dffe30e92c77",
         "webui/src/views/CaseDetailView.vue": "a47718f3336b8701cba1d56a0eac0af540c35c06d06bc011ae0c149e6cec11b2",
         "webui/src/views/CoverageView.vue": "daa456785087334d4c5e9bc437ccf1ac571e3020cb54f29e66d79e052f32f652",
         "webui/src/views/DashboardView.vue": "d33909cca659eb83108b8462b7b1c88cd7b866cf6acab57a193ec1e7278266b2",
@@ -251,7 +251,7 @@
       }
     },
     "suite": {
-      "id": "c4980b15fdb607945068582609e53c50898312213dad2cbb43d9276e8afc1596",
+      "id": "c18ebbfb299184ad86f3b3d4ccaa5160cbd5161d8968757f437d713673e6255f",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -303,7 +303,7 @@
         "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de",
         "framework_tests/test_ai_jobs.py": "11767d64e95e4c11d0ab0e89c2cca299af69bb668843ec5a353c293b01e56f1a",
         "framework_tests/test_ai_review_fixes.py": "86313f673c434afe793e800fbece7b8a48cbe991ec305b1911a006eac7e88268",
-        "framework_tests/test_product_missions.py": "5caeac39ba107c2b15ea02da74b00639bb7c8ee2d82407cf76fea85b93657c08"
+        "framework_tests/test_product_missions.py": "cd06cf06cb22ff7b826b3e780f391ffe34923bad6529d5ada9f7dbc3399ffdd4"
       }
     }
   },

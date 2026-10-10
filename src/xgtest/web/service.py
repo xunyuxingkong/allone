@@ -232,6 +232,36 @@ class QueryReadService:
             "module_completion": "MODULE_FULL_INCOMPLETE",
         }
 
+    # Human-readable meaning of the model dimension values, for the semantic path view.
+    _VALUE_LABELS = {
+        "join_type": {"inner": "INNER JOIN", "left": "LEFT JOIN", "right": "RIGHT JOIN", "full": "FULL JOIN", "cross": "CROSS JOIN"},
+        "predicate": {"none": "无连接谓词", "equality": "等值谓词", "inequality": "不等谓词", "less_equal": "≤ 谓词"},
+        "datatype": {"int": "INTEGER 键", "varchar": "VARCHAR 键", "date": "DATE 键"},
+        "null_side": {"none": "无 NULL 键", "left": "左表 NULL 键", "right": "右表 NULL 键", "both": "两侧 NULL 键"},
+        "interaction": {"none": "无附加交互", "where": "附加 WHERE", "group_by": "附加 GROUP BY", "subquery": "附加子查询"},
+    }
+    _DIMENSION_ORDER = ("join_type", "predicate", "datatype", "null_side", "interaction")
+
+    def _case_origin(self, case, assignment: dict[str, str]) -> dict[str, Any]:
+        """Explain a case in user terms: its semantic path, why it exists and where it came from."""
+        path = []
+        for name in sorted(assignment, key=lambda item: self._DIMENSION_ORDER.index(item) if item in self._DIMENSION_ORDER else 99):
+            value = assignment[name]
+            path.append({"dimension": name, "value": value, "label": self._VALUE_LABELS.get(name, {}).get(value, value)})
+        generation = case.generation
+        source = "AI 生成" if generation is not None else "人工定义"
+        if generation is None:
+            reason = "人工定义的基础用例"
+        else:
+            strategy = generation.strategy
+            reason = "AI 按 Pairwise 组合补全覆盖缺口" if strategy == "pairwise" else (
+                "AI 按全取值组合补全覆盖缺口" if strategy == "all_values" else f"AI 按 {strategy} 策略生成")
+        return {"path": path, "reason": reason, "source": source,
+                "source_detail": None if generation is None else {
+                    "generator": generation.generator, "generator_version": generation.generator_version,
+                    "template_id": generation.template_id, "template_version": generation.template_version,
+                    "strategy": generation.strategy, "model_id": generation.model_id, "model_version": generation.model_version}}
+
     def list_candidates(self, status: str | None = None) -> dict[str, Any]:
         if status is not None and status not in {"generated", "draft", "review", "active"}:
             raise ValueError("CANDIDATE_STATUS_INVALID")
@@ -242,14 +272,18 @@ class QueryReadService:
             if status is not None and case.metadata.status.value != status:
                 continue
             trial_status = self._trial_evidence_status(path, case, contract_set_id, profile_id)
+            assignment = case.coverage[0].assignment if case.coverage else {}
             items.append({
                 "case_id": case.metadata.id,
                 "status": case.metadata.status.value,
-                "assignment": case.coverage[0].assignment if case.coverage else {},
+                "assignment": assignment,
                 "model_version": case.coverage[0].model_version if case.coverage else None,
                 "trial_evidence_status": trial_status,
                 "trial_verified": trial_status == "verified",
                 "review_recorded": case.review_evidence is not None and case.coverage_review is not None,
+                # Semantic path / origin precomputed so the list can lead with meaning, not the raw id.
+                "path_summary": " · ".join(item["label"] for item in self._case_origin(case, assignment)["path"]),
+                "source_label": self._case_origin(case, assignment)["source"],
             })
         return {"items": items, "total": len(items)}
 
@@ -290,6 +324,7 @@ class QueryReadService:
         return {
             "case_id": case.metadata.id,
             "status": case.metadata.status.value,
+            "origin": self._case_origin(case, case.coverage[0].assignment if case.coverage else {}),
             "coverage": [claim.model_dump(mode="json") for claim in case.coverage],
             "generation": case.generation.model_dump(mode="json") if case.generation else None,
             "steps": [step.model_dump(mode="json") for step in case.steps],
