@@ -218,17 +218,27 @@ class QueryReadService:
         rows = []
         for (name, value) in sorted(requirements):
             required, hit = requirements[(name, value)], covered.get((name, value), 0)
-            rows.append({"dimension": name, "value": value, "required": required, "covered": hit,
+            rows.append({"dimension": name, "value": value, "label": self._VALUE_LABELS.get(name, {}).get(value, value),
+                         "required": required, "covered": hit,
                          "cases": cases.get((name, value), 0), "executions": executions.get((name, value), 0),
                          "status": "covered" if hit == required else "partial" if hit else "missing"})
+        # Tested / untested split of the modelled space, decided entirely by Core coverage.
+        tested = [{"dimension": row["dimension"], "value": row["value"], "label": row["label"],
+                   "covered": row["covered"], "required": row["required"]} for row in rows if row["covered"] > 0]
+        untested = [{"dimension": row["dimension"], "value": row["value"], "label": row["label"],
+                     "required": row["required"]} for row in rows if row["covered"] == 0]
         return {
             "feature": model.model_id, "model_version": model.model_version, "strategy": strategy,
-            "rows": rows,
+            "rows": rows, "tested_scope": tested, "untested_scope": untested,
             "totals": {"requirements": current["required"], "covered": current["covered"],
                        "missing": current["missing"], "cases": active_cases, "executions": total_executions},
             "count_semantics": {"requirements": "覆盖义务（一个 Case 可覆盖多条）",
                                 "cases": "已定义范围内的可执行用例数",
                                 "executions": "这些用例包含的 SQL 步骤总数"},
+            "scope_verdict": {
+                "defined_scope": "当前定义范围：已覆盖" if current["missing"] == 0 else f"当前定义范围：还有 {current['missing']} 项未覆盖",
+                "module": "模块全量：未完整（MODULE_FULL_INCOMPLETE）",
+            },
             "module_completion": "MODULE_FULL_INCOMPLETE",
         }
 

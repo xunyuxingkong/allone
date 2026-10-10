@@ -56,6 +56,25 @@ onMounted(refresh)
   <div v-if="error" class="error-banner" role="alert">{{ error }}</div>
 
   <template v-if="matrix">
+    <section class="surface scope-verdict">
+      <div class="verdict-row">
+        <span class="verdict-defined">{{ matrix.scope_verdict.defined_scope }}</span>
+        <span class="verdict-module">{{ matrix.scope_verdict.module }}</span>
+      </div>
+      <p class="hint">“当前定义范围”指本模型声明的测试空间；它与 Query 全模块是否完整测试是两件事。</p>
+    </section>
+
+    <div class="scope-two">
+      <section class="surface scope-block">
+        <h2 class="surface-title">已测范围 <span class="title-count">{{ matrix.tested_scope.length }}</span></h2>
+        <div class="scope-body"><ul class="chips"><li v-for="item in matrix.tested_scope" :key="`${item.dimension}-${item.value}`" class="chip ok">{{ item.label }}<em>{{ item.dimension }}</em></li><li v-if="!matrix.tested_scope.length" class="muted">—</li></ul></div>
+      </section>
+      <section class="surface scope-block">
+        <h2 class="surface-title">未测范围 <span class="title-count">{{ matrix.untested_scope.length }}</span></h2>
+        <div class="scope-body"><ul class="chips"><li v-for="item in matrix.untested_scope" :key="`${item.dimension}-${item.value}`" class="chip off">{{ item.label }}<em>{{ item.dimension }}</em></li><li v-if="!matrix.untested_scope.length" class="muted">—</li></ul></div>
+      </section>
+    </div>
+
     <section class="surface scope-summary">
       <div class="metric-row">
         <StatCard label="覆盖要求" :value="matrix.totals.requirements" />
@@ -91,6 +110,20 @@ onMounted(refresh)
 </template>
 
 <style scoped>
+.scope-verdict { padding: 16px 20px; margin-bottom: 16px; }
+.verdict-row { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: baseline; }
+.verdict-defined { color: #23354f; font-size: 16px; font-weight: 700; }
+.verdict-module { color: var(--amber); font-size: 14px; font-weight: 700; }
+.scope-verdict .hint { margin: 8px 0 0; }
+.scope-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.scope-block { overflow: hidden; }
+.scope-body { padding: 16px 20px; }
+.title-count { margin-left: 7px; color: #8592a4; font: 12px ui-monospace, Consolas, monospace; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.chip { display: inline-flex; align-items: baseline; gap: 7px; padding: 5px 10px; border-radius: 5px; font-size: 13px; font-weight: 600; }
+.chip em { color: var(--muted); font: 10px ui-monospace, Consolas, monospace; font-style: normal; }
+.chip.ok { color: #17834b; background: #e7f5ed; }
+.chip.off { color: #68778b; background: #eef1f5; }
 .scope-summary { overflow: hidden; margin-bottom: 16px; }
 .count-note { display: flex; flex-wrap: wrap; gap: 8px 26px; padding: 13px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .count-note b { color: #23354f; }
@@ -102,4 +135,5 @@ onMounted(refresh)
 .table-scroll { overflow-x: auto; }
 .filter-field { display: grid; gap: 6px; min-width: 160px; }
 .filter-field label { color: #718096; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+@media (max-width: 900px) { .scope-two { grid-template-columns: 1fr; } }
 </style>

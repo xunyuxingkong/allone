@@ -91,6 +91,15 @@ def test_scope_matrix_separates_requirement_case_and_execution_counts():
     assert matrix["rows"] and all(row["status"] in {"covered", "partial", "missing"} for row in matrix["rows"])
     # Row coverage never exceeds its requirements, and a fully covered row is marked covered.
     assert all(0 <= row["covered"] <= row["required"] for row in matrix["rows"])
+    # Tested / untested scope partitions the modelled space: a value is in exactly one side.
+    tested_keys = {(item["dimension"], item["value"]) for item in matrix["tested_scope"]}
+    untested_keys = {(item["dimension"], item["value"]) for item in matrix["untested_scope"]}
+    assert not (tested_keys & untested_keys)
+    assert tested_keys | untested_keys == {(row["dimension"], row["value"]) for row in matrix["rows"]}
+    assert all(item["label"] for item in (*matrix["tested_scope"], *matrix["untested_scope"]))
+    # The verdict keeps "defined scope" and "module" separate so PASS is never misread.
+    assert set(matrix["scope_verdict"]) == {"defined_scope", "module"}
+    assert matrix["scope_verdict"]["module"] == "模块全量：未完整（MODULE_FULL_INCOMPLETE）"
     with pytest.raises(ValueError, match="COVERAGE_STRATEGY_UNSUPPORTED"):
         QueryReadService.from_environment().scope_matrix("nope")
 

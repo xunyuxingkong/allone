@@ -78,6 +78,7 @@ export interface CandidateDetail {
 export interface ScopeMatrixRow {
   dimension: string
   value: string
+  label: string
   required: number
   covered: number
   cases: number
@@ -85,13 +86,24 @@ export interface ScopeMatrixRow {
   status: 'covered' | 'partial' | 'missing'
 }
 
+export interface ScopeEntry {
+  dimension: string
+  value: string
+  label: string
+  required: number
+  covered?: number
+}
+
 export interface ScopeMatrixView {
   feature: string
   model_version: string
   strategy: 'pairwise' | 'all_values'
   rows: ScopeMatrixRow[]
+  tested_scope: ScopeEntry[]
+  untested_scope: ScopeEntry[]
   totals: { requirements: number; covered: number; missing: number; cases: number; executions: number }
   count_semantics: { requirements: string; cases: string; executions: string }
+  scope_verdict: { defined_scope: string; module: string }
   module_completion: string
 }
 

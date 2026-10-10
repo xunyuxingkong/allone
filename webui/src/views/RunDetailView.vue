@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getRun, listCases } from '../api/runs'
+import { getScopeMatrix, type ScopeMatrixView } from '../api/generation'
 import type { QueryCaseReport, QueryRunReport } from '../types'
 import StatusTag from '../components/StatusTag.vue'
 import StatCard from '../components/StatCard.vue'
@@ -10,6 +11,7 @@ import { formatDate, formatDuration, shortId } from '../utils'
 
 const props = defineProps<{ runId: string }>()
 const run = ref<QueryRunReport | null>(null)
+const scope = ref<ScopeMatrixView | null>(null)
 const cases = ref<QueryCaseReport[]>([])
 const total = ref(0)
 const loading = ref(false)
@@ -51,6 +53,8 @@ async function load() {
   try {
     await loadRunMeta()
     await loadCases()
+    // Scope is a Core-derived property of the active set, shown alongside the run result.
+    scope.value = await getScopeMatrix('pairwise').catch(() => null)
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '无法读取运行详情'
   } finally {
@@ -105,6 +109,24 @@ watch(() => props.runId, load)
         <StatCard label="超时" :value="count('TIMEOUT')" tone="timeout" />
       </div>
     </section>
+    <section v-if="scope" class="surface scope-surface">
+      <h2 class="surface-title">本次测试范围</h2>
+      <div class="scope-verdict">
+        <span class="verdict-defined">{{ scope.scope_verdict.defined_scope }}</span>
+        <span class="verdict-module">{{ scope.scope_verdict.module }}</span>
+      </div>
+      <div class="scope-columns">
+        <div>
+          <h3>已测范围（{{ scope.tested_scope.length }}）</h3>
+          <ul class="scope-list"><li v-for="item in scope.tested_scope" :key="`t-${item.dimension}-${item.value}`" class="ok">✓ {{ item.label }}</li><li v-if="!scope.tested_scope.length" class="muted">—</li></ul>
+        </div>
+        <div>
+          <h3>未测范围（{{ scope.untested_scope.length }}）</h3>
+          <ul class="scope-list"><li v-for="item in scope.untested_scope" :key="`u-${item.dimension}-${item.value}`" class="off">✗ {{ item.label }}</li><li v-if="!scope.untested_scope.length" class="muted">—</li></ul>
+        </div>
+      </div>
+      <p class="scope-note">一次运行通过只代表当前定义范围内通过；未测范围与 Query 全模块完整性另行判定。详见<RouterLink class="link" to="/coverage"> 覆盖情况 </RouterLink>。</p>
+    </section>
     <section class="surface table-surface cases-surface">
       <h2 class="surface-title">Case 结果 <span class="title-count">{{ total }} 条</span></h2>
       <form class="filter-row" @submit.prevent="applyFilters">
@@ -157,6 +179,17 @@ watch(() => props.runId, load)
 .run-heading h1 { font-size: 22px; overflow-wrap: anywhere; }
 .run-metadata { overflow: hidden; }
 .cases-surface { margin-top: 16px; }
+.scope-surface { margin-top: 16px; padding-bottom: 4px; }
+.scope-verdict { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: baseline; padding: 15px 20px 4px; }
+.verdict-defined { color: #23354f; font-size: 15px; font-weight: 700; }
+.verdict-module { color: var(--amber); font-size: 13px; font-weight: 700; }
+.scope-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 12px 20px; }
+.scope-columns h3 { margin: 0 0 10px; font-size: 13px; color: #53647b; }
+.scope-list { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.scope-list li { padding: 4px 9px; border-radius: 5px; font-size: 12px; font-weight: 600; }
+.scope-list li.ok { color: #17834b; background: #e7f5ed; }
+.scope-list li.off { color: #68778b; background: #eef1f5; }
+.scope-note { margin: 0; padding: 6px 20px 16px; color: var(--muted); font-size: 12px; }
 .title-count { margin-left: 7px; color: #8592a4; font: 11px ui-monospace, Consolas, monospace; }
 .primary-button {
   height: 36px;
@@ -170,4 +203,5 @@ watch(() => props.runId, load)
   cursor: pointer;
 }
 .primary-button:hover { background: #173f8d; }
+@media (max-width: 900px) { .scope-columns { grid-template-columns: 1fr; } }
 </style>
