@@ -2,9 +2,15 @@
 
 from pathlib import Path
 
+import pytest
+import yaml
+
+from xgtest.core.models import CaseExecutionStatus, QueryCaseReport, QueryStepReport, StepStatus
 from xgtest.design.coverage import valid_assignments
 from xgtest.design.model import load_test_model
+from xgtest.generator.candidate import case_payload, static_validate_candidate
 from xgtest.generator.filter_template import _fixture, render_filter
+from xgtest.generator.lifecycle import validate_candidate_mutation
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -57,3 +63,38 @@ def test_less_than_comparison_assignment_drops_the_boundary_row() -> None:
             continue
         rows = render_filter(model, assignment)["expected"]["rows"]
         assert not any(row[0] == boundary[assignment["datatype"]] for row in rows), assignment
+
+
+def test_lt_mutation_must_change_trial_result(tmp_path: Path) -> None:
+    model = load_test_model(ROOT / "models/query/filter.yaml")
+    assignment = next(row for row in valid_assignments(model)
+                      if row["operator"] == "less_than" and row["predicate"] == "comparison")
+    payload = case_payload(model, assignment, "pairwise")
+    candidate = tmp_path / f"{payload['metadata']['id']}.yaml"
+    candidate.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    static_validate_candidate(candidate, model)
+
+    def runner(case, _config, _profile):
+        mutated = "d.k <= " in case.steps[0].sql
+        digest = "b" * 64 if mutated else "a" * 64
+        return QueryCaseReport(
+            case_id=case.metadata.id, status=CaseExecutionStatus.PASS, duration_ms=1.0,
+            steps=(QueryStepReport(id="q1", status=StepStatus.PASS, duration_ms=1.0, row_count=1, result_sha256=digest),),
+        )
+
+    result = validate_candidate_mutation(candidate, model, object(), {}, runner=runner)
+    assert result["status"] == "KILLED"
+    assert result["original_hash"] != result["mutated_hash"]
+
+
+def test_static_validation_rejects_expected_that_disagrees_with_claim(tmp_path: Path) -> None:
+    model = load_test_model(ROOT / "models/query/filter.yaml")
+    assignment = next(iter(valid_assignments(model)))
+    payload = case_payload(model, assignment, "pairwise")
+    candidate = tmp_path / f"{payload['metadata']['id']}.yaml"
+    candidate.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    payload = yaml.safe_load(candidate.read_text(encoding="utf-8"))
+    payload["steps"][0]["expected"]["rows"] = []
+    candidate.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="CANDIDATE_COVERAGE_SQL_EXPECTED_MISMATCH"):
+        static_validate_candidate(candidate, model)

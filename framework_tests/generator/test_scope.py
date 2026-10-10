@@ -36,3 +36,23 @@ def test_feature_coverage_excludes_other_feature_paths_and_claims():
         return Item(source=Item(relative_path=path), case=Item(metadata=Item(status=Item(value="active")), coverage=claims))
     assets = [asset("join/JOIN.yaml", (valid, foreign)), asset("filter/FILTER.yaml", (valid, foreign)), asset("join_01_inner.yaml", (valid,))]
     assert scope.feature_claims(root, model, assets) == [valid, valid]
+
+
+def test_both_features_scope_their_own_claims_without_interference():
+    from types import SimpleNamespace as Item
+    from xgtest.generator.plugins import FilterPlugin
+    root = Path(__file__).resolve().parents[2]
+    join_scope = resolve_scope()  # default = join
+    filter_scope = resolve_scope(scope=FilterPlugin().scope)
+    join_model = join_scope.load_model(root)
+    filter_model = filter_scope.load_model(root)
+    join_claim = Item(model_id=join_model.model_id, model_version=join_model.model_version, assignment={})
+    filter_claim = Item(model_id=filter_model.model_id, model_version=filter_model.model_version, assignment={})
+
+    def asset(path, claims):
+        return Item(source=Item(relative_path=path), case=Item(metadata=Item(status=Item(value="active")), coverage=claims))
+
+    assets = [asset("join/JOIN.yaml", (join_claim, filter_claim)), asset("filter/FILTER.yaml", (join_claim, filter_claim))]
+    # Each feature sees only the assets under its own root, and only its own claims.
+    assert join_scope.feature_claims(root, join_model, assets) == [join_claim]
+    assert filter_scope.feature_claims(root, filter_model, assets) == [filter_claim]

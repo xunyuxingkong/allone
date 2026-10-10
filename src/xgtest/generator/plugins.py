@@ -118,6 +118,45 @@ class JoinPlugin:
         return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
 
 
+@dataclass(frozen=True)
+class FilterPlugin:
+    model_id: str = "query.filter"
+    template_id: str = "query.filter.default"
+    template_version: str = "1"
+    id_prefix: str = "QUERY.FILTER"
+    generator_id: str = "query_template_generator"
+    generator_version: str = "1"
+    mutation_id: str = "replace_lt_with_le"
+    mutation_policy: MutationPolicy = MutationPolicy()
+    scope: AcceptanceScope = AcceptanceScope(module="query", feature="filter", candidate_root="candidates/query/filter", active_root="cases/query/filter", active_suite_root="cases/query", model_ref="models/query/filter.yaml", legacy_feature_assets=("cases/query/filter_01_where.yaml", "cases/query/filter_02_between.yaml", "cases/query/filter_03_in.yaml", "cases/query/filter_04_like.yaml", "cases/query/filter_05_is_null.yaml"))
+
+    def static_validate(self, path: Any, model: Any) -> dict[str, Any]:
+        from xgtest.generator.candidate import static_validate_candidate
+        return static_validate_candidate(path, model)
+
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+        from xgtest.generator.candidate import generate_candidates
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+
+    def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
+        from xgtest.generator.filter_template import render_filter
+        return render_filter(model, assignment)
+
+    def mutation_applies(self, case: Any) -> bool:
+        return any(claim.assignment.get("operator") == "less_than" for claim in case.coverage)
+
+    def mutation_specs(self) -> tuple[MutationSpec, ...]:
+        return (MutationSpec(self.mutation_id, "1", self.mutation_applies, self.mutated_sql),)
+
+    def mutated_sql(self, sql: str) -> str:
+        # Widen `<` to `<=`; the fixture always carries the boundary row, so this
+        # changes the observable result for every less_than case.
+        return sql.replace("d.k < ", "d.k <= ")
+
+    def expected_id(self, model: Any, assignment: dict[str, str]) -> str:
+        return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
+
+
 class PluginRegistry:
     def __init__(self, plugins: tuple[FeaturePlugin, ...], default_model_id: str | None = None):
         self._plugins = {plugin.model_id: plugin for plugin in plugins}
@@ -165,4 +204,4 @@ class PluginRegistry:
         return matches[0]
 
 
-FEATURE_PLUGINS = PluginRegistry((JoinPlugin(),))
+FEATURE_PLUGINS = PluginRegistry((JoinPlugin(), FilterPlugin()), default_model_id="query.join")

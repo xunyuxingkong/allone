@@ -156,14 +156,14 @@
       }
     },
     "generator": {
-      "id": "a159013db5ef4f0b5e1db86100edd79c5869201f3b4d7b152604dbaf73d28194",
+      "id": "6214896341e9986a52bf17960f04e7f032282aaca6cbc4a2cd12bc36d7007516",
       "layer": "generator",
       "schema_version": "1",
       "sources": {
         "generators/query/templates/filter.yaml": "662eedef07b2899eb4abfd384ae84355dc3e49020a85abfc3f1d2a19b3ea6f6d",
         "generators/query/templates/join.yaml": "a5c4e3e97757a4292151497a9201fb20fba832b50a762ac422258ab7d81994fb",
         "src/xgtest/generator/candidate.py": "2ae7ea9ded302c6f0f0c95c80b5c0ed50cc0de2576027da279c4cf06d2a134d4",
-        "src/xgtest/generator/plugins.py": "d8693c14da41c17ecc18444c5e745d751342f704cda1623aaa88871414bdd9cd",
+        "src/xgtest/generator/plugins.py": "9b71759e1059e348caadf1362ad228b956d9f1a416c2cafa7c798703dab15b2a",
         "src/xgtest/generator/template.py": "eba4c030ad33e26256e4e8d71870908b09785c4ad7bf1e7422e994ea373f6f2a"
       }
     },
@@ -206,7 +206,7 @@
       }
     },
     "mission_logic": {
-      "id": "4b490ce85c6ddc404e7eddcea17faebe7c09ff57c9742e371e55548f012ee00c",
+      "id": "c2dd48213b8fc02cf8ae3f738dc7690eaaaf8cafe1fabd4901412f7e6e5b8b12",
       "layer": "mission_logic",
       "schema_version": "1",
       "sources": {
@@ -232,7 +232,7 @@
         "src/xgtest/generator/join_template.py": "06fc10a900836b9cfda79cfcd706bacaf694ca31e49e3347e30916c63070b6e0",
         "src/xgtest/generator/lifecycle.py": "bd533e2928d0e094c05a9a48bb9ce4a5ec16cefd012b98782d9c87adb12796a8",
         "src/xgtest/generator/package.py": "b4c47adfa9cd94b2db12ee0b0b56ebf5e04089f63259917a16fb73436aba4fe0",
-        "src/xgtest/generator/plugins.py": "d8693c14da41c17ecc18444c5e745d751342f704cda1623aaa88871414bdd9cd",
+        "src/xgtest/generator/plugins.py": "9b71759e1059e348caadf1362ad228b956d9f1a416c2cafa7c798703dab15b2a",
         "src/xgtest/generator/post_acceptance.py": "1b7f7fc498a6d9f9736b1a57d2aa58c6bc418a4b06a44d8b537f51865a310e0b",
         "src/xgtest/generator/promotion_batch.py": "7815cd83f9d7ce76b8cf35757c6cc38ffdb472de1aafe431dcaed90fe5dbd0a9",
         "src/xgtest/generator/release_checks.py": "77005b85889a31e088bed7448e4236b0f5cdfea682881d8278121b366418d29f",
@@ -257,7 +257,7 @@
       }
     },
     "suite": {
-      "id": "d16acbee476df57cfc59847280c09a793f2374a83d28c400e1da082bb3e2c28c",
+      "id": "f947116fe5618a006a0c7c04dfcbb26b866792a58ab95ac3322e92bc1ee61cb8",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -287,16 +287,17 @@
         "framework_tests/generator/test_cli.py": "2e0d7c07c431bc79d4dd742997181d46819f899305e75a5588a0119ba7cb7be1",
         "framework_tests/generator/test_dedup.py": "d961e4908bfcab4d10c82bb4da9b7bee33d1785e2c6b3f3f7c4d8964126d7bc3",
         "framework_tests/generator/test_evidence_gate.py": "7a94cf57a725d790e24970cc313f7408abfffba4600a5cfe8ce9839836c65c96",
-        "framework_tests/generator/test_filter_template_semantics.py": "d77c545046ba663b706f902b7f9cb45b465288009d7c6ca75def4192054b69e7",
+        "framework_tests/generator/test_filter_template_semantics.py": "a83efd76521c9b18021c15aa51bec0ef4a96b04868dc06569b78e308932f0b71",
         "framework_tests/generator/test_join_template_semantics.py": "0d59b7b45fdc5cd861ffd3ade84b531811112680963729989f9d3dc738eb2936",
         "framework_tests/generator/test_lifecycle.py": "0ccc20a548b01f9e94bacd431ba341d13901bec321ca0562f0a5d1b6322ea0c1",
         "framework_tests/generator/test_mutation_specs.py": "855d5db8f09650e70b8cc7cbfd31d2572180bdd560ed57d02603d4d6bc6194cc",
+        "framework_tests/generator/test_plugins.py": "62f5be21176bd76897cd15174280a7a47c8228241bad9407ba3c298ace554932",
         "framework_tests/generator/test_portable_artifacts.py": "19dd748f0d1e00378bc4fdf729d07f4fab54cf25cd60e3bf7a336c1a47edebd0",
         "framework_tests/generator/test_post_acceptance.py": "7dcde8f1ccf9deb940b359fa7b6b02cddd87633eb94e40a4916c12cd17c53168",
         "framework_tests/generator/test_promotion_batch.py": "85b3a4bcabee0e50c94e3d350db25f29b1567223dc8db30dc04b9e09d32b594b",
         "framework_tests/generator/test_real_xugu_acceptance.py": "50527b58fba194bc2a06cd22b8049df711dd4df40b7bccb4bb68d0817d06b016",
         "framework_tests/generator/test_release_checks.py": "5f78a717b24ea03817e8c06902f3bf1e726b25d6603bfa3cf87a212bddb758dc",
-        "framework_tests/generator/test_scope.py": "84b34ec5f2d2af01b210daed255d8a3e151643a908baf627e2aa03e43d5201aa",
+        "framework_tests/generator/test_scope.py": "b43714cdefe20ffe5358366d85faa89dee3c99b4315010570548eda90b977b84",
         "framework_tests/generator/test_template.py": "ff6a0920fbd2a96263ffe68802113177893fcf930ede26d3abaa292d550cc7c4",
         "framework_tests/query/test_compiler.py": "d17e07f11663316b402a79c35e9495031e9c2b8d7864f76cfc9c35318de769e1",
         "framework_tests/query/test_query_history.py": "621a0c14931c98d78402ad80ef92279773c6d2a157d7936905d46034c78261f5",
@@ -361,7 +362,7 @@
     "src/xgtest/generator/join_template.py": "06fc10a900836b9cfda79cfcd706bacaf694ca31e49e3347e30916c63070b6e0",
     "src/xgtest/generator/lifecycle.py": "bd533e2928d0e094c05a9a48bb9ce4a5ec16cefd012b98782d9c87adb12796a8",
     "src/xgtest/generator/package.py": "b4c47adfa9cd94b2db12ee0b0b56ebf5e04089f63259917a16fb73436aba4fe0",
-    "src/xgtest/generator/plugins.py": "d8693c14da41c17ecc18444c5e745d751342f704cda1623aaa88871414bdd9cd",
+    "src/xgtest/generator/plugins.py": "9b71759e1059e348caadf1362ad228b956d9f1a416c2cafa7c798703dab15b2a",
     "src/xgtest/generator/post_acceptance.py": "1b7f7fc498a6d9f9736b1a57d2aa58c6bc418a4b06a44d8b537f51865a310e0b",
     "src/xgtest/generator/promotion_batch.py": "7815cd83f9d7ce76b8cf35757c6cc38ffdb472de1aafe431dcaed90fe5dbd0a9",
     "src/xgtest/generator/release_checks.py": "77005b85889a31e088bed7448e4236b0f5cdfea682881d8278121b366418d29f",
