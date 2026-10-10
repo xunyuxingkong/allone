@@ -1,0 +1,40 @@
+model_id: query.filter
+model_version: "1"
+module: query
+feature: query
+subfeature: filter
+dimensions:
+  predicate:
+    values: [comparison, between, in_list, like, is_null, arithmetic, conversion, boolean_combination]
+  operator:
+    values: [equals, not_equals, less_than, less_equal, greater_than, greater_equal, none]
+  null_handling:
+    values: [none, filtered_null, three_valued_unknown]
+  datatype:
+    values: [int, varchar, date]
+  interaction:
+    values: [none, and, or, not]
+coverage:
+  strategies:
+    - type: all_values
+    - type: pairwise
+      strength: 2
+constraints:
+  - if: {predicate: comparison}
+    exclude: {operator: [none]}
+  - if: {predicate: between}
+    then: {operator: less_equal}
+  - if: {predicate: in_list}
+    then: {operator: equals}
+  - if: {predicate: like}
+    then: {datatype: varchar, operator: equals}
+  - if: {predicate: is_null}
+    then: {operator: none}
+  - if: {predicate: is_null}
+    exclude: {null_handling: [none]}
+  - if: {predicate: arithmetic}
+    then: {operator: greater_equal}
+  - if: {predicate: conversion}
+    then: {operator: equals}
+  - if: {predicate: boolean_combination}
+    exclude: {interaction: [none]}

@@ -124,10 +124,11 @@
       }
     },
     "design": {
-      "id": "167e1a645519a778413a0b1298de490ef7afa49919398ab2c39ee24cbf6d48e4",
+      "id": "d57761b15bf6e855fe5d7b1da60a5a17a10dd42f58a51d2bf16bc781647dba15",
       "layer": "design",
       "schema_version": "1",
       "sources": {
+        "models/query/filter.yaml": "e18ff226f3e01e6adf37783238cf753d5d7bc56e75102e14a60a2e6f3923b9ce",
         "models/query/join.yaml": "5cca253a7ebd071a0923014b695a5d2a990ee754ad3fda90802d6f22e04fb975",
         "src/xgtest/design/__init__.py": "0f26da5aa2c74bd4883be61f1ba3f9e4e4bbe2e243444a71bad3fe6f89919d7c",
         "src/xgtest/design/constraint.py": "20897b69ff42a1661dce9dd4faa0340304f99e13ebcf265ce7598b461edf53e1",
@@ -155,10 +156,11 @@
       }
     },
     "generator": {
-      "id": "2153e5668c3b28310aedda3e0ad52c5dc00fd71dba89d265c157e42f99fb7848",
+      "id": "a159013db5ef4f0b5e1db86100edd79c5869201f3b4d7b152604dbaf73d28194",
       "layer": "generator",
       "schema_version": "1",
       "sources": {
+        "generators/query/templates/filter.yaml": "662eedef07b2899eb4abfd384ae84355dc3e49020a85abfc3f1d2a19b3ea6f6d",
         "generators/query/templates/join.yaml": "a5c4e3e97757a4292151497a9201fb20fba832b50a762ac422258ab7d81994fb",
         "src/xgtest/generator/candidate.py": "2ae7ea9ded302c6f0f0c95c80b5c0ed50cc0de2576027da279c4cf06d2a134d4",
         "src/xgtest/generator/plugins.py": "d8693c14da41c17ecc18444c5e745d751342f704cda1623aaa88871414bdd9cd",
@@ -166,7 +168,7 @@
       }
     },
     "governance": {
-      "id": "37aafcb5b4d377cf265f121e144d22943224ac43f0e34d3888af18e3582408e9",
+      "id": "fec14ed4606c3d33495dc6ffe0efa79e19e050c59993495b2705256ecb87e98f",
       "layer": "governance",
       "schema_version": "1",
       "sources": {
@@ -191,6 +193,7 @@
         "src/xgtest/generator/artifact_store.py": "1b1e12fcde31ac83b1acf723ad3cf255c185e0426fddbfa3b40199f781f90f9d",
         "src/xgtest/generator/dedup.py": "c3b69a667cbebf29f8a19bbfb6d5cde1c5e531695feee8430a8a06b8fc553d25",
         "src/xgtest/generator/evidence.py": "2286fb4733a43e1d519d913ce6566e2d41ab01c1baa443a30042560287db0e5c",
+        "src/xgtest/generator/filter_template.py": "4cf18f4942e4727ff3543e5bf1dd42090af3bfb9d93919c6124de0216c115fda",
         "src/xgtest/generator/join_template.py": "06fc10a900836b9cfda79cfcd706bacaf694ca31e49e3347e30916c63070b6e0",
         "src/xgtest/generator/lifecycle.py": "bd533e2928d0e094c05a9a48bb9ce4a5ec16cefd012b98782d9c87adb12796a8",
         "src/xgtest/generator/package.py": "b4c47adfa9cd94b2db12ee0b0b56ebf5e04089f63259917a16fb73436aba4fe0",
@@ -203,7 +206,7 @@
       }
     },
     "mission_logic": {
-      "id": "8cdd9073495eb281e264849087ae81d0bab64c243adaa6499ebece4d2b4f3240",
+      "id": "4b490ce85c6ddc404e7eddcea17faebe7c09ff57c9742e371e55548f012ee00c",
       "layer": "mission_logic",
       "schema_version": "1",
       "sources": {
@@ -225,6 +228,7 @@
         "src/xgtest/generator/candidate.py": "2ae7ea9ded302c6f0f0c95c80b5c0ed50cc0de2576027da279c4cf06d2a134d4",
         "src/xgtest/generator/dedup.py": "c3b69a667cbebf29f8a19bbfb6d5cde1c5e531695feee8430a8a06b8fc553d25",
         "src/xgtest/generator/evidence.py": "2286fb4733a43e1d519d913ce6566e2d41ab01c1baa443a30042560287db0e5c",
+        "src/xgtest/generator/filter_template.py": "4cf18f4942e4727ff3543e5bf1dd42090af3bfb9d93919c6124de0216c115fda",
         "src/xgtest/generator/join_template.py": "06fc10a900836b9cfda79cfcd706bacaf694ca31e49e3347e30916c63070b6e0",
         "src/xgtest/generator/lifecycle.py": "bd533e2928d0e094c05a9a48bb9ce4a5ec16cefd012b98782d9c87adb12796a8",
         "src/xgtest/generator/package.py": "b4c47adfa9cd94b2db12ee0b0b56ebf5e04089f63259917a16fb73436aba4fe0",
@@ -253,7 +257,7 @@
       }
     },
     "suite": {
-      "id": "49015169c3012f8061bb2cf24227a708a9aa2ffb1971e17056f6d762bfabf295",
+      "id": "d16acbee476df57cfc59847280c09a793f2374a83d28c400e1da082bb3e2c28c",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -283,6 +287,7 @@
         "framework_tests/generator/test_cli.py": "2e0d7c07c431bc79d4dd742997181d46819f899305e75a5588a0119ba7cb7be1",
         "framework_tests/generator/test_dedup.py": "d961e4908bfcab4d10c82bb4da9b7bee33d1785e2c6b3f3f7c4d8964126d7bc3",
         "framework_tests/generator/test_evidence_gate.py": "7a94cf57a725d790e24970cc313f7408abfffba4600a5cfe8ce9839836c65c96",
+        "framework_tests/generator/test_filter_template_semantics.py": "d77c545046ba663b706f902b7f9cb45b465288009d7c6ca75def4192054b69e7",
         "framework_tests/generator/test_join_template_semantics.py": "0d59b7b45fdc5cd861ffd3ade84b531811112680963729989f9d3dc738eb2936",
         "framework_tests/generator/test_lifecycle.py": "0ccc20a548b01f9e94bacd431ba341d13901bec321ca0562f0a5d1b6322ea0c1",
         "framework_tests/generator/test_mutation_specs.py": "855d5db8f09650e70b8cc7cbfd31d2572180bdd560ed57d02603d4d6bc6194cc",
@@ -310,7 +315,9 @@
     }
   },
   "sources": {
+    "generators/query/templates/filter.yaml": "662eedef07b2899eb4abfd384ae84355dc3e49020a85abfc3f1d2a19b3ea6f6d",
     "generators/query/templates/join.yaml": "a5c4e3e97757a4292151497a9201fb20fba832b50a762ac422258ab7d81994fb",
+    "models/query/filter.yaml": "e18ff226f3e01e6adf37783238cf753d5d7bc56e75102e14a60a2e6f3923b9ce",
     "models/query/join.yaml": "5cca253a7ebd071a0923014b695a5d2a990ee754ad3fda90802d6f22e04fb975",
     "registry/capabilities.yaml": "7ead0b388851890424aa38aa9d9008283f6d123bebcb47d4dc89df548dbb903f",
     "registry/failure_types.yaml": "276921ee6c4060346fc8307aa68ae65e6869f425a4792d215d5691aaefad68b3",
@@ -350,6 +357,7 @@
     "src/xgtest/generator/candidate.py": "2ae7ea9ded302c6f0f0c95c80b5c0ed50cc0de2576027da279c4cf06d2a134d4",
     "src/xgtest/generator/dedup.py": "c3b69a667cbebf29f8a19bbfb6d5cde1c5e531695feee8430a8a06b8fc553d25",
     "src/xgtest/generator/evidence.py": "2286fb4733a43e1d519d913ce6566e2d41ab01c1baa443a30042560287db0e5c",
+    "src/xgtest/generator/filter_template.py": "4cf18f4942e4727ff3543e5bf1dd42090af3bfb9d93919c6124de0216c115fda",
     "src/xgtest/generator/join_template.py": "06fc10a900836b9cfda79cfcd706bacaf694ca31e49e3347e30916c63070b6e0",
     "src/xgtest/generator/lifecycle.py": "bd533e2928d0e094c05a9a48bb9ce4a5ec16cefd012b98782d9c87adb12796a8",
     "src/xgtest/generator/package.py": "b4c47adfa9cd94b2db12ee0b0b56ebf5e04089f63259917a16fb73436aba4fe0",
