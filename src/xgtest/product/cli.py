@@ -13,7 +13,7 @@ def register(commands, root):
     create = sub.add_parser("create", help="Create a READY mission from a definition file")
     create.add_argument("--request", type=Path, required=True)
     sub.add_parser("list")
-    for name in ("show", "start"):
+    for name in ("show", "start", "explore"):
         sub.add_parser(name).add_argument("mission_id")
 
     def handle(args):
@@ -26,6 +26,8 @@ def register(commands, root):
                 value = {"items": service.store.list()}
             elif name == "show":
                 value = service.view(args.mission_id)
+            elif name == "explore":
+                value = service.exploration(args.mission_id)
             else:
                 value = service.start(args.mission_id)
             print(json.dumps(value, ensure_ascii=False, indent=2))

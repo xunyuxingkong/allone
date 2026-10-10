@@ -95,6 +95,30 @@ class MissionService:
             "does_not_change_core": True,
         }
 
+    def exploration(self, mission_id: str) -> dict:
+        """Assemble an AI-exploration briefing for the mission's job.
+
+        Read-only: it reads Core coverage and the job's recorded results and
+        classifies the remaining gaps by risk. It never generates, promotes or
+        decides anything; the external agent chooses the next action.
+        """
+        from xgtest.product.exploration import brief
+        mission = self.store.load(mission_id)
+        job = self._job(mission)
+        # Coverage and candidate data come from Core through the job's own services,
+        # so the briefing reflects the feature the mission actually scopes to.
+        coverage: dict = {"required": 0, "active_covered": 0, "active_missing": 0, "missing_requirements": []}
+        failures: list[dict] = []
+        rounds = 0
+        if job is not None:
+            _, module, _, _ = self.controller.services(job.job_id)
+            coverage = module.inspect_coverage().outputs
+            rounds = sum(1 for result in job.action_results if result.action == "candidate.generate")
+            for result in job.action_results:
+                if result.action == "module.regression":
+                    failures.extend(result.outputs.get("failures", []) or [])
+        return brief(coverage, failures, rounds)
+
     def view(self, mission_id: str) -> dict:
         mission = self.store.load(mission_id)
         state = self._job_state(mission)

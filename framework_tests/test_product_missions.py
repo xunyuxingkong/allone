@@ -126,6 +126,36 @@ def test_sort_limit_mission_starts_a_job_scoped_to_sort_limit(service):
     assert service.controller.services(job_id)[0].ctx.scope.feature == "sort_limit"
 
 
+def test_exploration_briefing_classifies_gaps_and_stays_advisory():
+    from xgtest.product.exploration import brief, classify_risk, gap_by_risk
+    assert classify_risk({"null_side": "both"}) == ["null"]
+    assert classify_risk({"datatype": "date"}) == ["type_conversion"]
+    assert classify_risk({"join_type": "left"}) == ["structure"]
+    coverage = {"required": 10, "active_covered": 4, "active_missing": 6, "missing_requirements": [
+        {"selections": {"null_side": "both", "datatype": "date"}},
+        {"selections": {"datatype": "date", "interaction": "where"}},
+    ]}
+    b = brief(coverage, [{"case_id": "C.1", "status": "FAIL", "failure_type": "DATABASE_ERROR"}], 2)
+    assert b["coverage_ratio"] == 0.4 and b["exploration_rounds"] == 2
+    assert b["advisory_only"] is True and b["does_not_change_core"] is True
+    assert {item["risk"] for item in b["risk_areas"]} >= {"null", "type_conversion"}
+    kinds = {item["kind"] for item in b["suggestions"]}
+    assert "coverage" in kinds and "failure" in kinds
+    # A complete scope yields an explicit "nothing to explore" suggestion, not a fabricated gap.
+    done = brief({"required": 3, "active_covered": 3, "active_missing": 0, "missing_requirements": []}, [], 0)
+    assert done["suggestions"][0]["kind"] == "complete"
+    assert gap_by_risk([{"selections": {"null_side": "both"}}])[0]["risk"] == "null"
+
+
+def test_exploration_before_a_job_is_empty_but_honest(service):
+    mission_id = service.create(DEFINITION)["mission"]["mission_id"]
+    # No job yet: there is no Core coverage to read, so the briefing is empty and says so.
+    empty = service.exploration(mission_id)
+    assert empty["required"] == 0 and empty["missing"] == 0 and empty["exploration_rounds"] == 0
+    assert empty["advisory_only"] is True
+    assert empty["suggestions"][0]["kind"] == "complete"
+
+
 def test_mission_start_requires_ready(service):
     mission_id = service.create(DEFINITION)["mission"]["mission_id"]
     service.start(mission_id)

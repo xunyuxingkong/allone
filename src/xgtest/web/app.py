@@ -46,6 +46,13 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
         except (ValueError, OSError) as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
 
+    @app.get("/api/missions/{mission_id}/exploration")
+    def mission_exploration(mission_id: str, current: QueryReadService = Depends(get_service)) -> dict:
+        try:
+            return get_missions(current).exploration(mission_id)
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
     @app.get("/api/jobs")
     def list_jobs(current: QueryReadService = Depends(get_service)) -> dict:
         from xgtest.ai.store import JobStore

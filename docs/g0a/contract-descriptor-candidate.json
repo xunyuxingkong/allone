@@ -68,7 +68,7 @@
       }
     },
     "control_plane": {
-      "id": "ac8d10b1966ad2ea174a9369b9d1b1f85788a1e1694d55c3ffdffc8abcfa2ed1",
+      "id": "d80692c77288ebd975698351c91fa6d75fb13fa8f9fb287a41053f3d655c4f4a",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
@@ -85,7 +85,7 @@
         "src/xgtest/application/worker_results.py": "47d1a65cf267a2849cdf0981af77a9305d880f96b0876e1e03b5ab7df38ecc9b",
         "src/xgtest/cli.py": "8830f916c7282f9fe36942ae7cbcb3b81713126d5cdb23994532198a044691a2",
         "src/xgtest/web/__init__.py": "cb31bfb4bd485de552392442d54a7512d36eaded1686adb53d3fa374d655f14b",
-        "src/xgtest/web/app.py": "1cb8fbff2f39b6c3c9cd2aeeff879b4f694a2ca24f6661f968d580b19576f1cf",
+        "src/xgtest/web/app.py": "a4347485570747757916bf8bb8c27c9eaa97041be7db746baadd75f1be55ecdc",
         "src/xgtest/web/service.py": "f5a98bf6978e76eccdc4cde20cb0d2478ed29f6eb350d82f317c3051ec9ecc7d",
         "webui/src/App.vue": "97a69a1543a877cb020efcab16db6db1276cb6119eb379617d377344fbd50826",
         "webui/src/api/cases.ts": "fc925b0f1a8660585d39331e609cd1ee182344b206ba84bfc2680d7e9ce8802b",
@@ -215,7 +215,7 @@
       }
     },
     "mission_logic": {
-      "id": "83ffbab0430fe32f4e57b22f210efce25b99bd0739335030403c6f44a2802b2b",
+      "id": "a0bce9d73ae9accd343448db9561de3b7bff1c7d989a1e1ac7ff23515797cedc",
       "layer": "mission_logic",
       "schema_version": "1",
       "sources": {
@@ -252,9 +252,10 @@
         "src/xgtest/generator/subquery_template.py": "39786e77dd967039b2d7edf37f9b8f04e8338b8d172e622d07b959c8546fb0b1",
         "src/xgtest/generator/template.py": "eba4c030ad33e26256e4e8d71870908b09785c4ad7bf1e7422e994ea373f6f2a",
         "src/xgtest/product/__init__.py": "4ecd3ad8cc1641351431822e2fffe874162ba7f5d7a22a1c12d5d14b00881db5",
-        "src/xgtest/product/cli.py": "44fcb8a5afb0c23cfeca006e2f8693ee664641545bce0b6766dab0c0d39a3002",
+        "src/xgtest/product/cli.py": "64600d2a77543abca4b2e46457d426910a22baa1894a15df6d302d681037ba36",
         "src/xgtest/product/contracts.py": "25fc4d9d8be765083324b8d82cf277ad1c5b35766f0253b7debfd1e6e512c00c",
-        "src/xgtest/product/mission_service.py": "b3b30910fae99090e80009ef885fcc5fe91bd7431398333224fdded3dc0b78c7",
+        "src/xgtest/product/exploration.py": "966d9f357e47f7813ef4ef14b572a9b46a7fce720506e3c5d439343ee9273770",
+        "src/xgtest/product/mission_service.py": "527bda60772bf00a8908e4020d313630ee3b16e11b8b7b3c6ccd9f59990a3b1a",
         "src/xgtest/product/store.py": "eb7732aeb8b93ec27c83a24a3b2342c2f63ea7cbe4cec07cdaad5caeb63ee602"
       }
     },
@@ -269,7 +270,7 @@
       }
     },
     "suite": {
-      "id": "9c00dd6b3d97f74a88a9225ed42ddb396bb25517f306f43be474e34efaf2f91a",
+      "id": "c8465c7ddc8efac8caecc1b5e58d087b727cc4bb9191bd3a2a0ad9b8f9cf81cb",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -292,7 +293,7 @@
         "framework_tests/design/test_signature.py": "4e29f5bb75f5faf1a11cb104f2df70885d929d2348d2520ee159ab37c89e8c7f",
         "framework_tests/fixtures/xugu_driver_type_mapping_v1.json": "35bbcd9af1f4001c8199cc3a21dee77d819dfdd40f62c6786c94499884d5c695",
         "framework_tests/fixtures/xugu_driver_type_mapping_write_attempt_v1.json": "ac456ae7c6c84d34dcf35afed192db18983cf371306f0fc05b7578a4b7661551",
-        "framework_tests/generator/test_acceptance.py": "8f9b5ba93965152241b3a2f32eeb66c8a05f4a47ccae7db94bcf50a32585631e",
+        "framework_tests/generator/test_acceptance.py": "93d2629063c0ebc2ed92ed200e9bae7624eea6e96469eb0c1a48004c0356c747",
         "framework_tests/generator/test_active_visibility.py": "0136c89c0a055fc1c2059e91973b5e129d1b36debfbe2f8fc5b5be35d7963392",
         "framework_tests/generator/test_aggregate_template_semantics.py": "ba127ac36f71f851a3cae0fe576f3c4edacfa9f81019023e7a74e65d8ed32462",
         "framework_tests/generator/test_approval.py": "368529dc89c044b1436e442c9881181b94b6f5909b3384672d38c47f269816f0",
@@ -326,7 +327,7 @@
         "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de",
         "framework_tests/test_ai_jobs.py": "11767d64e95e4c11d0ab0e89c2cca299af69bb668843ec5a353c293b01e56f1a",
         "framework_tests/test_ai_review_fixes.py": "86313f673c434afe793e800fbece7b8a48cbe991ec305b1911a006eac7e88268",
-        "framework_tests/test_product_missions.py": "4866f2508fc238cd80364d7a347da9db9fd866ae18916d9920f4e26c2548cb3d"
+        "framework_tests/test_product_missions.py": "c31d01fa60a56717a52ad8935e66822706c01ce5519c9ecc489af766907cf5e1"
       }
     }
   },

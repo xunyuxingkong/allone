@@ -14,11 +14,27 @@ from xgtest.generator.package import freeze_pre_promotion_manifest, preflight_pr
 ROOT = Path(__file__).resolve().parents[2]
 INDEX = ROOT / "acceptance" / "query-generation-mvp" / "trial-run-index.json"
 PROFILE = ROOT / "artifacts" / "runtime-profile-v9.json"
-CURRENT_PROFILE = max(
-    (ROOT / "artifacts").glob("runtime-profile-v*.json"),
-    default=ROOT / "artifacts/runtime-profile-v13.json",
-    key=lambda path: int(path.stem.rsplit("v", 1)[1]),
-)
+
+
+def _current_profile() -> Path | None:
+    """The profile the frozen acceptance package was verified against.
+
+    Selected by matching the frozen index's contract set rather than by taking
+    the newest profile: a newer profile for a different target/contract must not
+    silently replace the one these historical artifacts belong to.
+    """
+    try:
+        expected = json.loads(INDEX.read_text(encoding="utf-8"))["contract_set_id"]
+    except (OSError, ValueError, KeyError):
+        return None
+    candidates = sorted((ROOT / "artifacts").glob("runtime-profile-v*.json"),
+                        key=lambda path: int(path.stem.rsplit("v", 1)[1]))
+    matching = [path for path in candidates
+                if json.loads(path.read_text(encoding="utf-8")).get("identity", {}).get("contract_set_id") == expected]
+    return matching[-1] if matching else (candidates[-1] if candidates else None)
+
+
+CURRENT_PROFILE = _current_profile()
 
 
 pytestmark = pytest.mark.skipif(not PROFILE.is_file() or not CURRENT_PROFILE.is_file(), reason="historical live acceptance artifacts are local; import a verified artifact bundle to run these checks")
