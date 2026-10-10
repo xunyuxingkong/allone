@@ -11,3 +11,5 @@ items:
     phase: query_mvp
   - key: filter
     phase: query_mvp
+  - key: aggregate
+    phase: query_mvp

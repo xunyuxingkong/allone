@@ -157,6 +157,53 @@ class FilterPlugin:
         return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
 
 
+@dataclass(frozen=True)
+class AggregatePlugin:
+    model_id: str = "query.aggregate"
+    template_id: str = "query.aggregate.default"
+    template_version: str = "1"
+    id_prefix: str = "QUERY.AGGREGATE"
+    generator_id: str = "query_template_generator"
+    generator_version: str = "1"
+    mutation_id: str = "count_ignores_null"
+    mutation_policy: MutationPolicy = MutationPolicy()
+    scope: AcceptanceScope = AcceptanceScope(module="query", feature="aggregate", candidate_root="candidates/query/aggregate", active_root="cases/query/aggregate", active_suite_root="cases/query", model_ref="models/query/aggregate.yaml", legacy_feature_assets=("cases/query/aggregate_01_count.yaml", "cases/query/aggregate_02_min.yaml"))
+
+    def static_validate(self, path: Any, model: Any) -> dict[str, Any]:
+        from xgtest.generator.candidate import static_validate_candidate
+        return static_validate_candidate(path, model)
+
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+        from xgtest.generator.candidate import generate_candidates
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+
+    def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
+        from xgtest.generator.aggregate_template import render_aggregate
+        return render_aggregate(model, assignment)
+
+    def mutation_applies(self, case: Any) -> bool:
+        from xgtest.generator.aggregate_template import is_mutation_observable
+        # COUNT over a column that carries NULLs: dropping the argument changes the
+        # count. Only assignments with a non-empty result set are applicable.
+        return any(
+            claim.assignment.get("function") == "count"
+            and claim.assignment.get("null_handling") != "none"
+            and is_mutation_observable(claim.assignment)
+            for claim in case.coverage
+        )
+
+    def mutation_specs(self) -> tuple[MutationSpec, ...]:
+        return (MutationSpec(self.mutation_id, "1", self.mutation_applies, self.mutated_sql),)
+
+    def mutated_sql(self, sql: str) -> str:
+        # COUNT(q.v) ignores NULLs; COUNT(*) does not. With NULLs in the input the
+        # aggregate value changes, so the mutation must be killed.
+        return sql.replace("COUNT(q.v)", "COUNT(*)")
+
+    def expected_id(self, model: Any, assignment: dict[str, str]) -> str:
+        return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
+
+
 class PluginRegistry:
     def __init__(self, plugins: tuple[FeaturePlugin, ...], default_model_id: str | None = None):
         self._plugins = {plugin.model_id: plugin for plugin in plugins}
@@ -204,4 +251,4 @@ class PluginRegistry:
         return matches[0]
 
 
-FEATURE_PLUGINS = PluginRegistry((JoinPlugin(), FilterPlugin()), default_model_id="query.join")
+FEATURE_PLUGINS = PluginRegistry((JoinPlugin(), FilterPlugin(), AggregatePlugin()), default_model_id="query.join")

@@ -101,6 +101,15 @@ def test_filter_mission_starts_a_job_scoped_to_filter(service):
     assert service.controller.services(join_job)[0].ctx.scope.feature == "join"
 
 
+def test_aggregate_mission_starts_a_job_scoped_to_aggregate(service):
+    created = service.create({**DEFINITION, "features": ["aggregate"]})
+    mission_id = created["mission"]["mission_id"]
+    assert created["tested_scope"] == ["aggregate"]
+    job_id = service.start(mission_id)["mission"]["job_id"]
+    assert service.controller.store.load(job_id).intent.features == ["aggregate"]
+    assert service.controller.services(job_id)[0].ctx.scope.feature == "aggregate"
+
+
 def test_mission_start_requires_ready(service):
     mission_id = service.create(DEFINITION)["mission"]["mission_id"]
     service.start(mission_id)

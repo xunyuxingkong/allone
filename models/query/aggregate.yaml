@@ -1,0 +1,37 @@
+model_id: query.aggregate
+model_version: "1"
+module: query
+feature: query
+subfeature: aggregate
+dimensions:
+  function:
+    values: [count, count_star, sum, avg, min, max]
+  grouping:
+    values: [none, group_by, group_by_having]
+  null_handling:
+    values: [none, with_nulls, all_null]
+  cardinality:
+    values: [empty, single, duplicates, multiple_groups]
+  datatype:
+    values: [int, varchar, date]
+coverage:
+  strategies:
+    - type: all_values
+    - type: pairwise
+      strength: 2
+constraints:
+  # count_star ignores its argument, so it never exercises varchar/date typing.
+  - if: {function: count_star}
+    then: {datatype: int}
+  # SUM/AVG are numeric; a bare COUNT/MIN/MAX is the only valid form otherwise.
+  - if: {function: sum}
+    exclude: {datatype: [varchar, date]}
+  - if: {function: avg}
+    exclude: {datatype: [varchar, date]}
+  # HAVING COUNT(*) > 1 keeps only groups with duplicates. Only `duplicates`
+  # (a repeated group key) leaves a non-empty, observable result; `single` and
+  # `multiple_groups` would filter everything out.
+  - if: {grouping: group_by_having}
+    then: {cardinality: duplicates}
+  - if: {grouping: none}
+    exclude: {cardinality: [multiple_groups]}

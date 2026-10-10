@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from xgtest.generator.plugins import FEATURE_PLUGINS, FilterPlugin, JoinPlugin, PluginRegistry
+from xgtest.generator.plugins import FEATURE_PLUGINS, AggregatePlugin, FilterPlugin, JoinPlugin, PluginRegistry
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_registered_features_resolve_and_unknown_fails_closed():
     assert FEATURE_PLUGINS.for_model("query.join").id_prefix == "QUERY.JOIN"
     assert FEATURE_PLUGINS.for_model("query.filter").id_prefix == "QUERY.FILTER"
+    assert FEATURE_PLUGINS.for_model("query.aggregate").id_prefix == "QUERY.AGGREGATE"
     assert FEATURE_PLUGINS.for_scope("query.filter.review").model_id == "query.filter"
     with pytest.raises(ValueError, match="FEATURE_PLUGIN_UNAVAILABLE"):
         FEATURE_PLUGINS.for_model("query.unknown")
@@ -32,13 +33,14 @@ def test_case_id_routing_covers_every_registered_prefix():
     # suffix is enforced by the application/db-worker layers.
     assert FEATURE_PLUGINS.matches_case_id("QUERY.JOIN.ABCD1234")
     assert FEATURE_PLUGINS.matches_case_id("QUERY.FILTER.ABCD1234")
+    assert FEATURE_PLUGINS.matches_case_id("QUERY.AGGREGATE.ABCD1234")
     assert not FEATURE_PLUGINS.matches_case_id("QUERY.UNKNOWN.ABCD1234")
-    assert set(FEATURE_PLUGINS.id_prefixes()) == {"QUERY.FILTER", "QUERY.JOIN"}
+    assert set(FEATURE_PLUGINS.id_prefixes()) == {"QUERY.AGGREGATE", "QUERY.FILTER", "QUERY.JOIN"}
 
 
 def test_mutation_specs_are_well_formed_for_every_plugin():
     import re
-    for plugin in (JoinPlugin(), FilterPlugin()):
+    for plugin in (JoinPlugin(), FilterPlugin(), AggregatePlugin()):
         specs = plugin.mutation_specs()
         assert specs
         for spec in specs:

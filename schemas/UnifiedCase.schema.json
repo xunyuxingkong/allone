@@ -478,7 +478,8 @@
         "ddl_table",
         "string_function",
         "query",
-        "filter"
+        "filter",
+        "aggregate"
       ],
       "title": "FeatureKey",
       "type": "string"

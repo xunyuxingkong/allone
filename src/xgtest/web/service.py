@@ -260,10 +260,18 @@ class QueryReadService:
             "datatype": {"int": "INTEGER", "varchar": "VARCHAR", "date": "DATE"},
             "interaction": {"none": "无布尔交互", "and": "AND", "or": "OR", "not": "NOT"},
         },
+        "aggregate": {
+            "function": {"count": "COUNT(列)", "count_star": "COUNT(*)", "sum": "SUM", "avg": "AVG", "min": "MIN", "max": "MAX"},
+            "grouping": {"none": "无分组", "group_by": "GROUP BY", "group_by_having": "GROUP BY + HAVING"},
+            "null_handling": {"none": "无 NULL 值", "with_nulls": "含 NULL 值", "all_null": "全为 NULL"},
+            "cardinality": {"empty": "空集", "single": "单值", "duplicates": "重复值", "multiple_groups": "多分组"},
+            "datatype": {"int": "INTEGER", "varchar": "VARCHAR", "date": "DATE"},
+        },
     }
     _DIMENSION_ORDER = {
         "join": ("join_type", "predicate", "datatype", "null_side", "interaction"),
         "filter": ("predicate", "operator", "null_handling", "datatype", "interaction"),
+        "aggregate": ("function", "grouping", "null_handling", "cardinality", "datatype"),
     }
 
     def _case_origin(self, case, assignment: dict[str, str]) -> dict[str, Any]:
