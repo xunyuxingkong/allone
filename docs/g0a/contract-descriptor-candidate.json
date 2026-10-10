@@ -1,22 +1,22 @@
 {
-  "contract_set_id": "f7589aabf3714f1897cf8bd84eb9de7fdc0f19acadf881be4548d2a4ca172680",
+  "contract_set_id": "4c5b8f62b5c81997cf0f44335a350fcbe9b9f4976f24b631a1b00cda41f9ec14",
   "contract_version": "3.0",
   "descriptor_version": "3",
   "execution_projection": {
     "comparison": "3d104ee0acd29d9d2174ea233340c58c7c2c4cb7965c77c487050fca938a8829",
-    "execution_schema": "09ac18ab889122460f4014c76bca24e73ad0176339df96cd683c89ee7982f27f",
+    "execution_schema": "d85e7d89842bc14306ad04fb364c05cf3d486f2e8e32c3cabec4dcb1c0828bfa",
     "runtime": "d2ec27987eb24f652d35cee794b057f4787c27c8d06e5792d96e61189f987797"
   },
   "generated": {
     "schemas/AcceptanceScope.schema.json": "36e3d6054883f5afaeb894fd8d48fee3a0bdda33cb09aa7e5ce731878ff116a4",
-    "schemas/BootstrapCaseInput.schema.json": "b59d6ac4bff608c8d1c0904b7e037da548bf3688efd8c07dfe96fba4c0086e6d",
+    "schemas/BootstrapCaseInput.schema.json": "74d7094f992932500a765f64de0a0459d401306f332a94e46e496adb3192131d",
     "schemas/CapabilityOutcome.schema.json": "3a221c91c86794f430c2e9d084cc47bfb5defe7d7ebcb3c1b112e2b84ff902b8",
     "schemas/ConstraintRule.schema.json": "ae7104af50dbc5399dc580f13df41ef84950b73880162ffa98c9d20840392005",
     "schemas/CoverageClaim.schema.json": "42512858d2661f587739b926c8daa7ff4ffb00752b3b0465fa3d99d04101e3f3",
     "schemas/CoverageReview.schema.json": "055c26bb136e9f936dd046524c14900bff47378199dd0431ec0d6417eb9c58a9",
     "schemas/CoverageStrategy.schema.json": "d8aee11393af0f6b6a2fcf4176df124d5525b081650979db8006a5f66cfa27c7",
     "schemas/Dimension.schema.json": "d3be992c18ad571943012aab43c98ee9acdae74e96525a229fdae8809cb1f66e",
-    "schemas/EffectiveMetadata.schema.json": "fe1b50abe42db867e9e933b0bc8c51d1b705ce9f188a39a197860992b1dee0c2",
+    "schemas/EffectiveMetadata.schema.json": "d8099d6979c90f02b1c100766d5a54e72252dfa98bf4dfd8d98d0dd4943cbef7",
     "schemas/EnvironmentRequirement.schema.json": "145df7e5a87c3888fd893fa0efeb1afe8dfbcd50329678cf7125591e7ae6b2df",
     "schemas/ErrorMappingProfile.schema.json": "5baaae7a4e1441fa0134cdc4f04a68b638134835405d15f60bf2cac03843dcf4",
     "schemas/GenerationProvenance.schema.json": "a757d6b58a5506d5d162a5833ade5287d716b1bb7ec91025c7078ef8b30ddeba",
@@ -29,14 +29,14 @@
     "schemas/MvpStepReport.schema.json": "2c6e42d2b8e2f314cc9bade85182ff83709bee949b3abb76e518e2ecadf1558d",
     "schemas/MvpTargetReport.schema.json": "10b6b3c970dfdc9f8b280738b2245257191bfbdafff9ad3c90d93caef41dbc60",
     "schemas/OracleProvenance.schema.json": "1e8048a6381ba4e5b4bfced1f5f13ef0bd904d372ec4d9d0ec29a522aeac8e3b",
-    "schemas/QueryCaseInput.schema.json": "1db86030c72f8936c85b35db137b3cabc49305eb49cff18a80b7ce83db388d11",
+    "schemas/QueryCaseInput.schema.json": "0358d190282cbb3a6a3582549a8a81899517bced06641d9cf5271d985960b31e",
     "schemas/QueryCaseReport.schema.json": "0fdeff7ec4b7a2d673a3681cd73dba2138175eb20b29b35a7e7ceda0624a6602",
     "schemas/QueryExecutable.schema.json": "7d489d10b2a57f08110199e10d610784d5af1c727b2965f9c5c727ea6a05d9f0",
     "schemas/QueryRunReport.schema.json": "6d5fba43dbf74660c250315ca1667cbc759146e8ec479273d67c655195283c23",
     "schemas/QueryStep.schema.json": "af7c638ef5986f1d0a84a5b553bafc27bab0867e051f9d747af67a759735102a",
     "schemas/QueryStepReport.schema.json": "7dbd258c5b1e9081de9d8d1550939f4db45cd65f4afbeb8ed792872615996c7f",
     "schemas/QueryTargetReport.schema.json": "f6ae124d773229b33de50b68ac370223db0ede95dcb18cf4327630a2a99b67ba",
-    "schemas/RawMetadata.schema.json": "00b60051ef21ced13ec9320521f8f570b44b71666183c7db31694faa51246c7c",
+    "schemas/RawMetadata.schema.json": "7319eece603d17c91ea61f138f5875b95c71c45f42846db545e4f5f8578ece3d",
     "schemas/ResourceRequest.schema.json": "43e02a4b996236ddc602c5451f14123605f6be7d8f57529c7a604e2c379bccc3",
     "schemas/ResultEvent.schema.json": "d848dcaacac1b594bf9bbd6c6fb0dd1c756a683d7380fc06618c05e0d3069476",
     "schemas/ReviewEvidence.schema.json": "d88c7ad58c2fa6589d1f44edd0818d932286ac1189d0b19ff49f3741d871d1f1",
@@ -50,9 +50,9 @@
     "schemas/TestPlan.schema.json": "bbcd2df5d4f0dfe9b2ee39297686567255ce6e9c9af507ea0dc0c3b4731bafbb",
     "schemas/TransactionSemantics.schema.json": "37f8059d1e3dd1b0678f2860a69e8ea017c5cd37f84cfdf2f6c8f1355ba2f225",
     "schemas/TypeMappingProfile.schema.json": "f39ee6bacea45416e05b9fdc475cded0a803d0ec989d46d16faa3cea00e237bf",
-    "schemas/UnifiedCase.schema.json": "5faba65d4b0615f66a131b82125d94996eaf1dcaf4c518368ff11024e2cdb18e",
+    "schemas/UnifiedCase.schema.json": "21937dd52a0f246b19dcb78ef327d97638d721b8233ccf454d6737d283a873c8",
     "schemas/ValidationEvidence.schema.json": "dcf546112398a9fdd848866d370dc87fa759d9fbba39363b85b6986f4a6dc68e",
-    "src/xgtest/generated/registry_enums.py": "fafeb70854c7c591ee3cca5ec8f0d047d93bf39aad74fbe997a7dd33313c7b9d"
+    "src/xgtest/generated/registry_enums.py": "f1c4daedf017c5ff0e83095640eeacde6fe16a03cf66b213025c33a91e407b16"
   },
   "identity_kind": "execution",
   "layers": {
@@ -138,7 +138,7 @@
       }
     },
     "execution_schema": {
-      "id": "09ac18ab889122460f4014c76bca24e73ad0176339df96cd683c89ee7982f27f",
+      "id": "d85e7d89842bc14306ad04fb364c05cf3d486f2e8e32c3cabec4dcb1c0828bfa",
       "layer": "execution_schema",
       "schema_version": "1",
       "sources": {
@@ -148,7 +148,7 @@
         "src/xgtest/core/errors.py": "1a8d6cbce7083e32ae4d0e0b24971964d47234d862728cc3113c943283ecafc8",
         "src/xgtest/core/execution_models.py": "172d556ee36afdeb9462ce0e2d26e520bd49177005529b42def2f91958f7f4a9",
         "src/xgtest/core/model_base.py": "64f4c3cce850d729669e33b426816e828feee21b725f6115a1e2e33fe0322c53",
-        "src/xgtest/generated/registry_enums.py": "fafeb70854c7c591ee3cca5ec8f0d047d93bf39aad74fbe997a7dd33313c7b9d",
+        "src/xgtest/generated/registry_enums.py": "f1c4daedf017c5ff0e83095640eeacde6fe16a03cf66b213025c33a91e407b16",
         "src/xgtest/query/compiler.py": "b8a615badf84f249370ce5e68d501e0715f4b1111aabe31e9f9501957bbb8554",
         "src/xgtest/query/result.py": "fdcd7f268eb15d9e8b1f6e639ab46824f3bc2d73585a3c0e7e3aa4a82feeb5d2",
         "src/xgtest/query/runner.py": "cd36f2f19654825665b12a0e2d36727fc8eaa0f451c0fa725979eaa6eedcf669",
@@ -168,13 +168,13 @@
       }
     },
     "governance": {
-      "id": "fec14ed4606c3d33495dc6ffe0efa79e19e050c59993495b2705256ecb87e98f",
+      "id": "906bb860031189f3fc644083ae1e524db660d4f05a7f2c1edd85e138e7b7c499",
       "layer": "governance",
       "schema_version": "1",
       "sources": {
         "registry/capabilities.yaml": "7ead0b388851890424aa38aa9d9008283f6d123bebcb47d4dc89df548dbb903f",
         "registry/failure_types.yaml": "276921ee6c4060346fc8307aa68ae65e6869f425a4792d215d5691aaefad68b3",
-        "registry/features.yaml": "d22831b921747dbba42935712fd42c84e6cc8b245e0f63b93af51ed25c776976",
+        "registry/features.yaml": "7105c67f598757d686f885bc23c72c37d6ed1a98f4b43e8345093418ba905c27",
         "registry/isolation_scopes.yaml": "268525ba7a1c3f81e83996ec1c0389d294548c6b029986e6691a3be02c772cea",
         "registry/levels.yaml": "f5ea1217d43f3ac24e743f5db7ce6f8c583a268465a1a5cecd81964a27745ec1",
         "registry/resource_access_modes.yaml": "1fb7ce9691943f7a44365facb0618b0ef219024e0607b18e20af676a2bf814a8",
@@ -257,7 +257,7 @@
       }
     },
     "suite": {
-      "id": "f947116fe5618a006a0c7c04dfcbb26b866792a58ab95ac3322e92bc1ee61cb8",
+      "id": "317c9fcc7634e869c214123a961aa714b78d128a0397e775d1215caba8996dec",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -270,7 +270,7 @@
         "framework_tests/contract/test_driver_mapping_fixture.py": "9a9096090e2284f250bf3e32db5a2be13ba92487b9c5f807ce2e9428992b938e",
         "framework_tests/contract/test_expected_boundary.py": "c224d26f2b4b593b6ac752b087d275b0861338c196aa831f735fd78bf5457b34",
         "framework_tests/contract/test_models.py": "a7e3f05d2f143e8e6225c0c8c04dcae453514474bf8d28fb52f3f6a0c6205721",
-        "framework_tests/contract/test_registry.py": "633e61c36e92a9f5644b3660ce365d1a0eec08e1782c0c51a3dea6924713b803",
+        "framework_tests/contract/test_registry.py": "9f938a5204c496bc1d0ddfb22b0abd662875bbe72eb53642f7ed4d5e9974d56b",
         "framework_tests/contract/test_row_codec.py": "1bfcb0a8d15f2c530f8308714a4ef56b69fd38b177ecf42beb9f6ef5dbdd1ad3",
         "framework_tests/contract/test_row_codec_vectors.py": "eb44c77791711967f4da07807aa4dfe5263ec7931ab5c0cc183f65b8623a030a",
         "framework_tests/design/test_constraint.py": "72e1509dc46bde503488a6c9fd5ecc37ef82824f3c8f4f574335298b09af6826",
@@ -322,7 +322,7 @@
     "models/query/join.yaml": "5cca253a7ebd071a0923014b695a5d2a990ee754ad3fda90802d6f22e04fb975",
     "registry/capabilities.yaml": "7ead0b388851890424aa38aa9d9008283f6d123bebcb47d4dc89df548dbb903f",
     "registry/failure_types.yaml": "276921ee6c4060346fc8307aa68ae65e6869f425a4792d215d5691aaefad68b3",
-    "registry/features.yaml": "d22831b921747dbba42935712fd42c84e6cc8b245e0f63b93af51ed25c776976",
+    "registry/features.yaml": "7105c67f598757d686f885bc23c72c37d6ed1a98f4b43e8345093418ba905c27",
     "registry/isolation_scopes.yaml": "268525ba7a1c3f81e83996ec1c0389d294548c6b029986e6691a3be02c772cea",
     "registry/levels.yaml": "f5ea1217d43f3ac24e743f5db7ce6f8c583a268465a1a5cecd81964a27745ec1",
     "registry/resource_access_modes.yaml": "1fb7ce9691943f7a44365facb0618b0ef219024e0607b18e20af676a2bf814a8",

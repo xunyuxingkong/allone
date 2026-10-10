@@ -462,7 +462,8 @@
         "union",
         "ddl_table",
         "string_function",
-        "query"
+        "query",
+        "filter"
       ],
       "title": "FeatureKey",
       "type": "string"

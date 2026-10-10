@@ -21,6 +21,7 @@ class FeatureKey(StrEnum):
     DDL_TABLE = "ddl_table"
     STRING_FUNCTION = "string_function"
     QUERY = "query"
+    FILTER = "filter"
 
 class IsolationScope(StrEnum):
     SESSION = "session"

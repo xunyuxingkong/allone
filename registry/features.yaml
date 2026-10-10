@@ -9,3 +9,5 @@ items:
     phase: sql_mvp
   - key: query
     phase: query_mvp
+  - key: filter
+    phase: query_mvp
