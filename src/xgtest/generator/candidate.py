@@ -11,28 +11,30 @@ from xgtest.core.canonical import xgmj1_sha256
 from xgtest.design.coverage import assignment_requirements, coverage_gap, valid_assignments
 from xgtest.design.model import TestModel
 from xgtest.design.signature import candidate_signature, coverage_signature, model_signature
-from xgtest.generator.template import TEMPLATE_ID, TEMPLATE_VERSION, render_join, semantic_hash
+from xgtest.generator.template import semantic_hash
 from xgtest.query.loader import load_query_case
 
 
-GENERATOR_ID = "query_template_generator"
-GENERATOR_VERSION = "4"
+def _plugin(model: TestModel):
+    from xgtest.generator.plugins import FEATURE_PLUGINS
+    return FEATURE_PLUGINS.for_model(model.model_id)
 
 
 def case_payload(model: TestModel, assignment: dict[str, str], strategy: str) -> dict[str, Any]:
-    rendered = render_join(model, assignment)
+    plugin = _plugin(model)
+    rendered = plugin.render(model, assignment)
     signature = coverage_signature(model, assignment)
     input_hash = xgmj1_sha256({
         "model_hash": model_signature(model),
-        "template_id": TEMPLATE_ID,
-        "template_version": TEMPLATE_VERSION,
+        "template_id": plugin.template_id,
+        "template_version": plugin.template_version,
         "strategy": strategy,
         "assignment": assignment,
     })
     return {
         "metadata": {
-            "id": f"QUERY.JOIN.{candidate_signature(model, assignment, TEMPLATE_ID, TEMPLATE_VERSION)[:8].upper()}",
-            "title": f"Generated JOIN {signature[:8]}",
+            "id": plugin.expected_id(model, assignment),
+            "title": f"Generated {plugin.scope.feature.upper()} {signature[:8]}",
             "module": "query",
             "feature": model.feature,
             "subfeature": model.subfeature,
@@ -40,27 +42,27 @@ def case_payload(model: TestModel, assignment: dict[str, str], strategy: str) ->
             "status": "generated",
             "timeout": "30s",
             "isolation": "session",
-            "tags": ["join", "generated"],
+            "tags": [plugin.scope.feature, "generated"],
         },
         "coverage": [{
-            "claim_id": f"join_{signature[:12]}",
+            "claim_id": f"{plugin.scope.feature}_{signature[:12]}",
             "model_id": model.model_id,
             "model_version": model.model_version,
             "assignment": dict(assignment),
             "assertion_refs": ["q1"],
         }],
         "generation": {
-            "generator": GENERATOR_ID,
-            "generator_version": GENERATOR_VERSION,
+            "generator": plugin.generator_id,
+            "generator_version": plugin.generator_version,
             "model_id": model.model_id,
             "model_version": model.model_version,
-            "template_id": TEMPLATE_ID,
-            "template_version": TEMPLATE_VERSION,
+            "template_id": plugin.template_id,
+            "template_version": plugin.template_version,
             "strategy": strategy,
             "seed": None,
             "input_hash": input_hash,
         },
-        "oracle": {"kind": "known_result", "reference": f"join-template-v{TEMPLATE_VERSION}"},
+        "oracle": {"kind": "known_result", "reference": f"{plugin.scope.feature}-template-v{plugin.template_version}"},
         "steps": [{
             "id": "q1",
             "kind": "query",
@@ -103,8 +105,9 @@ def generate_candidates(
 ) -> tuple[Path, ...]:
     if limit is not None and limit < 1:
         raise ValueError("GENERATOR_LIMIT_INVALID")
-    if model.model_id != "query.join":
-        raise ValueError("GENERATOR_FEATURE_UNSUPPORTED: only query.join is implemented")
+    # Resolve the plugin before creating any directory, so an unregistered model
+    # fails closed without leaving artifacts behind.
+    _plugin(model)
     output_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     for assignment in _select_gap_assignments(model, strategy, existing_cases, limit):
@@ -128,6 +131,7 @@ def generate_candidates(
 
 
 def static_validate_candidate(path: Path, model: TestModel) -> dict[str, Any]:
+    plugin = _plugin(model)
     case = load_query_case(path)
     current_status = case.metadata.status.value
     if current_status not in {"generated", "draft", "review"}:
@@ -137,13 +141,13 @@ def static_validate_candidate(path: Path, model: TestModel) -> dict[str, Any]:
     if case.generation.strategy not in {"all_values", "pairwise"}:
         raise ValueError("CANDIDATE_STRATEGY_NOT_IMPLEMENTED")
     if (
-        case.generation.generator != GENERATOR_ID
-        or case.generation.generator_version != GENERATOR_VERSION
-        or case.generation.template_id != TEMPLATE_ID
-        or case.generation.template_version != TEMPLATE_VERSION
+        case.generation.generator != plugin.generator_id
+        or case.generation.generator_version != plugin.generator_version
+        or case.generation.template_id != plugin.template_id
+        or case.generation.template_version != plugin.template_version
     ):
         raise ValueError("CANDIDATE_PROVENANCE_MISMATCH")
-    if case.oracle.kind != "known_result" or case.oracle.reference != f"join-template-v{TEMPLATE_VERSION}":
+    if case.oracle.kind != "known_result" or case.oracle.reference != f"{plugin.scope.feature}-template-v{plugin.template_version}":
         raise ValueError("CANDIDATE_ORACLE_PROVENANCE_INVALID")
     if case.generation.model_id != model.model_id or case.generation.model_version != model.model_version:
         raise ValueError("CANDIDATE_MODEL_MISMATCH")
@@ -155,17 +159,17 @@ def static_validate_candidate(path: Path, model: TestModel) -> dict[str, Any]:
     from xgtest.design.constraint import validate_assignment
 
     validate_assignment(model, claim.assignment)
-    expected_id = f"QUERY.JOIN.{candidate_signature(model, claim.assignment, TEMPLATE_ID, TEMPLATE_VERSION)[:8].upper()}"
+    expected_id = plugin.expected_id(model, claim.assignment)
     if case.metadata.id != expected_id:
         raise ValueError("CANDIDATE_ID_MISMATCH")
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    expected_step = {"id": "q1", "kind": "query", **render_join(model, claim.assignment)}
+    expected_step = {"id": "q1", "kind": "query", **plugin.render(model, claim.assignment)}
     if payload.get("steps") != [expected_step]:
         raise ValueError("CANDIDATE_COVERAGE_SQL_EXPECTED_MISMATCH")
     expected_input_hash = xgmj1_sha256({
         "model_hash": model_signature(model),
-        "template_id": TEMPLATE_ID,
-        "template_version": TEMPLATE_VERSION,
+        "template_id": plugin.template_id,
+        "template_version": plugin.template_version,
         "strategy": case.generation.strategy,
         "assignment": claim.assignment,
     })

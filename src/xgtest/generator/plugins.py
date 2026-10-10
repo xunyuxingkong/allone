@@ -64,6 +64,10 @@ def mutation_spec_for(plugin: Any, mutation_id: str | None = None) -> MutationSp
 class FeaturePlugin(Protocol):
     model_id: str
     template_id: str
+    template_version: str
+    id_prefix: str
+    generator_id: str
+    generator_version: str
     scope: AcceptanceScope
     mutation_policy: MutationPolicy
 
@@ -71,6 +75,7 @@ class FeaturePlugin(Protocol):
 
     def mutation_applies(self, case: Any) -> bool: ...
     def mutated_sql(self, sql: str) -> str: ...
+    def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]: ...
     def expected_id(self, model: Any, assignment: dict[str, str]) -> str: ...
     def static_validate(self, path: Any, model: Any) -> dict[str, Any]: ...
     def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any: ...
@@ -80,6 +85,10 @@ class FeaturePlugin(Protocol):
 class JoinPlugin:
     model_id: str = "query.join"
     template_id: str = TEMPLATE_ID
+    template_version: str = TEMPLATE_VERSION
+    id_prefix: str = "QUERY.JOIN"
+    generator_id: str = "query_template_generator"
+    generator_version: str = "4"
     mutation_id: str = "replace_le_with_lt"
     mutation_policy: MutationPolicy = MutationPolicy()
     scope: AcceptanceScope = AcceptanceScope(module="query", feature="join", candidate_root="candidates/query/join", active_root="cases/query/join", active_suite_root="cases/query", model_ref="models/query/join.yaml", legacy_feature_assets=("cases/query/join_01_inner.yaml", "cases/query/join_02_left.yaml"))
@@ -92,6 +101,10 @@ class JoinPlugin:
         from xgtest.generator.candidate import generate_candidates
         return generate_candidates(model, strategy, existing_cases, output, limit=limit)
 
+    def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
+        from xgtest.generator.join_template import render_join
+        return render_join(model, assignment)
+
     def mutation_applies(self, case: Any) -> bool:
         return any(claim.assignment.get("predicate") == "less_equal" for claim in case.coverage)
 
@@ -102,14 +115,19 @@ class JoinPlugin:
         return sql.replace("a.k <= b.k", "a.k < b.k")
 
     def expected_id(self, model: Any, assignment: dict[str, str]) -> str:
-        return f"QUERY.JOIN.{candidate_signature(model, assignment, TEMPLATE_ID, TEMPLATE_VERSION)[:8].upper()}"
+        return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"
 
 
 class PluginRegistry:
-    def __init__(self, plugins: tuple[FeaturePlugin, ...]):
+    def __init__(self, plugins: tuple[FeaturePlugin, ...], default_model_id: str | None = None):
         self._plugins = {plugin.model_id: plugin for plugin in plugins}
         if len(self._plugins) != len(plugins):
             raise ValueError("PLUGIN_MODEL_DUPLICATE")
+        if default_model_id is None:
+            # A single-plugin registry is unambiguous; with several, callers must name one.
+            self._default = next(iter(self._plugins.values())) if len(self._plugins) == 1 else None
+        else:
+            self._default = self.for_model(default_model_id)
 
     def for_model(self, model_id: str) -> FeaturePlugin:
         try:
@@ -124,9 +142,19 @@ class PluginRegistry:
         return matches[0]
 
     def default_scope(self) -> AcceptanceScope:
-        if len(self._plugins) != 1:
+        if self._default is None:
             raise ValueError("EXPLICIT_FEATURE_SCOPE_REQUIRED")
-        return next(iter(self._plugins.values())).scope
+        return self._default.scope
+
+    def id_prefixes(self) -> tuple[str, ...]:
+        return tuple(sorted({plugin.id_prefix for plugin in self._plugins.values()}))
+
+    def id_pattern(self) -> str:
+        prefixes = "|".join(re.escape(prefix) for prefix in self.id_prefixes())
+        return rf"^({prefixes})\.[A-Z0-9]+$"
+
+    def matches_case_id(self, case_id: str) -> bool:
+        return any(case_id.startswith(f"{prefix}.") for prefix in self.id_prefixes())
 
     def for_case(self, case: Any) -> FeaturePlugin:
         if case.generation is None:
