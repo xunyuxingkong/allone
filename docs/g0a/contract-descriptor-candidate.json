@@ -68,7 +68,7 @@
       }
     },
     "control_plane": {
-      "id": "eb6d821f9c3664bb39f79f9e74d5354c8fa7de02f3b14248848599c2e4f6defe",
+      "id": "ad03878864a3575090d2131e81d6a89fb6ceea5613f1c91a74ce9c6140e7d606",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
@@ -111,7 +111,7 @@
         "webui/src/views/CandidateListView.vue": "2c206d576d89fb3e29517cfd5855affc892aeca44de8843dd7a16dd9138a62a4",
         "webui/src/views/CaseDetailView.vue": "a47718f3336b8701cba1d56a0eac0af540c35c06d06bc011ae0c149e6cec11b2",
         "webui/src/views/CoverageView.vue": "daa456785087334d4c5e9bc437ccf1ac571e3020cb54f29e66d79e052f32f652",
-        "webui/src/views/DashboardView.vue": "de9c0f5691b86fac3434f049eeb8736eae039c135cea4ba63ffa9497ebccfb79",
+        "webui/src/views/DashboardView.vue": "d33909cca659eb83108b8462b7b1c88cd7b866cf6acab57a193ec1e7278266b2",
         "webui/src/views/JobDetailView.vue": "b239f5fbe3a5cba431dc85b10512e7984679c985b6859e1fba7216d4cc0a5e15",
         "webui/src/views/JobsView.vue": "e98ae1e0784afe398a2e0e2630f816eb18cbafbb647e60357d653fafbda85960",
         "webui/src/views/MissionCreateView.vue": "01ae8559baebf51192a480327d7163f433e3ed01e171391ff692ae5ebb9712e5",
