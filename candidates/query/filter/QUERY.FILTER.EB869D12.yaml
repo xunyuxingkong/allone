@@ -1,0 +1,57 @@
+metadata:
+  id: QUERY.FILTER.EB869D12
+  title: Generated FILTER 89e78f5c
+  module: query
+  feature: query
+  subfeature: filter
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - filter
+  - generated
+coverage:
+- claim_id: filter_89e78f5c5151
+  model_id: query.filter
+  model_version: '1'
+  assignment:
+    datatype: int
+    interaction: and
+    null_handling: none
+    operator: less_equal
+    predicate: between
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.filter
+  model_version: '1'
+  template_id: query.filter.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 6417726b55b2fe5ff43c8b9247f4e0bf8477553191aeb062c351ea8283222450
+oracle:
+  kind: known_result
+  reference: filter-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT d.k AS k, d.label AS label FROM (SELECT CAST(1 AS INTEGER) AS k, 'r1'
+    AS label UNION ALL SELECT CAST(2 AS INTEGER) AS k, 'r2' AS label UNION ALL SELECT
+    CAST(3 AS INTEGER) AS k, 'r3' AS label UNION ALL SELECT CAST(4 AS INTEGER) AS
+    k, 'x4' AS label) d WHERE (d.k BETWEEN CAST(1 AS INTEGER) AND CAST(2 AS INTEGER))
+    AND d.label <> 'r3'
+  expected:
+    rows:
+    - - 1
+      - r1
+    - - 2
+      - r2
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 7a0ed976f4f96bedf38430a058fd0ff1460ff67a6bcfec835d400639110f26ff
+  static_validation_hash: 3f158132033bd5dfb91422a5617b55181d039b3a020a01e386b7719de112b608

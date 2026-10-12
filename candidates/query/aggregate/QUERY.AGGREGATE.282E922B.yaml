@@ -1,0 +1,55 @@
+metadata:
+  id: QUERY.AGGREGATE.282E922B
+  title: Generated AGGREGATE 4fc238dc
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_4fc238dc4c76
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: duplicates
+    datatype: int
+    function: sum
+    grouping: group_by_having
+    null_handling: with_nulls
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 55060b73c21baf6850735d198af85893d9459820b3bf9fd7fc4a6ec937da990c
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, SUM(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, CAST(10
+    AS INTEGER) AS v UNION ALL SELECT CAST(0 AS INTEGER) AS g, CAST(10 AS INTEGER)
+    AS v UNION ALL SELECT CAST(1 AS INTEGER) AS g, CAST(20 AS INTEGER) AS v UNION
+    ALL SELECT CAST(0 AS INTEGER) AS g, NULL AS v) q GROUP BY q.g HAVING COUNT(*)
+    > 1
+  expected:
+    rows:
+    - - 0
+      - 20
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 3ba08253404ad2956aba65566e10d035ed500b43d6e716d038dd99b7f635a305
+  static_validation_hash: 7d9da4190359c3aea35730d6ccb3318882c2ba0e7f5b60f3b7ba004bb47d5d53

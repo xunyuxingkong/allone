@@ -1,0 +1,56 @@
+metadata:
+  id: QUERY.FILTER.E121817B
+  title: Generated FILTER 9df83cf4
+  module: query
+  feature: query
+  subfeature: filter
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - filter
+  - generated
+coverage:
+- claim_id: filter_9df83cf41c3e
+  model_id: query.filter
+  model_version: '1'
+  assignment:
+    datatype: date
+    interaction: or
+    null_handling: none
+    operator: less_than
+    predicate: boolean_combination
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.filter
+  model_version: '1'
+  template_id: query.filter.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: f445c87fe4f2d9c2a34904847243aa5428facba045cc7b1ead3b3d3e9722c794
+oracle:
+  kind: known_result
+  reference: filter-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT d.k AS k, d.label AS label FROM (SELECT DATE '2020-01-01' AS k, 'r1'
+    AS label UNION ALL SELECT DATE '2020-01-02' AS k, 'r2' AS label UNION ALL SELECT
+    DATE '2020-01-03' AS k, 'r3' AS label UNION ALL SELECT DATE '2020-01-04' AS k,
+    'x4' AS label) d WHERE (d.k <= DATE '2020-01-02') OR d.k IS NULL
+  expected:
+    rows:
+    - - '2020-01-01'
+      - r1
+    - - '2020-01-02'
+      - r2
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: e971a1fd3f9fcd8ba7f7ee21d25b89b6fd016726a41dd9d6480ee35dc52879b5
+  static_validation_hash: 090ec148c917e0dccf9a67a205daa9c226bb6a1177333b2af1d1e781f98a2941

@@ -1,0 +1,57 @@
+metadata:
+  id: QUERY.AGGREGATE.61816D89
+  title: Generated AGGREGATE d6841325
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_d6841325f013
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: multiple_groups
+    datatype: int
+    function: avg
+    grouping: group_by
+    null_handling: all_null
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: ff1dc4ecfc49ea0655d8e346e1dc7adf389adb3b545318d1bb6fd4ef10277ab4
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, AVG(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, NULL
+    AS v UNION ALL SELECT CAST(1 AS INTEGER) AS g, NULL AS v UNION ALL SELECT CAST(2
+    AS INTEGER) AS g, NULL AS v) q GROUP BY q.g
+  expected:
+    rows:
+    - - 0
+      - null
+    - - 1
+      - null
+    - - 2
+      - null
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 77a4a046dc9c193ed5b925ce730ac1b85b22e2f9b0793a6f8108e29ab8109a49
+  static_validation_hash: 51de5a91b4fc59d6bd3f6aa13a7666f2a1095ef61d2a7bbc5fa087d4158d51f2

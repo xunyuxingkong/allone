@@ -1,0 +1,58 @@
+metadata:
+  id: QUERY.FILTER.92DB8957
+  title: Generated FILTER 998589f1
+  module: query
+  feature: query
+  subfeature: filter
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - filter
+  - generated
+coverage:
+- claim_id: filter_998589f18f3d
+  model_id: query.filter
+  model_version: '1'
+  assignment:
+    datatype: varchar
+    interaction: or
+    null_handling: filtered_null
+    operator: greater_equal
+    predicate: arithmetic
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.filter
+  model_version: '1'
+  template_id: query.filter.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 88ddff43df3277a6ed62e3ccde11c9b97aa841ff828d2c62026ba714767dd031
+oracle:
+  kind: known_result
+  reference: filter-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT d.k AS k, d.label AS label FROM (SELECT 'a' AS k, 'r1' AS label UNION
+    ALL SELECT 'b' AS k, 'r2' AS label UNION ALL SELECT 'c' AS k, 'r3' AS label UNION
+    ALL SELECT 'd' AS k, 'x4' AS label UNION ALL SELECT NULL AS k, 'rn' AS label)
+    d WHERE ((d.k + 'a') >= 'c') OR d.k IS NULL
+  expected:
+    rows:
+    - - c
+      - r3
+    - - d
+      - x4
+    - - null
+      - rn
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: f02204aa6710aeaef9fc76af16f7b92ac94af45a1bbc9bcaf097fa1981418356
+  static_validation_hash: e39b82734d0b3ebf8f0f37f08306f02d7a662e4a56ab5121ccada9d93fa8d083

@@ -1,0 +1,50 @@
+metadata:
+  id: QUERY.AGGREGATE.F1C5881C
+  title: Generated AGGREGATE b5b8202b
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_b5b8202b2eca
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: empty
+    datatype: int
+    function: max
+    grouping: group_by
+    null_handling: all_null
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: e75aa4a48fb37e2de96648bbcdc8734755f92afe64a1d1e677521a8c6b9e42fe
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, MAX(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, CAST(0
+    AS INTEGER) AS v FROM (SELECT 1) one WHERE 1 = 0) q GROUP BY q.g
+  expected:
+    rows: []
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: eb311efb68e724df8d8f7b70c2a406096093fde542cb949cee96ad7baca54225
+  static_validation_hash: 829e53b41372703f3a668845666b9551d2733c29dfd936b8d1d78d5d21954a1c

@@ -2,6 +2,7 @@
 import os
 import re
 import uuid
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from xgtest.ai.models import ActionRequest, ActionResult, FailureAnalysis, JobAbandonment, TestIntent, TestJob, TestPlan
@@ -23,11 +24,12 @@ class JobController:
         def configured(name):
             value = os.environ.get(name)
             return Path(value).resolve() if value else None
-        features = self.store.load(job_id).intent.features
-        strategy = self.store.load(job_id).intent.strategy
+        job = self.store.load(job_id)
+        features = job.intent.features
+        strategy = job.intent.strategy
         ctx = ServiceContext(self.root, self.store.directory(job_id), self.profile,
             configured("XGTEST_APPROVAL"), configured("XGTEST_ALLOWED_SIGNERS"), configured("XGTEST_REVOKED"),
-            features=features, strategy=strategy)
+            features=features, strategy=strategy, candidate_scope_ids=list(job.candidate_scope_ids))
         return ProjectService(ctx, self.db), ModuleService(ctx, self.db), CandidateService(ctx, self.db), AcceptanceService(ctx)
 
     def create(self, goal, intent):
@@ -118,7 +120,7 @@ class JobController:
             if latest_regression < latest_promotion:
                 return reads + [option("module.regression")]
             return reads + [option("acceptance.post_verify")]
-        items = candidates.readiness()
+        items = candidates.readiness(job.candidate_scope_ids)
         pending = []
         for item in items:
             case_id = item["case_id"]
@@ -204,6 +206,17 @@ class JobController:
             if result.status == "PASS" and result.action in {"project.inspect", "module.inspect", "feature.coverage"} and previous_state in {"BLOCKED", "FAILED", "WAITING_APPROVAL"}:
                 state, blockers = previous_state, previous_blockers
             results = [*job.action_results, result]
+            candidate_scope_ids = list(job.candidate_scope_ids)
+            if result.action == "candidate.generate" and result.status == "PASS":
+                candidate_scope_ids = list(dict.fromkeys([*candidate_scope_ids, *[
+                    case_id for case_id in result.outputs.get("candidate_ids", []) if isinstance(case_id, str)
+                ]]))
+            strategy_completion = job.strategy_completion
+            if result.action == "acceptance.inspect" and result.status == "WAITING_APPROVAL":
+                _, module, candidates, _ = self.services(job_id)
+                strategy_completion = self.strategy_completion(job, module, candidates, candidate_scope_ids)
+                result = result.model_copy(update={"outputs": {**result.outputs, "strategy_completion": strategy_completion}})
+                results[-1] = result
             if result.status == "PASS" and (result.action == "acceptance.post_verify" or
                 job.intent.intent == "query.status" and {r.action for r in results if r.status == "PASS"} >= {"project.inspect", "module.inspect", "feature.coverage"}):
                 state = "COMPLETED"
@@ -211,7 +224,7 @@ class JobController:
                 _, module, candidates, _ = self.services(job_id)
                 regression = self.last(job, "module.regression")
                 if (regression is not None and module.regression_valid(regression)
-                        and result.outputs.get("active_missing") == 0 and not candidates.readiness()):
+                        and result.outputs.get("active_missing") == 0 and not candidates.readiness(job.candidate_scope_ids)):
                     state = "COMPLETED"
             recovery_action = request.action if request.action.action == "acceptance.promote" and result.status == "BLOCKED" else None
             identity_error = self.identity_error(job)
@@ -219,6 +232,7 @@ class JobController:
                 state, blockers = "BLOCKED", list(dict.fromkeys([*blockers, identity_error]))
             job = self.store.save(job.model_copy(update={"state": state, "current_action": recovery_action,
                 "action_results": results, "blockers": blockers,
+                "candidate_scope_ids": candidate_scope_ids, "strategy_completion": strategy_completion,
                 "preflight_required": False if result.action == "project.preflight" and result.status == "PASS" else job.preflight_required,
                 "completed_requests": {**job.completed_requests, request.request_id: fingerprint}}), "ACTION_FINISHED")
             self.report(job)
@@ -243,6 +257,41 @@ class JobController:
         if name == "candidate.technical_review": return candidates.technical_review(case_id, request.technical_review, request.review_context_id)
         return {"candidate.validate": candidates.validate, "candidate.mutation": candidates.mutation_validate,
                 "candidate.trial": candidates.trial}[name](case_id)
+
+    @staticmethod
+    def strategy_completion(job, module, candidates, candidate_ids):
+        readiness = candidates.readiness(candidate_ids)
+        selected_ids = set(candidate_ids)
+        cases_valid = selected_ids == {item["case_id"] for item in readiness} and all(
+            item["static_valid"] and item["mutation_valid"] and item["trial_verified"]
+            and item["technical_review_accepted"] for item in readiness
+        )
+        regression = JobController.last(job, "module.regression")
+        regression_pass = bool(regression and module.regression_valid(regression))
+        latest_results = {}
+        for result in job.action_results:
+            latest_results[(result.action, result.case_id)] = result.status
+        no_blocking_failure = job.state not in {"BLOCKED", "FAILED"} and not any(
+            status in {"FAIL", "BLOCKED"} for status in latest_results.values()
+        )
+        ctx = getattr(candidates, "ctx", None)
+        try:
+            if ctx is None:
+                raise OSError("JOB_ACCEPTANCE_EVIDENCE_UNAVAILABLE")
+            coverage = json.loads((ctx.job_dir / "acceptance" / "coverage-summary.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            coverage = module.inspect_coverage().outputs
+        progress = JobController.generation_progress(job)
+        budget_or_no_gap = progress["remaining_budget"] == 0 or coverage.get(
+            "provisional_missing_if_promoted", coverage.get("provisional_missing")
+        ) == 0
+        return {
+            "schema_version": "1", "candidate_scope_ids": sorted(selected_ids),
+            "generated_cases_valid": cases_valid, "regression_pass": regression_pass,
+            "no_blocking_failure": no_blocking_failure, "budget_or_no_gap": budget_or_no_gap,
+            "smoke_complete": job.intent.strategy == "SMOKE" and cases_valid and regression_pass
+                and no_blocking_failure and budget_or_no_gap,
+        }
 
     def resume(self, job_id, expected_revision):
         with self.store.execution_lock(), self.store.lock(job_id):

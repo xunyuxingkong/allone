@@ -1,0 +1,56 @@
+metadata:
+  id: QUERY.FILTER.EB1269D6
+  title: Generated FILTER 54372505
+  module: query
+  feature: query
+  subfeature: filter
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - filter
+  - generated
+coverage:
+- claim_id: filter_543725054065
+  model_id: query.filter
+  model_version: '1'
+  assignment:
+    datatype: varchar
+    interaction: and
+    null_handling: none
+    operator: equals
+    predicate: like
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.filter
+  model_version: '1'
+  template_id: query.filter.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 30365990860fc2e342314fed67337b34aa025e7cb1996f9c7a6d723ea11cef96
+oracle:
+  kind: known_result
+  reference: filter-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT d.k AS k, d.label AS label FROM (SELECT 'a' AS k, 'r1' AS label UNION
+    ALL SELECT 'b' AS k, 'r2' AS label UNION ALL SELECT 'c' AS k, 'r3' AS label UNION
+    ALL SELECT 'd' AS k, 'x4' AS label) d WHERE (d.label LIKE 'r%') AND d.label <>
+    'r3'
+  expected:
+    rows:
+    - - a
+      - r1
+    - - b
+      - r2
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 2a409819c3e39196938a5ba6f5c02fa4a64928820460b7b4f81c7f785ac3e221
+  static_validation_hash: 2d9c237975feffde8b23724aa6dc8fc895970f2e498d4ae7bebb474c10877538

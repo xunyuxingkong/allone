@@ -1,0 +1,50 @@
+metadata:
+  id: QUERY.AGGREGATE.E8082868
+  title: Generated AGGREGATE 8fedc7c6
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_8fedc7c6b11d
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: empty
+    datatype: int
+    function: sum
+    grouping: group_by
+    null_handling: none
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: b686b3275ad06cfb0d9e27d3b7e6d51bc2b80e106392034f53eef1c0fb15efaa
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, SUM(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, CAST(0
+    AS INTEGER) AS v FROM (SELECT 1) one WHERE 1 = 0) q GROUP BY q.g
+  expected:
+    rows: []
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 58b04cb139559a81ffeea134eb1aeefc9b2e3841ca5ae2f14cca4a4916cc6dd9
+  static_validation_hash: 719b1250f32a8f8f3d016747afc61c55c152428ca5e61b0c19317b7a87bed478

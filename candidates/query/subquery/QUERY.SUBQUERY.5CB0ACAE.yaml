@@ -1,0 +1,51 @@
+metadata:
+  id: QUERY.SUBQUERY.5CB0ACAE
+  title: Generated SUBQUERY d11c2e2e
+  module: query
+  feature: query
+  subfeature: subquery
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - subquery
+  - generated
+coverage:
+- claim_id: subquery_d11c2e2e6d23
+  model_id: query.subquery
+  model_version: '1'
+  assignment:
+    correlation: correlated
+    datatype: varchar
+    predicate: any
+    subquery_result: empty
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.subquery
+  model_version: '1'
+  template_id: query.subquery.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 131fc7f472b550d21999c66e75a93089c179f1f93f4d43cdc5d6067bcd47ce4e
+oracle:
+  kind: known_result
+  reference: subquery-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT o.label AS label FROM (SELECT 'o1' AS label, 'a' AS k UNION ALL SELECT
+    'o2' AS label, 'b' AS k UNION ALL SELECT 'o3' AS label, 'c' AS k) o WHERE o.k
+    = ANY (SELECT 'z' AS k WHERE o.k = 'z')
+  expected:
+    rows:
+    - - o1
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: a0ba8ca6931be9d2b665f83b1bebbcb0306811167317a55aaf774bb01b3332aa
+  static_validation_hash: e44c3874482d9d9220e4a2556120ebdc500a6002a2d9a792113ca885c6acf759

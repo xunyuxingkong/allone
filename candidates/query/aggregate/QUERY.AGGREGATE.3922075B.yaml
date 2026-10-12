@@ -1,0 +1,53 @@
+metadata:
+  id: QUERY.AGGREGATE.3922075B
+  title: Generated AGGREGATE e257fb93
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_e257fb937dcd
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: duplicates
+    datatype: varchar
+    function: max
+    grouping: none
+    null_handling: with_nulls
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 63eacfaa48d22c94487f2f6748d8845648c9244d20b573eb185c0643731a1ca7
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT MAX(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, 'aa' AS v FROM
+    (SELECT 1) one UNION ALL SELECT CAST(0 AS INTEGER) AS g, 'aa' AS v FROM (SELECT
+    1) one UNION ALL SELECT CAST(1 AS INTEGER) AS g, 'bb' AS v FROM (SELECT 1) one
+    UNION ALL SELECT CAST(0 AS INTEGER) AS g, NULL AS v FROM (SELECT 1) one) q
+  expected:
+    rows:
+    - - 1
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: db31ab41df7bf534498084ec56a1440b84792c38302479eade3ab79c6e94f1f4
+  static_validation_hash: 18dea67cb4d96db8327299b0c3d6fd4cf56d502221da4b28edda4a08de804b46

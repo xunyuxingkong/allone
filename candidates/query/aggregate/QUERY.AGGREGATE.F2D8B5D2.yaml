@@ -1,0 +1,51 @@
+metadata:
+  id: QUERY.AGGREGATE.F2D8B5D2
+  title: Generated AGGREGATE c3e7649f
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_c3e7649f0506
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: empty
+    datatype: date
+    function: min
+    grouping: none
+    null_handling: none
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 82eb2fdf2bcd8e06a1cd383b31bf2f5a2c87a812833f72087150086bf4a546a0
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT MIN(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, CAST(0 AS INTEGER)
+    AS v FROM (SELECT 1) one WHERE 1 = 0) q
+  expected:
+    rows:
+    - - null
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 0d670cf0448e7a85dc6691aab9303729c89f5f5a0cff5b2c307909eedc8954ea
+  static_validation_hash: a62f0ef5f0a9f1e1f56b4bdb76515944848325f2fe3a94d26d130d93e2904513

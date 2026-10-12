@@ -1,0 +1,51 @@
+metadata:
+  id: QUERY.SUBQUERY.324554A1
+  title: Generated SUBQUERY 5b3549de
+  module: query
+  feature: query
+  subfeature: subquery
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - subquery
+  - generated
+coverage:
+- claim_id: subquery_5b3549decdab
+  model_id: query.subquery
+  model_version: '1'
+  assignment:
+    correlation: correlated
+    datatype: date
+    predicate: not_in
+    subquery_result: with_null
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.subquery
+  model_version: '1'
+  template_id: query.subquery.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: cf30b0923b893cfb1a197306fa5c0aee7dd170b0f7cfbfd7075cc8d54a5cc810
+oracle:
+  kind: known_result
+  reference: subquery-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT o.label AS label FROM (SELECT 'o1' AS label, DATE '2020-01-01' AS k
+    UNION ALL SELECT 'o2' AS label, DATE '2020-01-02' AS k UNION ALL SELECT 'o3' AS
+    label, DATE '2020-01-03' AS k) o WHERE o.k NOT IN (SELECT NULL AS k WHERE o.k
+    = DATE '2020-01-03')
+  expected:
+    rows: []
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 9b14cfca96708ed2665a1019b776238b6284392d5cfe7ef05ab2f357cf0f4447
+  static_validation_hash: ce0fbbc15309775fc26ba2cd0f745012b3727da5e403881201c5f13b31dad8c7

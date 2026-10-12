@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 from functools import wraps
 
 from xgtest.core.canonical import xgmj1_sha256
@@ -70,7 +70,7 @@ def contract_bindings(root: Path) -> dict[str, str]:
 
 
 @consistent_project_read
-def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path: Path, *, scope: AcceptanceScope | None = None) -> dict[str, Any]:
+def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path: Path, *, scope: AcceptanceScope | None = None, candidate_ids: Iterable[str] | None = None) -> dict[str, Any]:
     """Describe an exact review snapshot; caller decides when to save it."""
     root = root.resolve()
     scope = resolve_scope(scope=scope)
@@ -88,7 +88,10 @@ def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path
     if policy_path.is_file():
         inputs["governance-policy.json"] = _sha(policy_path)
     members: list[dict[str, str]] = []
+    selected_ids = set(candidate_ids) if candidate_ids is not None else None
     for path in _candidate_paths(root, scope):
+        if selected_ids is not None and path.stem not in selected_ids:
+            continue
         case = load_query_case(path)
         if case.metadata.status.value != "review":
             continue
@@ -106,6 +109,8 @@ def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path
         })
     if not members:
         raise ValueError("ACCEPTANCE_SCOPE_EMPTY")
+    if selected_ids is not None and {item["case_id"] for item in members} != selected_ids:
+        raise ValueError("JOB_CANDIDATE_SCOPE_MISSING")
     descriptor = {
         "schema_version": "1", "phase": "pre_promotion", "scope": scope.scope_id, "scope_definition": scope.model_dump(mode="json"),
         "runtime_profile_id": profile["sql_runtime_profile_id"],
@@ -114,6 +119,7 @@ def freeze_pre_promotion_manifest(root: Path, acceptance_dir: Path, profile_path
         "runtime_profile_evidence_sha256": _sha(evidence_path),
         "acceptance_root": acceptance_dir.resolve().relative_to(root).as_posix(),
         "inputs": inputs, "members": members,
+        **({"candidate_scope_ids": sorted(selected_ids)} if selected_ids is not None else {}),
         "ci_disposition": policy["ci_disposition"],
         "governance_policy": policy,
         "contract_bindings": contract_bindings(root),
@@ -211,7 +217,12 @@ def verify_pre_promotion_package(
         except (OSError, ValueError, KeyError):
             fail(case_id, "MANIFEST_ASSET_INVALID")
     current_ids: set[str] = set()
+    selected_manifest_ids = set(manifest.get("candidate_scope_ids", expected_ids))
+    if selected_manifest_ids != expected_ids:
+        fail("*", "MANIFEST_CANDIDATE_SCOPE_MISMATCH")
     for path in _candidate_paths(root, scope):
+        if path.stem not in expected_ids:
+            continue
         try:
             case = load_query_case(path)
             if case.metadata.status.value == "review":
@@ -308,7 +319,9 @@ def verify_pre_promotion_package(
         model = scope.load_model(root)
         assets = load_query_directory_with_sources(scope.path(root, "active_suite_root"))
         active_claims = scope.feature_claims(root, model, assets)
-        candidates = [load_query_case(path) for path in _candidate_paths(root, scope) if load_query_case(path).metadata.status.value == "review"]
+        selected_ids = set(manifest.get("candidate_scope_ids", [item["case_id"] for item in manifest.get("members", [])]))
+        candidates = [load_query_case(path) for path in _candidate_paths(root, scope)
+            if path.stem in selected_ids and load_query_case(path).metadata.status.value == "review"]
         active_gap = coverage_gap(model, active_claims, scope.coverage_strategy)
         provisional = coverage_gap(model, active_claims + [claim for case in candidates for claim in case.coverage], scope.coverage_strategy)
         summary = json.loads((acceptance_dir / "coverage-summary.json").read_text(encoding="utf-8"))

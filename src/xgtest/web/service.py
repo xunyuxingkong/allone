@@ -7,7 +7,7 @@ import json
 import os
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import yaml
 
@@ -124,12 +124,21 @@ class QueryReadService:
         except (OSError, ValueError):
             return None
 
-    def coverage(self, strategy: str = "pairwise") -> dict[str, Any]:
+    def coverage(self, strategy: str = "pairwise", *, candidate_ids: Iterable[str] | None = None) -> dict[str, Any]:
         if strategy not in {"pairwise", "all_values"}:
             raise ValueError("COVERAGE_STRATEGY_UNSUPPORTED")
         model = self._feature_model()
         assets = load_query_directory_with_sources(self.cases_dir)
-        candidates = [case for _, case in self._candidate_cases() if case.metadata.status.value == "review"]
+        if candidate_ids is None:
+            candidates = [case for _, case in self._candidate_cases() if case.metadata.status.value == "review"]
+        else:
+            candidates = []
+            for case_id in dict.fromkeys(candidate_ids):
+                if self.get_candidate(case_id) is None:
+                    continue
+                case = load_query_case(self.candidates_dir / f"{case_id}.yaml")
+                if case.metadata.status.value == "review":
+                    candidates.append(case)
         active_claims = self.scope.feature_claims(self.project_root, model, assets, suite_root=self.cases_dir)
         current = coverage_gap(model, active_claims, strategy)
         provisional = coverage_gap(model, active_claims + [claim for case in candidates for claim in case.coverage], strategy)

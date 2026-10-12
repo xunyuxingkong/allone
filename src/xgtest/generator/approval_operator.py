@@ -92,7 +92,7 @@ def initialize_local_signer(principal: str, private_key_path: Path, allowed_sign
                 raise ValueError("SIGNER_PRINCIPAL_ALREADY_REGISTERED")
     private_key_path.parent.mkdir(parents=True, exist_ok=True)
     completed = subprocess.run(
-        ["ssh-keygen", "-t", "ed25519", "-C", f"xgtest-promotion:{principal}", "-f", str(private_key_path)],
+        ["ssh-keygen", "-t", "ed25519", "-N", "", "-C", f"xgtest-promotion:{principal}", "-f", str(private_key_path)],
         check=False,
     )
     if completed.returncode != 0 or not public_key_path.is_file() or not private_key_path.is_file():

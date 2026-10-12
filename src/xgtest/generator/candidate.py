@@ -116,6 +116,7 @@ def generate_candidates(
     output_dir: Path,
     *,
     limit: int | None = None,
+    reserved_case_ids: set[str] | None = None,
 ) -> tuple[Path, ...]:
     if limit is not None and limit < 1:
         raise ValueError("GENERATOR_LIMIT_INVALID")
@@ -127,8 +128,13 @@ def generate_candidates(
     # not treated as coverage, but their deterministic IDs are excluded so a
     # later round cannot return the same first batch indefinitely.
     candidate_paths = sorted(path for path in output_dir.glob("*.yaml") if path.is_file())
-    reserved_cases = tuple(load_query_case(path) for path in candidate_paths)
-    excluded_case_ids = {case.metadata.id for case in reserved_cases}
+    reserved_cases = tuple(load_query_case(path) for path in candidate_paths
+        if reserved_case_ids is None or path.stem in reserved_case_ids)
+    # In Job-scoped mode, unowned deterministic candidates remain selectable
+    # when they cover a gap; returning their existing paths adopts them into
+    # this Job's selected set without counting unrelated files as coverage.
+    excluded_case_ids = ({path.stem for path in candidate_paths}
+        if reserved_case_ids is None else set(reserved_case_ids))
     generation_cases = (*existing_cases, *reserved_cases)
     written: list[Path] = []
     for assignment in _select_gap_assignments(model, strategy, generation_cases, limit, excluded_case_ids):

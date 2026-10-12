@@ -1,0 +1,57 @@
+metadata:
+  id: QUERY.AGGREGATE.029A01CD
+  title: Generated AGGREGATE 725fe77f
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_725fe77f522a
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: multiple_groups
+    datatype: varchar
+    function: count
+    grouping: group_by
+    null_handling: none
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: df3695d6edfb583c446d82ed0e478af0fb7b317a0a01c15b28d68f1546d2b478
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, COUNT(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, 'aa'
+    AS v UNION ALL SELECT CAST(1 AS INTEGER) AS g, 'bb' AS v UNION ALL SELECT CAST(2
+    AS INTEGER) AS g, 'cc' AS v) q GROUP BY q.g
+  expected:
+    rows:
+    - - 0
+      - 1
+    - - 1
+      - 1
+    - - 2
+      - 1
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 4ca9c47b8067c20e12c2be5f59a155882e9b8dbfc4bde11841962b958ec54967
+  static_validation_hash: f6a668fb3b637170c5379afd0acf1894e0588ce0deaed9076d36fe7e84983f9d

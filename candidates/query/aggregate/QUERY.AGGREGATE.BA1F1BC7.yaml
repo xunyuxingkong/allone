@@ -1,0 +1,58 @@
+metadata:
+  id: QUERY.AGGREGATE.BA1F1BC7
+  title: Generated AGGREGATE ea7a5544
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_ea7a554425f4
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: multiple_groups
+    datatype: date
+    function: min
+    grouping: group_by
+    null_handling: with_nulls
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 0a79c92c58552559f5f1eccd31c63018649bb6403acace4f04bc14b44d9a5116
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, MIN(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, DATE
+    '2020-01-01' AS v UNION ALL SELECT CAST(1 AS INTEGER) AS g, DATE '2020-01-02'
+    AS v UNION ALL SELECT CAST(2 AS INTEGER) AS g, DATE '2020-01-03' AS v UNION ALL
+    SELECT CAST(0 AS INTEGER) AS g, NULL AS v) q GROUP BY q.g
+  expected:
+    rows:
+    - - 0
+      - '2020-01-01'
+    - - 1
+      - '2020-01-02'
+    - - 2
+      - '2020-01-03'
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: dd0d92b14e53b76835e844f9da66d4871afc2d7a44a4a436e91bb2c628159832
+  static_validation_hash: 605022cc35ccbb3aaa31df24cb0f4d08f24219e7b571ac35bea693eda4564899

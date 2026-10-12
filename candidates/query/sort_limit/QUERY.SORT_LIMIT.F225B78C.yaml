@@ -1,0 +1,58 @@
+metadata:
+  id: QUERY.SORT_LIMIT.F225B78C
+  title: Generated SORT_LIMIT 6e8f0921
+  module: query
+  feature: query
+  subfeature: sort_limit
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - sort_limit
+  - generated
+coverage:
+- claim_id: sort_limit_6e8f09211bcf
+  model_id: query.sort_limit
+  model_version: '1'
+  assignment:
+    composition: with_join
+    limit_kind: limit_offset
+    null_ordering: nulls_first
+    order_direction: asc
+    sort_columns: multi
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.sort_limit
+  model_version: '1'
+  template_id: query.sort_limit.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 0f9ca73340e649fea67566642abe05e72583abf249a7a1c05bca1711a4e543a8
+oracle:
+  kind: known_result
+  reference: sort_limit-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.label AS label, q.k AS k FROM (SELECT 'r3' AS label, CAST(3 AS INTEGER)
+    AS k, CAST(2 AS INTEGER) AS t UNION ALL SELECT 'r1' AS label, CAST(1 AS INTEGER)
+    AS k, CAST(4 AS INTEGER) AS t UNION ALL SELECT 'r2' AS label, CAST(2 AS INTEGER)
+    AS k, CAST(1 AS INTEGER) AS t UNION ALL SELECT 'rn' AS label, NULL AS k, CAST(0
+    AS INTEGER) AS t) q JOIN (SELECT 1 AS probe) p ON (q.k IS NULL OR q.k >= 1) ORDER
+    BY q.k ASC NULLS FIRST, q.t ASC LIMIT 2 OFFSET 1
+  expected:
+    rows:
+    - - r1
+      - 1
+    - - r2
+      - 2
+  comparison:
+    mode: exact
+validation_evidence:
+  semantic_hash: 12dc3cd486e53021be7a9ae2ca1b9fc6956ff359919db793e0b71f4b201734ad
+  static_validation_hash: c18af77dcd25cc1980e6e0adca53216359b2bc9fc0ede9d3237b678717769324

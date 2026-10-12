@@ -184,6 +184,18 @@ class MissionService:
                   "generated_cases_valid": False, "no_blocking_failure": False}
         if strategy != "SMOKE" or job is None:
             return result
+        frozen = getattr(job, "strategy_completion", None)
+        if isinstance(frozen, dict) and frozen.get("schema_version") == "1":
+            regression = next((item for item in reversed(job.action_results) if item.action == "module.regression"), None)
+            regression_pass = bool(regression and module.regression_valid(regression))
+            no_blocking_failure = job.state not in {"BLOCKED", "FAILED"}
+            return {
+                "smoke_complete": bool(frozen.get("smoke_complete")) and regression_pass and no_blocking_failure,
+                "regression_pass": regression_pass,
+                "generated_cases_valid": bool(frozen.get("generated_cases_valid")),
+                "no_blocking_failure": no_blocking_failure,
+                "strategy_completion_frozen": True,
+            }
         generated_ids = {
             case_id for action in job.action_results if action.action == "candidate.generate"
             for case_id in action.outputs.get("candidate_ids", []) if isinstance(case_id, str)
@@ -197,8 +209,11 @@ class MissionService:
         )
         regression = next((item for item in reversed(job.action_results) if item.action == "module.regression"), None)
         regression_pass = bool(regression and module.regression_valid(regression))
+        latest_results = {}
+        for item in job.action_results:
+            latest_results[(item.action, item.case_id)] = item.status
         no_blocking_failure = job.state not in {"BLOCKED", "FAILED"} and not any(
-            item.status in {"FAIL", "BLOCKED"} for item in job.action_results
+            status in {"FAIL", "BLOCKED"} for status in latest_results.values()
         )
         coverage = module.inspect_coverage().outputs
         budget_or_no_gap = generation["remaining_budget"] == 0 or coverage.get("provisional_missing") == 0
@@ -227,12 +242,36 @@ class MissionService:
         package_result = next((result for result in reversed(job.action_results) if result.action == "acceptance.inspect"), None)
         regression = next((result for result in reversed(job.action_results) if result.action == "module.regression"), None)
         readiness = latest_preflight.outputs.get("readiness") if latest_preflight else None
-        status = (
-            "APPROVED" if latest_preflight and latest_preflight.status == "PASS"
-            else "INVALID" if package_result and package_result.status == "BLOCKED"
-            else "WAITING_APPROVAL" if package_result or job.state == "WAITING_APPROVAL"
-            else "NOT_READY"
-        )
+        historical_approval = bool(latest_preflight and latest_preflight.status == "PASS")
+        current_preflight = None
+        current_approval_valid = False
+        if manifest_path.is_file() and plan_path.is_file():
+            try:
+                acceptance = self.controller.services(job.job_id)[3]
+                promotion = next((result for result in reversed(job.action_results) if result.action == "acceptance.promote"), None)
+                if promotion and promotion.status == "PASS":
+                    from xgtest.generator.approval_operator import verify_operator_approval
+                    ctx = acceptance.ctx
+                    if ctx.approval_path and ctx.allowed_signers_path:
+                        current_approval_valid = verify_operator_approval(
+                            ctx.approval_path, ctx.allowed_signers_path, manifest_path=manifest_path,
+                            plan_path=plan_path, revoked_path=ctx.revoked_path,
+                        ).get("status") == "APPROVED"
+                else:
+                    current_preflight = acceptance.preflight()
+                    current_approval_valid = current_preflight.status == "PASS"
+            except (OSError, ValueError, KeyError):
+                current_preflight = None
+        if current_approval_valid:
+            status = "APPROVED_CURRENT"
+        elif historical_approval:
+            status = "APPROVED_STALE"
+        elif package_result and package_result.status == "BLOCKED":
+            status = "INVALID"
+        elif package_result or job.state == "WAITING_APPROVAL":
+            status = "WAITING_APPROVAL"
+        else:
+            status = "NOT_READY"
         package = package_result.outputs if package_result else {}
         coverage_summary = {}
         coverage_path = directory / "coverage-summary.json"
@@ -271,8 +310,15 @@ class MissionService:
         ]
         return {
             "status": status,
-            "reason": "审批绑定当前冻结清单与 Promotion Plan；签名必须由本地 Operator 完成。" if status == "WAITING_APPROVAL" else None,
-            "readiness": readiness or package.get("readiness"),
+            "reason": (
+                "当前签名、冻结清单、Promotion Plan、Signer 和撤销状态均已通过只读复核。"
+                if status == "APPROVED_CURRENT" else
+                "历史预检曾通过，但当前审批或输入已变化；需要重新核验并签署。"
+                if status == "APPROVED_STALE" else
+                "审批绑定当前冻结清单与 Promotion Plan；签名必须由本地 Operator 完成。"
+                if status == "WAITING_APPROVAL" else None
+            ),
+            "readiness": (current_preflight.outputs.get("readiness") if current_preflight else None) or readiness or package.get("readiness"),
             "manifest_id": manifest.get("manifest_id") or package.get("manifest_id"),
             "plan_hash": plan.get("plan_hash"),
             "manifest_ref": manifest_path.relative_to(self.root).as_posix() if manifest_path.is_file() else None,

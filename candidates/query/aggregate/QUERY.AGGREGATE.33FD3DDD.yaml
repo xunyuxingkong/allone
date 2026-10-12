@@ -1,0 +1,52 @@
+metadata:
+  id: QUERY.AGGREGATE.33FD3DDD
+  title: Generated AGGREGATE 7c9ab856
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_7c9ab8560234
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: single
+    datatype: date
+    function: max
+    grouping: group_by
+    null_handling: none
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 1cda7704b3317f8cf12c7789e2bf267ef5e808793e9727196a52563773de686f
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, MAX(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, DATE
+    '2020-01-01' AS v) q GROUP BY q.g
+  expected:
+    rows:
+    - - 0
+      - '2020-01-01'
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 2db2622a4587540fd47efa9143ad1d4457653f219c6a3223324bf47e7c882a4f
+  static_validation_hash: a8a8767ae16867d670ab13a368bda44d2dfaf7d4aa7f49c4a0455da8e9fe6035

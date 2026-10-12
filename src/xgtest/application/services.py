@@ -51,6 +51,7 @@ class ServiceContext:
     revoked_path: Path | None = None
     features: list[str] | None = None
     strategy: str = "STANDARD"
+    candidate_scope_ids: list[str] | None = None
 
     def __post_init__(self):
         self.root = self.root.resolve()
@@ -170,10 +171,20 @@ class ModuleService:
 
     def inspect(self, module_id="query"):
         if module_id != "query": raise ValueError("MODULE_UNSUPPORTED")
-        coverage = self.ctx.reader.coverage(self.ctx.scope.coverage_strategy)
+        coverage = self._coverage()
         # Report the job's active feature, not a hardcoded one.
+        candidates = self.ctx.reader.list_candidates()["items"] if self.ctx.candidate_scope_ids is None else [
+            {"case_id": case_id, "status": detail["status"], "trial_evidence_status": detail["trial_evidence_status"],
+             "trial_verified": detail["trial_evidence_status"] == "verified"}
+            for case_id in self.ctx.candidate_scope_ids
+            if (detail := self.ctx.reader.get_candidate(case_id)) is not None
+        ]
         return {"module": "query", "features": {self.ctx.scope.feature: coverage}, "module_completion": "MODULE_FULL_INCOMPLETE",
-                "active_input_identity": self.input_identity(), "candidates": self.ctx.reader.list_candidates()["items"]}
+                "active_input_identity": self.input_identity(), "candidates": candidates}
+
+    def _coverage(self):
+        return self.ctx.reader.coverage(self.ctx.scope.coverage_strategy,
+            candidate_ids=self.ctx.candidate_scope_ids)
 
     def run_regression(self, module_id="query"):
         if module_id != "query": raise ValueError("MODULE_UNSUPPORTED")
@@ -202,7 +213,7 @@ class ModuleService:
     def inspect_coverage(self, feature_id=None):
         feature_id = feature_id or self.ctx.scope.model_id
         if feature_id != self.ctx.scope.model_id: raise ValueError("FEATURE_UNSUPPORTED")
-        return ActionResult(action="feature.coverage", status="PASS", outputs=self.ctx.reader.coverage(self.ctx.scope.coverage_strategy))
+        return ActionResult(action="feature.coverage", status="PASS", outputs=self._coverage())
 
 
 class CandidateService:
@@ -232,9 +243,19 @@ class CandidateService:
             return True
         except (ValueError, OSError, KeyError, TypeError): return False
 
-    def readiness(self):
+    def readiness(self, candidate_ids=None):
         items = []
-        for item in self.ctx.reader.list_candidates()["items"]:
+        if candidate_ids is None:
+            source_items = self.ctx.reader.list_candidates()["items"]
+        else:
+            source_items = []
+            for case_id in dict.fromkeys(candidate_ids):
+                detail = self.ctx.reader.get_candidate(case_id)
+                if detail is not None:
+                    source_items.append({"case_id": case_id, "status": detail["status"],
+                        "trial_evidence_status": detail["trial_evidence_status"],
+                        "trial_verified": detail["trial_evidence_status"] == "verified"})
+        for item in source_items:
             case_id = item["case_id"]; case = load_query_case(self.ctx.candidate(case_id))
             static = False
             if case.metadata.status.value in {"draft", "review"}:
@@ -258,7 +279,9 @@ class CandidateService:
             strategy = self.ctx.scope.coverage_strategy
             budget = 30 if self.ctx.strategy == "SMOKE" else None
             effective_limit = min(budget, limit) if budget is not None and limit is not None else budget if budget is not None else limit
-            paths = FEATURE_PLUGINS.for_model(model.model_id).generate(model, strategy, cases, self.ctx.scope.path(self.ctx.root, "candidate_root"), limit=effective_limit)
+            paths = FEATURE_PLUGINS.for_model(model.model_id).generate(model, strategy, cases,
+                self.ctx.scope.path(self.ctx.root, "candidate_root"), limit=effective_limit,
+                reserved_case_ids=set(self.ctx.candidate_scope_ids) if self.ctx.candidate_scope_ids is not None else None)
         candidate_ids = [load_query_case(path).metadata.id for path in paths]
         return ActionResult(action="candidate.generate", status="PASS", outputs={
             "candidate_ids": candidate_ids, "generated_count": len(candidate_ids),
@@ -351,8 +374,9 @@ class AcceptanceService:
     def freeze(self):
         ctx = self.ctx; self.directory.mkdir(parents=True, exist_ok=True)
         trial, mutation = [], []
-        for item in ctx.reader.list_candidates()["items"]:
-            case = load_query_case(ctx.candidate(item["case_id"]))
+        selected_ids = set(ctx.candidate_scope_ids or [])
+        for case_id in sorted(selected_ids):
+            case = load_query_case(ctx.candidate(case_id))
             if case.metadata.status.value != "review" or case.validation_evidence is None or case.mutation_evidence is None:
                 raise ValueError("CANDIDATE_EVIDENCE_INCOMPLETE")
             ve, me = case.validation_evidence, case.mutation_evidence
@@ -372,12 +396,23 @@ class AcceptanceService:
         write_json(self.directory / "trial-run-index.json", {"candidates": trial, "candidate_count": len(trial), "double_run_pass_count": len(trial), "contract_set_id": profile["identity"]["contract_set_id"],
             "runtime_profile_id": profile["sql_runtime_profile_id"], "database_version": target.get("database_version"), "database_build_time": target.get("db_build")})
         write_json(self.directory / "mutation-validation-index.json", {"candidates": mutation, "candidate_count": len(mutation)})
-        coverage = ctx.reader.coverage(ctx.scope.coverage_strategy)
+        from xgtest.design.coverage import coverage_gap
+        from xgtest.query.loader import load_query_directory_with_sources
+        model = ctx.scope.load_model(ctx.root)
+        assets = load_query_directory_with_sources(ctx.scope.path(ctx.root, "active_suite_root"))
+        active_claims = ctx.scope.feature_claims(ctx.root, model, assets)
+        selected_cases = [load_query_case(ctx.candidate(case_id)) for case_id in sorted(selected_ids)]
+        active_gap = coverage_gap(model, active_claims, ctx.scope.coverage_strategy)
+        provisional = coverage_gap(model, active_claims + [claim for case in selected_cases for claim in case.coverage], ctx.scope.coverage_strategy)
+        coverage = {"active_covered": active_gap["covered"], "active_missing": active_gap["missing"],
+            "required": active_gap["required"], "provisional_covered": provisional["covered"],
+            "provisional_missing": provisional["missing"], "review_candidate_count": len(selected_cases)}
         write_json(self.directory / "coverage-summary.json", {"active_covered": coverage["active_covered"], "active_missing": coverage["active_missing"],
             "required": coverage["required"], "provisional_covered_if_promoted": coverage["provisional_covered"], "provisional_missing_if_promoted": coverage["provisional_missing"], "review_candidate_count": coverage["review_candidate_count"]})
         policy = ctx.root / "acceptance/query-generation-mvp/governance-policy.json"
         if policy.is_file(): write_json(self.directory / "governance-policy.json", read_json(policy))
-        write_json(self.manifest_path, freeze_pre_promotion_manifest(ctx.root, self.directory, ctx.profile_path))
+        write_json(self.manifest_path, freeze_pre_promotion_manifest(ctx.root, self.directory, ctx.profile_path,
+            candidate_ids=sorted(selected_ids)))
         write_json(self.directory / "promotion-plan.json", build_promotion_plan(ctx.root, self.manifest_path))
 
     def inspect(self):

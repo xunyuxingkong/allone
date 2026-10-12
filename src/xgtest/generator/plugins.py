@@ -78,7 +78,7 @@ class FeaturePlugin(Protocol):
     def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]: ...
     def expected_id(self, model: Any, assignment: dict[str, str]) -> str: ...
     def static_validate(self, path: Any, model: Any) -> dict[str, Any]: ...
-    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any: ...
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None, reserved_case_ids: set[str] | None = None) -> Any: ...
 
 
 @dataclass(frozen=True)
@@ -97,9 +97,9 @@ class JoinPlugin:
         from xgtest.generator.candidate import static_validate_candidate
         return static_validate_candidate(path, model)
 
-    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None, reserved_case_ids: set[str] | None = None) -> Any:
         from xgtest.generator.candidate import generate_candidates
-        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit, reserved_case_ids=reserved_case_ids)
 
     def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
         from xgtest.generator.join_template import render_join
@@ -134,9 +134,9 @@ class FilterPlugin:
         from xgtest.generator.candidate import static_validate_candidate
         return static_validate_candidate(path, model)
 
-    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None, reserved_case_ids: set[str] | None = None) -> Any:
         from xgtest.generator.candidate import generate_candidates
-        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit, reserved_case_ids=reserved_case_ids)
 
     def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
         from xgtest.generator.filter_template import render_filter
@@ -173,9 +173,9 @@ class AggregatePlugin:
         from xgtest.generator.candidate import static_validate_candidate
         return static_validate_candidate(path, model)
 
-    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None, reserved_case_ids: set[str] | None = None) -> Any:
         from xgtest.generator.candidate import generate_candidates
-        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit, reserved_case_ids=reserved_case_ids)
 
     def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
         from xgtest.generator.aggregate_template import render_aggregate
@@ -220,9 +220,9 @@ class SubqueryPlugin:
         from xgtest.generator.candidate import static_validate_candidate
         return static_validate_candidate(path, model)
 
-    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None, reserved_case_ids: set[str] | None = None) -> Any:
         from xgtest.generator.candidate import generate_candidates
-        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit, reserved_case_ids=reserved_case_ids)
 
     def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
         from xgtest.generator.subquery_template import render_subquery
@@ -266,9 +266,9 @@ class SortLimitPlugin:
         from xgtest.generator.candidate import static_validate_candidate
         return static_validate_candidate(path, model)
 
-    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None) -> Any:
+    def generate(self, model: Any, strategy: str, existing_cases: Any, output: Any, *, limit: int | None = None, reserved_case_ids: set[str] | None = None) -> Any:
         from xgtest.generator.candidate import generate_candidates
-        return generate_candidates(model, strategy, existing_cases, output, limit=limit)
+        return generate_candidates(model, strategy, existing_cases, output, limit=limit, reserved_case_ids=reserved_case_ids)
 
     def render(self, model: Any, assignment: dict[str, str]) -> dict[str, Any]:
         from xgtest.generator.sort_limit_template import render_sort_limit

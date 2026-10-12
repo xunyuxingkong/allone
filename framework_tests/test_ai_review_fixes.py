@@ -23,7 +23,7 @@ def review_service(controller, monkeypatch):
     monkeypatch.setattr(service, "review_context", lambda _: context)
     candidate = controller.services(job_id)[2]
     candidate.technical_review = service.technical_review
-    def readiness():
+    def readiness(*_):
         state = service.review_state(case_id)
         return [{"case_id": case_id, "static_valid": True, "mutation_valid": True, "trial_verified": True,
             "technical_review_valid": state["valid"], "technical_review_accepted": state["accepted"]}]

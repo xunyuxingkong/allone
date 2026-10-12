@@ -1,0 +1,51 @@
+metadata:
+  id: QUERY.AGGREGATE.6C89B408
+  title: Generated AGGREGATE 45d93a71
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_45d93a718b56
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: empty
+    datatype: int
+    function: avg
+    grouping: none
+    null_handling: with_nulls
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 6590820f9588e4beaf962ff326600eac804074772e5ed464f30ffef57f17c5b1
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT AVG(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, CAST(0 AS INTEGER)
+    AS v FROM (SELECT 1) one WHERE 1 = 0) q
+  expected:
+    rows:
+    - - null
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 8917ef5ca4e0d85b8a8ed669e86401e475348699ba25ddb788ec8e8ddebd3e77
+  static_validation_hash: a2d83b3435b9fd9b0cab6df169720bd63b2f109c5cc2ad008048e3f9a5207384

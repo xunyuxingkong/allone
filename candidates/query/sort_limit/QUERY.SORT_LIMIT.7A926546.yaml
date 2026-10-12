@@ -1,0 +1,61 @@
+metadata:
+  id: QUERY.SORT_LIMIT.7A926546
+  title: Generated SORT_LIMIT fb22159c
+  module: query
+  feature: query
+  subfeature: sort_limit
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - sort_limit
+  - generated
+coverage:
+- claim_id: sort_limit_fb22159c3500
+  model_id: query.sort_limit
+  model_version: '1'
+  assignment:
+    composition: none
+    limit_kind: none
+    null_ordering: nulls_first
+    order_direction: asc
+    sort_columns: multi
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.sort_limit
+  model_version: '1'
+  template_id: query.sort_limit.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: ad00a9d76abb88bbd02ba3bf1ba5d3814e31181aa74c98e53b5375617d9d1652
+oracle:
+  kind: known_result
+  reference: sort_limit-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.label AS label, q.k AS k FROM (SELECT 'r3' AS label, CAST(3 AS INTEGER)
+    AS k, CAST(2 AS INTEGER) AS t UNION ALL SELECT 'r1' AS label, CAST(1 AS INTEGER)
+    AS k, CAST(4 AS INTEGER) AS t UNION ALL SELECT 'r2' AS label, CAST(2 AS INTEGER)
+    AS k, CAST(1 AS INTEGER) AS t UNION ALL SELECT 'rn' AS label, NULL AS k, CAST(0
+    AS INTEGER) AS t) q ORDER BY q.k ASC NULLS FIRST, q.t ASC
+  expected:
+    rows:
+    - - rn
+      - null
+    - - r1
+      - 1
+    - - r2
+      - 2
+    - - r3
+      - 3
+  comparison:
+    mode: exact
+validation_evidence:
+  semantic_hash: 412eb73d192ba55453fe634d4e60afc57ee8957272fbfca319e6caa0b143a26d
+  static_validation_hash: 307ce2fd9c57ecaaba3e155bd10ab6115327cfde0c8bc34d58deedc22bde9b74

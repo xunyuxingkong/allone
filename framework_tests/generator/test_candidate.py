@@ -44,3 +44,17 @@ def test_limited_generation_continues_without_repeating_prior_batch(tmp_path: Pa
     second = generate_candidates(model, "pairwise", active, output, limit=2)
     assert len(first) == 2 and len(second) == 2
     assert {path.name for path in first}.isdisjoint(path.name for path in second)
+
+
+def test_unowned_candidates_are_reserved_for_ids_but_do_not_reduce_job_coverage(tmp_path: Path) -> None:
+    model = load_test_model(ROOT / "models" / "query" / "join.yaml")
+    active = load_query_directory(ROOT / "cases" / "query")
+    output = tmp_path / "candidates"
+    stale = generate_candidates(model, "pairwise", active, output, limit=1)
+
+    selected = generate_candidates(model, "pairwise", active, output, limit=1, reserved_case_ids=set())
+
+    assert len(stale) == 1 and len(selected) == 1
+    # The existing deterministic candidate is selected into this Job, so its
+    # evidence can be reused without silently counting every shared-root file.
+    assert stale[0] == selected[0]

@@ -96,6 +96,54 @@ def test_smoke_completion_is_budget_limited_and_distinct_from_pairwise():
     assert module.inspect_coverage().outputs["active_missing"] > 0
 
 
+def test_smoke_completion_uses_frozen_evidence_after_candidate_promotion():
+    from xgtest.ai.models import ActionResult
+    candidate_id = "QUERY.JOIN.ABCDEF12"
+    job = SimpleNamespace(state="COMPLETED", action_results=[
+        ActionResult(action="module.regression", status="PASS"),
+    ], strategy_completion={
+        "schema_version": "1", "candidate_scope_ids": [candidate_id],
+        "generated_cases_valid": True, "regression_pass": True,
+        "no_blocking_failure": True, "budget_or_no_gap": True, "smoke_complete": True,
+    })
+    module = SimpleNamespace(regression_valid=lambda result: result.status == "PASS")
+    candidates = SimpleNamespace(readiness=lambda *_: (_ for _ in ()).throw(AssertionError("promotion removed candidate")))
+
+    completion = MissionService.smoke_completion(
+        "SMOKE", job, module, candidates,
+        {"budget": 30, "generated_total": 30, "remaining_budget": 0, "stalled": False},
+    )
+
+    assert completion["smoke_complete"] is True
+    assert completion["strategy_completion_frozen"] is True
+
+
+def test_smoke_completion_ignores_superseded_blocked_action_results():
+    from xgtest.ai.models import ActionResult
+    candidate_id = "QUERY.JOIN.ABCDEF12"
+    job = SimpleNamespace(state="WAITING_APPROVAL", action_results=[
+        ActionResult(action="candidate.generate", status="PASS", outputs={"candidate_ids": [candidate_id]}),
+        ActionResult(action="module.regression", status="BLOCKED"),
+        ActionResult(action="module.regression", status="PASS"),
+    ])
+    module = SimpleNamespace(
+        regression_valid=lambda result: result.status == "PASS",
+        inspect_coverage=lambda: SimpleNamespace(outputs={"active_missing": 20, "provisional_missing": 0}),
+    )
+    candidates = SimpleNamespace(readiness=lambda *_: [{
+        "case_id": candidate_id, "static_valid": True, "mutation_valid": True,
+        "trial_verified": True, "technical_review_accepted": True,
+    }])
+
+    completion = MissionService.smoke_completion(
+        "SMOKE", job, module, candidates,
+        {"budget": 30, "generated_total": 1, "remaining_budget": 29, "stalled": False},
+    )
+
+    assert completion["no_blocking_failure"] is True
+    assert completion["smoke_complete"] is True
+
+
 def test_ai_summary_reflects_recorded_explanation_and_failure(service):
     from xgtest.ai.models import ActionResult, FailureAnalysis
     mission_id = service.create(DEFINITION)["mission"]["mission_id"]

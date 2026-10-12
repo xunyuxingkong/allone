@@ -76,7 +76,7 @@ onMounted(refresh)
     <section v-if="detail.approval_review.status !== 'NOT_READY'" class="surface mission-block approval-block">
       <h2 class="surface-title">人工审批与签名</h2>
       <div class="mission-body">
-        <p class="approval-status">{{ detail.approval_review.status === 'APPROVED' ? '签名已通过 Core 验证。' : detail.approval_review.status === 'INVALID' ? '审批证据无法读取，请检查冻结审批包。' : '测试证据已进入人工审批门禁。AI 不会代替负责人签名。' }}</p>
+        <p class="approval-status">{{ detail.approval_review.status === 'APPROVED_CURRENT' ? '当前签名与审批输入已通过 Core 只读复核。' : detail.approval_review.status === 'APPROVED_STALE' ? '历史签名曾通过，但当前审批输入已变化或无法验证，请重新核验。' : detail.approval_review.status === 'INVALID' ? '审批证据无法读取，请检查冻结审批包。' : '测试证据已进入人工审批门禁。AI 不会代替负责人签名。' }}</p>
         <p v-if="detail.approval_review.reason" class="muted">{{ detail.approval_review.reason }}</p>
         <div class="approval-grid">
           <div><span>审批包</span><b class="mono">{{ detail.approval_review.manifest_id || '尚未冻结' }}</b></div>

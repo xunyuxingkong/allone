@@ -1,0 +1,52 @@
+metadata:
+  id: QUERY.SUBQUERY.CF67D4C4
+  title: Generated SUBQUERY d9bb093e
+  module: query
+  feature: query
+  subfeature: subquery
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - subquery
+  - generated
+coverage:
+- claim_id: subquery_d9bb093eb148
+  model_id: query.subquery
+  model_version: '1'
+  assignment:
+    correlation: correlated
+    datatype: varchar
+    predicate: not_in
+    subquery_result: matching
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.subquery
+  model_version: '1'
+  template_id: query.subquery.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: f7a23f34b962d0e00276a6d2406f92692d1af6afeb82b0647013d4fc565b4f22
+oracle:
+  kind: known_result
+  reference: subquery-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT o.label AS label FROM (SELECT 'o1' AS label, 'a' AS k UNION ALL SELECT
+    'o2' AS label, 'b' AS k UNION ALL SELECT 'o3' AS label, 'c' AS k) o WHERE o.k
+    NOT IN (SELECT 'a' AS k WHERE o.k = 'a')
+  expected:
+    rows:
+    - - o2
+    - - o3
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 6e342721ea272280095983e9a92a34122c27c0eb42969922a96e4e4f432a5d82
+  static_validation_hash: a161f1a1b9b0d4c12d69d8e848252bca71705b8840d7bc96537c76828d1be548

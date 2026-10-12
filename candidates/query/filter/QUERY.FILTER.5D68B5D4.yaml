@@ -1,0 +1,56 @@
+metadata:
+  id: QUERY.FILTER.5D68B5D4
+  title: Generated FILTER 72dae3cd
+  module: query
+  feature: query
+  subfeature: filter
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - filter
+  - generated
+coverage:
+- claim_id: filter_72dae3cd0743
+  model_id: query.filter
+  model_version: '1'
+  assignment:
+    datatype: varchar
+    interaction: none
+    null_handling: three_valued_unknown
+    operator: less_equal
+    predicate: between
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.filter
+  model_version: '1'
+  template_id: query.filter.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: ef4923adac9888536c7c2182e87b14000c9f6059d91c93adc1c0a1659753967b
+oracle:
+  kind: known_result
+  reference: filter-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT d.k AS k, d.label AS label FROM (SELECT 'a' AS k, 'r1' AS label UNION
+    ALL SELECT 'b' AS k, 'r2' AS label UNION ALL SELECT 'c' AS k, 'r3' AS label UNION
+    ALL SELECT 'd' AS k, 'x4' AS label UNION ALL SELECT NULL AS k, 'rn' AS label)
+    d WHERE d.k BETWEEN 'a' AND 'b'
+  expected:
+    rows:
+    - - a
+      - r1
+    - - b
+      - r2
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 314a3e773d3e14b8fa6214f0c971d00d26ffb2944aaf9ad37b0acbb116b67c98
+  static_validation_hash: 9cbae8fa7b82937013a1943498276c33ade947f5d763a8a5f04741d65007fa23

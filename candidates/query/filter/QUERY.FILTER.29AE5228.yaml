@@ -1,0 +1,56 @@
+metadata:
+  id: QUERY.FILTER.29AE5228
+  title: Generated FILTER f1433cd3
+  module: query
+  feature: query
+  subfeature: filter
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - filter
+  - generated
+coverage:
+- claim_id: filter_f1433cd34c07
+  model_id: query.filter
+  model_version: '1'
+  assignment:
+    datatype: int
+    interaction: none
+    null_handling: none
+    operator: greater_than
+    predicate: comparison
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.filter
+  model_version: '1'
+  template_id: query.filter.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 569a8fde87314ed388285410f78bc15c0d05847540c9c53906068ff59aa0cda5
+oracle:
+  kind: known_result
+  reference: filter-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT d.k AS k, d.label AS label FROM (SELECT CAST(1 AS INTEGER) AS k, 'r1'
+    AS label UNION ALL SELECT CAST(2 AS INTEGER) AS k, 'r2' AS label UNION ALL SELECT
+    CAST(3 AS INTEGER) AS k, 'r3' AS label UNION ALL SELECT CAST(4 AS INTEGER) AS
+    k, 'x4' AS label) d WHERE d.k > CAST(2 AS INTEGER)
+  expected:
+    rows:
+    - - 3
+      - r3
+    - - 4
+      - x4
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 7d1967aeb8ec409cf260070c6320c00a89efbb67645f004c3106c8c05fb9c974
+  static_validation_hash: ba95e0864173c5973bb474a28026fc45a676ce279b7d74fb1c8387ee177653d3

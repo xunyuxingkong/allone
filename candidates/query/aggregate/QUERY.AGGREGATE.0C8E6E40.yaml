@@ -1,0 +1,50 @@
+metadata:
+  id: QUERY.AGGREGATE.0C8E6E40
+  title: Generated AGGREGATE a6fb927a
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_a6fb927a33fd
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: empty
+    datatype: varchar
+    function: count
+    grouping: group_by
+    null_handling: all_null
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 132b19ce3c9c39f7e3df4fb196e587053d9ee8a73469a373c5a03168d35740ea
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, COUNT(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, CAST(0
+    AS INTEGER) AS v FROM (SELECT 1) one WHERE 1 = 0) q GROUP BY q.g
+  expected:
+    rows: []
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 8491add18fc8e67a7339c26f9a641ea69ddb4dc7a7379fa943157798e07c35db
+  static_validation_hash: dcc36c6bc904f4667811332cd957ca46996279311e2578ef58c0565e883751e7

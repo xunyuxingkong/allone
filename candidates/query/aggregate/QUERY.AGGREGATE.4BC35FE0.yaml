@@ -1,0 +1,54 @@
+metadata:
+  id: QUERY.AGGREGATE.4BC35FE0
+  title: Generated AGGREGATE e04c9fe8
+  module: query
+  feature: query
+  subfeature: aggregate
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - aggregate
+  - generated
+coverage:
+- claim_id: aggregate_e04c9fe85a9d
+  model_id: query.aggregate
+  model_version: '1'
+  assignment:
+    cardinality: duplicates
+    datatype: int
+    function: avg
+    grouping: group_by_having
+    null_handling: none
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.aggregate
+  model_version: '1'
+  template_id: query.aggregate.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 72ed980898a54a304dfdb589df0c7e4e2312e70159182a370c68f7038a605341
+oracle:
+  kind: known_result
+  reference: aggregate-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT q.g AS g, AVG(q.v) AS agg FROM (SELECT CAST(0 AS INTEGER) AS g, CAST(10
+    AS INTEGER) AS v UNION ALL SELECT CAST(0 AS INTEGER) AS g, CAST(10 AS INTEGER)
+    AS v UNION ALL SELECT CAST(1 AS INTEGER) AS g, CAST(20 AS INTEGER) AS v) q GROUP
+    BY q.g HAVING COUNT(*) > 1
+  expected:
+    rows:
+    - - 0
+      - 10
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: a5fb61b24ffbf6243035bbec40a7ade102ce6ad64ca0c246d396e849eb642b4e
+  static_validation_hash: e3d8fb570216409600c3daf54ba5a2a5a45bf2c52ad7b739353a73971c865ce1

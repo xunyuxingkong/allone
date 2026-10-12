@@ -1,0 +1,51 @@
+metadata:
+  id: QUERY.SUBQUERY.46A7EC56
+  title: Generated SUBQUERY 285b4c5d
+  module: query
+  feature: query
+  subfeature: subquery
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - subquery
+  - generated
+coverage:
+- claim_id: subquery_285b4c5d873d
+  model_id: query.subquery
+  model_version: '1'
+  assignment:
+    correlation: uncorrelated
+    datatype: int
+    predicate: scalar
+    subquery_result: empty
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.subquery
+  model_version: '1'
+  template_id: query.subquery.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 1f8656c24c70619b6a8b61d62543dd2bcee3cb8e96981579dea76b3f82fe8ee5
+oracle:
+  kind: known_result
+  reference: subquery-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT o.label AS label FROM (SELECT 'o1' AS label, CAST(1 AS INTEGER) AS k
+    UNION ALL SELECT 'o2' AS label, CAST(2 AS INTEGER) AS k UNION ALL SELECT 'o3'
+    AS label, CAST(3 AS INTEGER) AS k) o WHERE o.k = (SELECT CAST(1 AS INTEGER) AS
+    k FROM (SELECT 1) one WHERE 1 = 0)
+  expected:
+    rows: []
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: decdd39911d23afd944104b6797e6882a1e8c1c73be6680e36955e69de4950d8
+  static_validation_hash: 79c8dafeef54c6f2a132dfd51b0f472f5f235331c327587afe9333b990ea3e08

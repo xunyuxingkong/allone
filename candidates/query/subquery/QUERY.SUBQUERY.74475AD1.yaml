@@ -1,0 +1,54 @@
+metadata:
+  id: QUERY.SUBQUERY.74475AD1
+  title: Generated SUBQUERY 08e7e4ac
+  module: query
+  feature: query
+  subfeature: subquery
+  level: P1
+  status: draft
+  timeout: 30s
+  isolation: session
+  tags:
+  - subquery
+  - generated
+coverage:
+- claim_id: subquery_08e7e4ac684b
+  model_id: query.subquery
+  model_version: '1'
+  assignment:
+    correlation: uncorrelated
+    datatype: int
+    predicate: not_in
+    subquery_result: empty
+  assertion_refs:
+  - q1
+generation:
+  generator: query_template_generator
+  generator_version: '1'
+  model_id: query.subquery
+  model_version: '1'
+  template_id: query.subquery.default
+  template_version: '1'
+  strategy: pairwise
+  seed: null
+  input_hash: 998df3a9e963b2ec3eb59512475da0b2f7c63c55411284b3366b6210e6e33207
+oracle:
+  kind: known_result
+  reference: subquery-template-v1
+steps:
+- id: q1
+  kind: query
+  sql: SELECT o.label AS label FROM (SELECT 'o1' AS label, CAST(1 AS INTEGER) AS k
+    UNION ALL SELECT 'o2' AS label, CAST(2 AS INTEGER) AS k UNION ALL SELECT 'o3'
+    AS label, CAST(3 AS INTEGER) AS k) o WHERE o.k NOT IN (SELECT CAST(1 AS INTEGER)
+    AS k FROM (SELECT 1) one WHERE 1 = 0)
+  expected:
+    rows:
+    - - o1
+    - - o2
+    - - o3
+  comparison:
+    mode: rowsort
+validation_evidence:
+  semantic_hash: 27f1dd6ce71dea1845218583e39a281098dbc528ce839689024d4665b4100c17
+  static_validation_hash: 5d2a1657250637d75b3a0fcc954edc6d41da3723e65a645bca5a010af63034d7

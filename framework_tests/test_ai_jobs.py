@@ -17,7 +17,7 @@ def controller(tmp_path, monkeypatch):
         inspect_coverage=lambda: ActionResult(action="feature.coverage", status="PASS", outputs={"provisional_missing": 0}),
         regression_valid=lambda result: result.status == "PASS",
         run_regression=lambda: ActionResult(action="module.regression", status="PASS"))
-    candidates = SimpleNamespace(readiness=lambda: [], generate=lambda **kwargs: ActionResult(action="candidate.generate", status="PASS", outputs={"limit": kwargs.get("limit")}))
+    candidates = SimpleNamespace(readiness=lambda *_: [], generate=lambda **kwargs: ActionResult(action="candidate.generate", status="PASS", outputs={"limit": kwargs.get("limit")}))
     acceptance = SimpleNamespace(manifest_path=tmp_path / "missing.json",
         inspect=lambda: ActionResult(action="acceptance.inspect", status="WAITING_APPROVAL", blockers=["HUMAN_REVIEW_REQUIRED"]),
         preflight=lambda: ActionResult(action="acceptance.preflight", status="WAITING_APPROVAL"),
