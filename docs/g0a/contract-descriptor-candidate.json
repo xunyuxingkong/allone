@@ -68,30 +68,30 @@
       }
     },
     "control_plane": {
-      "id": "d80692c77288ebd975698351c91fa6d75fb13fa8f9fb287a41053f3d655c4f4a",
+      "id": "3683082011ee7466b540673453d7aec2d5650c34e5ee1c634de8de8d8d0c62ab",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
         "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
         "src/xgtest/ai/cli.py": "f9adb091fd2606fbbec0782e813b50c22c29af3778c166aa934b89df95efdc60",
-        "src/xgtest/ai/controller.py": "d28c9a43211e5695157e098447e6ee851e61d8861388e3ebcf8ac145fb5d32ab",
+        "src/xgtest/ai/controller.py": "670848399fbb150f3c3826d0be0bec46408544ba1d48ada1c32f418e0d1815ee",
         "src/xgtest/ai/identity.py": "3fb026188922f11f2ebc67798e949f76c1f75c186a787c337fa438735b62715a",
         "src/xgtest/ai/mcp_server.py": "65380106e45e768812621ddd9a269eea5a10b8da0d8ef40b29e1b41c4021fa4a",
-        "src/xgtest/ai/models.py": "44af87b8a428a4445b158a3911cb802c17eb53a8ca6af5c2bd8c3a9a65d84ca8",
+        "src/xgtest/ai/models.py": "f9d5baf940bbe81d5ae19f65da06c5688b319ee4643eeeaa62a6bc1d40570fc9",
         "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
         "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
         "src/xgtest/application/db_worker.py": "94c755450111b4c81371aa22621d46207187a15fdb84bcf826610c1788da8700",
-        "src/xgtest/application/services.py": "7916820f742c49585e3a0941a660404eacda4d8738a9bae3c47cd13108e5d597",
+        "src/xgtest/application/services.py": "dd170bc160852380fa545e834b55c9e191b2e5728e896c8135e4c9a775701eba",
         "src/xgtest/application/worker_results.py": "47d1a65cf267a2849cdf0981af77a9305d880f96b0876e1e03b5ab7df38ecc9b",
         "src/xgtest/cli.py": "8830f916c7282f9fe36942ae7cbcb3b81713126d5cdb23994532198a044691a2",
         "src/xgtest/web/__init__.py": "cb31bfb4bd485de552392442d54a7512d36eaded1686adb53d3fa374d655f14b",
-        "src/xgtest/web/app.py": "a4347485570747757916bf8bb8c27c9eaa97041be7db746baadd75f1be55ecdc",
-        "src/xgtest/web/service.py": "f5a98bf6978e76eccdc4cde20cb0d2478ed29f6eb350d82f317c3051ec9ecc7d",
+        "src/xgtest/web/app.py": "2af91cb30fc987acf46a2752ba4d79ccd8927b3952280696fe903414daf8e7d1",
+        "src/xgtest/web/service.py": "35c8e46153549d77ede37e18b0bd322091622cfecd25c42a94d902ba972f8f8c",
         "webui/src/App.vue": "97a69a1543a877cb020efcab16db6db1276cb6119eb379617d377344fbd50826",
         "webui/src/api/cases.ts": "fc925b0f1a8660585d39331e609cd1ee182344b206ba84bfc2680d7e9ce8802b",
         "webui/src/api/client.ts": "f7ba468f903f6f4bb46e8ba8d0ce192e0687a33586f3c764a50571d90286b4a5",
-        "webui/src/api/generation.ts": "74a7ff9d3caa06132096ec736acb8fc89a602e0cc816a91ed836cc0737a219b8",
-        "webui/src/api/missions.ts": "d313ad922b1281edf76dd4ad1b08560802c8f8e41790c4fe744b3f781294ee04",
+        "webui/src/api/generation.ts": "22d279a55204dbd83ff7b5fdf6e1ae7599b32187a3b6d58bb1ccea54d9542cc2",
+        "webui/src/api/missions.ts": "ac23c08caa3511f4538c5de86eb32aedd19747c7baf731e1d6dfd5f075b29db0",
         "webui/src/api/runs.ts": "63288a3a28b61df1bac2879e2fb1f3643c071aacad94dcee897cda01f78354e7",
         "webui/src/api/runtime.ts": "36badc779e28158ba5c5de133fa4200f6e253bc096adedfa5fe48fbebbebcbd0",
         "webui/src/components/CaseTable.vue": "2267af0aa44fd5a2f959e5279013d10c8407ba1688f5a5c295587bc9f18897ba",
@@ -111,15 +111,15 @@
         "webui/src/views/CandidateListView.vue": "8054594e29ef5e16ceaeb5f017e3211a70c004fac2d21a69b731dffe30e92c77",
         "webui/src/views/CaseDetailView.vue": "a47718f3336b8701cba1d56a0eac0af540c35c06d06bc011ae0c149e6cec11b2",
         "webui/src/views/CoverageView.vue": "f671036a5e684c02a7164e4c5fd5c00dec942b20b83dd89fd67ee4224136a728",
-        "webui/src/views/DashboardView.vue": "d33909cca659eb83108b8462b7b1c88cd7b866cf6acab57a193ec1e7278266b2",
-        "webui/src/views/JobDetailView.vue": "2f2e282498768d4f820a70890a72844714080a477f623e64db305ad7332f7aba",
+        "webui/src/views/DashboardView.vue": "c158f2faae4f011e97d2f6f13e83b4789d432009370ec1f02e10908fea525c17",
+        "webui/src/views/JobDetailView.vue": "6b738ab69f963e3d2248eccb07411eb30937b374d87622c4a33e6da1cb678fe1",
         "webui/src/views/JobsView.vue": "e98ae1e0784afe398a2e0e2630f816eb18cbafbb647e60357d653fafbda85960",
-        "webui/src/views/MissionCreateView.vue": "7b16b71d8f353a7c4a8e32a3cc1e07bd2640f8d07d2270ec2ad36b75d2d11434",
-        "webui/src/views/MissionListView.vue": "5f7fb5c4d5f34269b6c7a9c77c3e9b9cacb493085e56ca26bc372720c8f5029d",
+        "webui/src/views/MissionCreateView.vue": "fc8f60df00797020ea8aaf8b5e1b1ff86738fd425acf89f98d2f413e61c80137",
+        "webui/src/views/MissionListView.vue": "d8b5e6e935b0b5de303beaf523d2cdc92ec3557e3287228b07f6710346d5e913",
         "webui/src/views/RunDetailView.vue": "0ffd1610316e07797a8a5dbc2c37d641f96e58df985eeaf29f011d20f159620d",
         "webui/src/views/RunListView.vue": "cf25c311efffba1a160ca33bdada0867cb40a7255bbee6a8e7b20b78441ec788",
         "webui/src/views/RuntimeView.vue": "d4d99f821d5458d521caf064b77cc4c4e33a6860f65052c2314e332eef52f3a8",
-        "webui/src/views/ScopeMatrixView.vue": "26766b156448703c6e6cd51f95cb2993f2ce6a3a56f566f2e19df0f6431f533f",
+        "webui/src/views/ScopeMatrixView.vue": "371d34e4d1b8c52061c14ccc17ac8f9a3161dcbf3173734d8ac7d0117ce4565e",
         "webui/vite.config.ts": "607783b360d186bd5317bee0a5add77238232e0e2d562465d8287fe6388f6552"
       }
     },
@@ -215,20 +215,20 @@
       }
     },
     "mission_logic": {
-      "id": "a0bce9d73ae9accd343448db9561de3b7bff1c7d989a1e1ac7ff23515797cedc",
+      "id": "1cd0ca9863fe27a248020d491583a4b92ccf033f0675d2dc6945038089913d22",
       "layer": "mission_logic",
       "schema_version": "1",
       "sources": {
         "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
         "src/xgtest/ai/cli.py": "f9adb091fd2606fbbec0782e813b50c22c29af3778c166aa934b89df95efdc60",
-        "src/xgtest/ai/controller.py": "d28c9a43211e5695157e098447e6ee851e61d8861388e3ebcf8ac145fb5d32ab",
+        "src/xgtest/ai/controller.py": "670848399fbb150f3c3826d0be0bec46408544ba1d48ada1c32f418e0d1815ee",
         "src/xgtest/ai/identity.py": "3fb026188922f11f2ebc67798e949f76c1f75c186a787c337fa438735b62715a",
         "src/xgtest/ai/mcp_server.py": "65380106e45e768812621ddd9a269eea5a10b8da0d8ef40b29e1b41c4021fa4a",
-        "src/xgtest/ai/models.py": "44af87b8a428a4445b158a3911cb802c17eb53a8ca6af5c2bd8c3a9a65d84ca8",
+        "src/xgtest/ai/models.py": "f9d5baf940bbe81d5ae19f65da06c5688b319ee4643eeeaa62a6bc1d40570fc9",
         "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
         "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
         "src/xgtest/application/db_worker.py": "94c755450111b4c81371aa22621d46207187a15fdb84bcf826610c1788da8700",
-        "src/xgtest/application/services.py": "7916820f742c49585e3a0941a660404eacda4d8738a9bae3c47cd13108e5d597",
+        "src/xgtest/application/services.py": "dd170bc160852380fa545e834b55c9e191b2e5728e896c8135e4c9a775701eba",
         "src/xgtest/application/worker_results.py": "47d1a65cf267a2849cdf0981af77a9305d880f96b0876e1e03b5ab7df38ecc9b",
         "src/xgtest/generator/__init__.py": "9047feb438f372a64ff35b24e991d3a48decdd18993f896f2362b922ca445c38",
         "src/xgtest/generator/acceptance.py": "1f9664d8c40458f1e5e326537e0618a7e9b8727141ebd2148b4314c3b6b51ce4",
@@ -253,9 +253,9 @@
         "src/xgtest/generator/template.py": "eba4c030ad33e26256e4e8d71870908b09785c4ad7bf1e7422e994ea373f6f2a",
         "src/xgtest/product/__init__.py": "4ecd3ad8cc1641351431822e2fffe874162ba7f5d7a22a1c12d5d14b00881db5",
         "src/xgtest/product/cli.py": "64600d2a77543abca4b2e46457d426910a22baa1894a15df6d302d681037ba36",
-        "src/xgtest/product/contracts.py": "25fc4d9d8be765083324b8d82cf277ad1c5b35766f0253b7debfd1e6e512c00c",
+        "src/xgtest/product/contracts.py": "cc851db052fca0fc354439cecb844fd85066822c0256d2792109c6c6d6d161e3",
         "src/xgtest/product/exploration.py": "966d9f357e47f7813ef4ef14b572a9b46a7fce720506e3c5d439343ee9273770",
-        "src/xgtest/product/mission_service.py": "527bda60772bf00a8908e4020d313630ee3b16e11b8b7b3c6ccd9f59990a3b1a",
+        "src/xgtest/product/mission_service.py": "d8e6bbb505a204cc80f4681b542faa3762fb89dfb577e6e52e856246959a59fd",
         "src/xgtest/product/store.py": "eb7732aeb8b93ec27c83a24a3b2342c2f63ea7cbe4cec07cdaad5caeb63ee602"
       }
     },
@@ -270,7 +270,7 @@
       }
     },
     "suite": {
-      "id": "c8465c7ddc8efac8caecc1b5e58d087b727cc4bb9191bd3a2a0ad9b8f9cf81cb",
+      "id": "a2eab5f7f6d366215caf2602486115f16912fa108d6ca88af9230530781495c9",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -327,7 +327,7 @@
         "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de",
         "framework_tests/test_ai_jobs.py": "11767d64e95e4c11d0ab0e89c2cca299af69bb668843ec5a353c293b01e56f1a",
         "framework_tests/test_ai_review_fixes.py": "86313f673c434afe793e800fbece7b8a48cbe991ec305b1911a006eac7e88268",
-        "framework_tests/test_product_missions.py": "c31d01fa60a56717a52ad8935e66822706c01ce5519c9ecc489af766907cf5e1"
+        "framework_tests/test_product_missions.py": "bd87df0447865820da6ce3b9d9660aa15473e167eb97bd2bee2cab67fd3db09c"
       }
     }
   },

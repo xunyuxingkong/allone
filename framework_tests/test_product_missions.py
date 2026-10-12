@@ -38,7 +38,8 @@ def test_mission_create_start_links_a_job_and_maps_state(service):
     created = service.create(DEFINITION)
     mission_id = created["mission"]["mission_id"]
     assert created["state"] == "READY" and created["mission"]["job_id"] is None
-    assert created["tested_scope"] == ["join"] and created["untested_scope"] == ["performance", "concurrency"]
+    assert created["requested_scope"] == ["join"] and created["executed_scope"] == []
+    assert created["excluded_scope"] == ["performance", "concurrency"]
     started = service.start(mission_id)
     assert started["state"] == "RUNNING"
     job_id = started["mission"]["job_id"]
@@ -89,7 +90,7 @@ def test_ai_summary_reflects_recorded_explanation_and_failure(service):
 def test_filter_mission_starts_a_job_scoped_to_filter(service):
     created = service.create({**DEFINITION, "features": ["filter"]})
     mission_id = created["mission"]["mission_id"]
-    assert created["tested_scope"] == ["filter"]
+    assert created["requested_scope"] == ["filter"] and created["executed_scope"] == []
     started = service.start(mission_id)
     job_id = started["mission"]["job_id"]
     job = service.controller.store.load(job_id)
@@ -104,7 +105,7 @@ def test_filter_mission_starts_a_job_scoped_to_filter(service):
 def test_aggregate_mission_starts_a_job_scoped_to_aggregate(service):
     created = service.create({**DEFINITION, "features": ["aggregate"]})
     mission_id = created["mission"]["mission_id"]
-    assert created["tested_scope"] == ["aggregate"]
+    assert created["requested_scope"] == ["aggregate"] and created["executed_scope"] == []
     job_id = service.start(mission_id)["mission"]["job_id"]
     assert service.controller.store.load(job_id).intent.features == ["aggregate"]
     assert service.controller.services(job_id)[0].ctx.scope.feature == "aggregate"
@@ -113,7 +114,7 @@ def test_aggregate_mission_starts_a_job_scoped_to_aggregate(service):
 def test_subquery_mission_starts_a_job_scoped_to_subquery(service):
     created = service.create({**DEFINITION, "features": ["subquery"]})
     mission_id = created["mission"]["mission_id"]
-    assert created["tested_scope"] == ["subquery"]
+    assert created["requested_scope"] == ["subquery"] and created["executed_scope"] == []
     job_id = service.start(mission_id)["mission"]["job_id"]
     assert service.controller.store.load(job_id).intent.features == ["subquery"]
     assert service.controller.services(job_id)[0].ctx.scope.feature == "subquery"

@@ -40,7 +40,7 @@ class TestMission(StrictModel):
     name: str = Field(min_length=1, max_length=200)
     purpose: str = Field(min_length=1, max_length=2000)
     module: Literal["query"] = "query"
-    features: list[str] = Field(min_length=1)
+    features: list[str] = Field(min_length=1, max_length=1)
     strategy: MissionStrategy = "STANDARD"
     data_scale: MissionDataScale = "SMALL"
     risk_focus: list[str] = Field(default_factory=list)
@@ -53,6 +53,8 @@ class TestMission(StrictModel):
     @field_validator("features")
     @classmethod
     def features_are_supported(cls, values: list[str]) -> list[str]:
+        if len(values) != 1:
+            raise ValueError("MISSION_FEATURE_SCOPE_MUST_BE_SINGLE_UNTIL_ORCHESTRATION")
         identifiers = _identifiers(values, "MISSION_FEATURE_INVALID")
         if len(set(identifiers)) != len(identifiers):
             raise ValueError("MISSION_FEATURE_DUPLICATE")
@@ -70,8 +72,16 @@ class TestMission(StrictModel):
         return identifiers
 
 
-def strategy_estimate(strategy: MissionStrategy) -> dict:
+def strategy_estimate(strategy: MissionStrategy, feature: str | None = None) -> dict:
     """Planning estimate shown before a job is created (a range, never a promise)."""
-    low, high = STRATEGY_CASE_RANGE[strategy]
+    if feature is None:
+        low, high = STRATEGY_CASE_RANGE[strategy]
+    elif strategy in {"STANDARD", "AI_EXPLORATORY"}:
+        low, high = {"join": (40, 60), "filter": (40, 70), "aggregate": (30, 60),
+                     "subquery": (30, 60), "sort_limit": (20, 40)}[feature]
+    elif strategy == "SMOKE":
+        low, high = (0, 30)
+    else:
+        low, high = STRATEGY_CASE_RANGE[strategy]
     return {"strategy": strategy, "case_min": low, "case_max": high,
             "sql_min": low, "sql_max": high * 2, "unit": "cases"}

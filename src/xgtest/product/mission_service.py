@@ -42,7 +42,8 @@ class MissionService:
             raise ValueError("MISSION_NOT_READY")
         # Reuse query.full_test; the mission's feature selects the job's scope.
         goal = f"{mission.name}｜{mission.purpose}"
-        job = self.controller.create(goal, {"intent": "query.full_test", "features": list(mission.features)})
+        job = self.controller.create(goal, {"intent": "query.full_test", "features": list(mission.features),
+            "strategy": mission.strategy, "data_scale": mission.data_scale, "risk_focus": mission.risk_focus})
         with self.store.lock(mission_id):
             current = self.store.load(mission_id)
             self.store.save(current.model_copy(update={"job_id": job["job_id"], "state": "RUNNING"}))
@@ -122,12 +123,35 @@ class MissionService:
     def view(self, mission_id: str) -> dict:
         mission = self.store.load(mission_id)
         state = self._job_state(mission)
+        job = self._job(mission)
+        executed = bool(job and any(
+            result.status in {"PASS", "FAIL"} and result.action in {
+                "module.regression", "candidate.trial", "candidate.mutation"
+            }
+            for result in job.action_results
+        ))
+        covered = bool(job and any(
+            result.action == "feature.coverage" and result.status == "PASS"
+            and result.outputs.get("active_missing") == 0 for result in job.action_results
+        ))
         return {
             "mission": mission.model_dump(mode="json"),
             "state": state,
-            "tested_scope": list(mission.features),
-            "untested_scope": list(mission.excluded_scope),
-            "estimate": strategy_estimate(mission.strategy),
+            "requested_scope": list(mission.features),
+            "executed_scope": list(mission.features) if executed else [],
+            "covered_scope": list(mission.features) if covered else [],
+            "excluded_scope": list(mission.excluded_scope),
+            "unmodelled_scope": [],
+            "execution_policy": {
+                "strategy": mission.strategy,
+                "coverage_strategy": "all_values" if mission.strategy == "FULL" else "pairwise",
+                "candidate_budget": 30 if mission.strategy == "SMOKE" else None,
+                "data_scale": mission.data_scale,
+                "risk_focus": list(mission.risk_focus),
+                "data_scale_applied": False,
+                "risk_focus_applied": False,
+            },
+            "estimate": strategy_estimate(mission.strategy, mission.features[0]),
             "ai_summary": self.ai_summary(mission_id),
             "completeness_note": "MODULE_FULL_INCOMPLETE",
         }

@@ -159,10 +159,17 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
 
-    @app.get("/api/scope-matrix")
-    def scope_matrix(current: QueryReadService = Depends(get_service), strategy: str = "pairwise") -> dict:
+    @app.get("/api/feature-coverages")
+    def feature_coverages(current: QueryReadService = Depends(get_service), strategy: str = "pairwise") -> dict:
         try:
-            return current.scope_matrix(strategy)
+            return current.feature_coverages(strategy)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.get("/api/scope-matrix")
+    def scope_matrix(current: QueryReadService = Depends(get_service), strategy: str = "pairwise", feature: str | None = None) -> dict:
+        try:
+            return current.scope_matrix(strategy, feature)
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
 

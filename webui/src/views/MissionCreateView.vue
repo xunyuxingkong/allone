@@ -19,10 +19,10 @@ const FEATURES = [
 const RISK_FOCUS = ['null', 'duplicate', 'boundary', 'type_conversion']
 const EXCLUDED_SCOPE = ['performance', 'concurrency', 'transaction', 'window', 'cte']
 const STRATEGIES: { value: MissionStrategy; label: string; detail: string }[] = [
-  { value: 'SMOKE', label: 'Smoke', detail: '基础语法与关键路径，约 30~50 Case' },
-  { value: 'STANDARD', label: 'Standard', detail: 'Pairwise、NULL、空结果、边界值，约 150~300 Case' },
-  { value: 'FULL', label: 'Full', detail: '更多维度组合与高阶边界，约 500~2000 Case' },
-  { value: 'AI_EXPLORATORY', label: 'AI Exploratory', detail: 'AI 分析覆盖缺口并动态补充 Case' },
+  { value: 'SMOKE', label: 'Smoke', detail: 'Pairwise，最多生成 30 个候选' },
+  { value: 'STANDARD', label: 'Standard', detail: 'Pairwise 全部要求组合' },
+  { value: 'FULL', label: 'Full', detail: 'All Values 覆盖策略' },
+  { value: 'AI_EXPLORATORY', label: 'AI Exploratory', detail: 'Standard 基线与 AI 风险简报；自动补测循环尚未实现' },
 ]
 
 const form = reactive({
@@ -38,19 +38,22 @@ const form = reactive({
 
 const submitting = ref(false)
 const error = ref('')
-const estimate = computed(() => {
-  const ranges: Record<MissionStrategy, [number, number]> = {
-    SMOKE: [30, 50], STANDARD: [150, 300], FULL: [500, 2000], AI_EXPLORATORY: [150, 300],
-  }
-  const [min, max] = ranges[form.strategy]
-  return { min, max, sqlMin: min, sqlMax: max * 2 }
-})
 const toggle = (list: string[], value: string) => {
   const index = list.indexOf(value)
   if (index >= 0) list.splice(index, 1)
   else list.push(value)
 }
-
+const estimate = computed(() => {
+  const featureRanges: Record<string, [number, number]> = {
+    join: [40, 60], filter: [40, 70], aggregate: [30, 60], subquery: [30, 60], sort_limit: [20, 40],
+  }
+  const standard = featureRanges[form.features[0]] ?? [0, 0]
+  const ranges: Record<MissionStrategy, [number, number]> = {
+    SMOKE: [0, 30], STANDARD: standard, FULL: [500, 2000], AI_EXPLORATORY: standard,
+  }
+  const [min, max] = ranges[form.strategy]
+  return { min, max, sqlMin: min, sqlMax: max * 2 }
+})
 async function submit() {
   error.value = ''
   if (!form.features.length) { error.value = '请至少选择一个测试范围。'; return }
@@ -90,12 +93,12 @@ async function submit() {
       <div class="mission-body">
         <div class="option-grid">
           <label v-for="feature in FEATURES" :key="feature.value" class="option" :class="{ disabled: !feature.enabled }">
-            <input type="checkbox" :value="feature.value" :checked="form.features.includes(feature.value)" :disabled="!feature.enabled" @change="toggle(form.features, feature.value)" />
+            <input type="radio" name="mission-feature" :value="feature.value" v-model="form.features[0]" :disabled="!feature.enabled" />
             <span>{{ feature.label }}</span>
             <em v-if="!feature.enabled">未支持</em>
           </label>
         </div>
-        <p class="hint">当前 Core 已能建模并度量 JOIN、Filter、Aggregate、Subquery 与 Sort / Limit 的覆盖；其余范围在具备模型前不会创建虚假覆盖。</p>
+        <p class="hint">每个 Job 当前执行一个 Feature。多 Feature Mission 编排上线前，请为本次任务选择单一测试范围。</p>
       </div>
     </section>
 

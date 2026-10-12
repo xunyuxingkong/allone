@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useRunsStore } from '../stores/runs'
-import { getCoverage, type CoverageView } from '../api/generation'
+import { getFeatureCoverages, type FeatureCoveragesView } from '../api/generation'
 import { listMissions, type MissionSummary } from '../api/missions'
 import StatCard from '../components/StatCard.vue'
 import StatusTag from '../components/StatusTag.vue'
@@ -10,17 +10,17 @@ import { formatDate, formatDuration, shortId } from '../utils'
 
 const store = useRunsStore()
 const missions = ref<MissionSummary[]>([])
-const coverage = ref<CoverageView | null>(null)
+const coverage = ref<FeatureCoveragesView | null>(null)
 const error = ref('')
 const loading = ref(false)
 
 const ACTIVE = ['READY', 'RUNNING', 'WAITING_APPROVAL', 'BLOCKED']
 const current = computed(() => missions.value.find((item) => ACTIVE.includes(item.state)) ?? null)
 const latest = computed(() => store.recent[0] ?? null)
-const coverageRows = computed(() => coverage.value?.matrix ?? [])
+const coverageRows = computed(() => coverage.value?.features ?? [])
 // Preserve the Core wording: the defined scope may be complete while the module is not.
 const scopeCompletion = computed(() => {
-  const missing = coverage.value?.active_missing ?? 0
+  const missing = coverage.value?.totals.missing ?? 0
   return missing === 0 ? '当前定义范围：完成' : `当前定义范围：还缺 ${missing} 项`
 })
 
@@ -29,7 +29,7 @@ async function refresh() {
   try {
     const [missionResponse, coverageResponse] = await Promise.all([
       listMissions().catch(() => ({ items: [] as MissionSummary[] })),
-      getCoverage('pairwise').catch(() => null),
+      getFeatureCoverages('pairwise').catch(() => null),
     ])
     missions.value = missionResponse.items
     coverage.value = coverageResponse
@@ -70,23 +70,20 @@ onMounted(refresh)
 
   <div class="dashboard-top">
     <section class="surface coverage-panel">
-      <div class="section-heading"><h2 class="surface-title">Query 覆盖</h2><RouterLink class="link" to="/coverage">查看覆盖详情 →</RouterLink></div>
+      <div class="section-heading"><h2 class="surface-title">五个 Feature 覆盖（Pairwise）</h2><RouterLink class="link" to="/coverage">查看覆盖详情 →</RouterLink></div>
       <div v-if="coverage" class="metric-row">
-        <StatCard label="要求组合" :value="coverage.required" />
-        <StatCard label="正式覆盖" :value="coverage.active_covered" tone="pass" />
-        <StatCard label="正式缺口" :value="coverage.active_missing" tone="error" />
-        <StatCard label="待评审候选" :value="coverage.review_candidate_count" />
-        <StatCard label="候选晋级后预计缺口" :value="coverage.provisional_missing" :tone="coverage.provisional_missing ? 'error' : 'pass'" />
+        <StatCard label="要求组合" :value="coverage.totals.required" />
+        <StatCard label="正式覆盖" :value="coverage.totals.covered" tone="pass" />
+        <StatCard label="正式缺口" :value="coverage.totals.missing" tone="error" />
+        <StatCard label="Active Cases" :value="coverage.totals.cases" />
       </div>
       <div class="scope-note"><span>{{ scopeCompletion }}</span><span class="muted">模块层面：未完整（MODULE_FULL_INCOMPLETE）</span></div>
       <div class="table-scroll" v-if="coverageRows.length">
         <table class="data-table compact-table">
-          <thead><tr><th>覆盖维度</th><th>要求</th><th>正式覆盖</th><th>候选晋级后</th></tr></thead>
-          <tbody><tr v-for="row in coverageRows" :key="row.dimensions.join('·')">
-            <td>{{ row.dimensions.join(' · ') || '—' }}</td>
-            <td>{{ row.required }}</td>
-            <td>{{ row.active_covered }}</td>
-            <td>{{ row.provisional_covered }}</td>
+          <thead><tr><th>Feature</th><th>Requirements</th><th>Covered</th><th>Missing</th><th>Active Cases</th><th>状态</th></tr></thead>
+          <tbody><tr v-for="row in coverageRows" :key="row.feature">
+            <td>{{ row.feature }}</td><td>{{ row.required }}</td><td>{{ row.covered }}</td><td>{{ row.missing }}</td><td>{{ row.cases }}</td>
+            <td>{{ row.status === 'DEFINED_SCOPE_COMPLETE' ? '当前定义范围已覆盖' : '当前定义范围有缺口' }}</td>
           </tr></tbody>
         </table>
       </div>

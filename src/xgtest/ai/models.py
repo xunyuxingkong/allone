@@ -18,8 +18,19 @@ class TestIntent(StrictModel):
     allow_candidate_generation: bool = True
     allow_trial: bool = True
     allow_promotion: bool = True
-    # Which query feature the job drives. The first entry selects the job's scope.
+    # One Job owns one feature scope. Multi-feature Missions must orchestrate child Jobs.
     features: list[Literal["join", "filter", "aggregate", "subquery", "sort_limit"]] = Field(default_factory=lambda: ["join"], min_length=1)
+    strategy: Literal["SMOKE", "STANDARD", "FULL", "AI_EXPLORATORY"] = "STANDARD"
+    data_scale: Literal["SMALL", "MEDIUM", "LARGE"] = "SMALL"
+    risk_focus: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def one_feature_per_job(self):
+        if len(self.features) != 1:
+            raise ValueError("JOB_FEATURE_SCOPE_MUST_BE_SINGLE")
+        if len(set(self.risk_focus)) != len(self.risk_focus):
+            raise ValueError("JOB_RISK_FOCUS_DUPLICATE")
+        return self
 
 
 class SemanticAction(StrictModel):

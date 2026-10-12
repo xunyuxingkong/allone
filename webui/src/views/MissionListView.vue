@@ -41,15 +41,17 @@ onMounted(refresh)
     </section>
     <div class="mission-two">
       <section class="surface mission-block">
-        <h2 class="surface-title">测试范围（测什么）</h2>
+        <h2 class="surface-title">请求的测试范围</h2>
         <div class="mission-body">
-          <ul class="chips"><li v-for="item in detail.tested_scope" :key="item" class="chip ok">✓ {{ item }}</li><li v-if="!detail.tested_scope.length" class="muted">—</li></ul>
+          <ul class="chips"><li v-for="item in detail.requested_scope" :key="item" class="chip">{{ item }}</li><li v-if="!detail.requested_scope.length" class="muted">—</li></ul>
+          <p>已执行：{{ detail.executed_scope.join(' / ') || '尚无执行证据' }}</p>
+          <p>已覆盖：{{ detail.covered_scope.join(' / ') || '尚未达到完整覆盖' }}</p>
           <RouterLink class="link" :to="`/tests/${detail.mission.mission_id}/scope`">查看测试空间矩阵 →</RouterLink>
         </div>
       </section>
       <section class="surface mission-block">
         <h2 class="surface-title">明确不测范围</h2>
-        <div class="mission-body"><ul class="chips"><li v-for="item in detail.untested_scope" :key="item" class="chip off">✗ {{ item }}</li><li v-if="!detail.untested_scope.length" class="muted">—</li></ul></div>
+        <div class="mission-body"><ul class="chips"><li v-for="item in detail.excluded_scope" :key="item" class="chip off">✗ {{ item }}</li><li v-if="!detail.excluded_scope.length" class="muted">—</li></ul></div>
       </section>
     </div>
     <section class="surface mission-block">
@@ -63,6 +65,7 @@ onMounted(refresh)
         <b v-if="detail.mission.job_id"><RouterLink class="link" :to="`/jobs/${detail.mission.job_id}`">查看任务 {{ shortId(detail.mission.job_id) }}</RouterLink></b>
       </div>
       <p class="hint">Query / 当前定义范围 与 Query 全模块验收分开；模块层面仍为 {{ detail.completeness_note }}。</p>
+      <p v-if="!detail.execution_policy.data_scale_applied || !detail.execution_policy.risk_focus_applied" class="hint">数据规模和风险重点已记录，但当前生成器尚未据此调整数据集或候选选择。</p>
     </section>
 
     <section class="surface mission-block ai-block">

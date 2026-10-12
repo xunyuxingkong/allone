@@ -27,6 +27,12 @@ export interface CoverageView {
   constraints: Record<string, unknown>[]
 }
 
+export interface FeatureCoveragesView {
+  strategy: 'pairwise' | 'all_values'
+  features: { feature: string; model_id: string; required: number; covered: number; missing: number; cases: number; status: string }[]
+  totals: { required: number; covered: number; missing: number; cases: number }
+}
+
 export interface CandidateSummary {
   case_id: string
   status: string
@@ -109,8 +115,10 @@ export interface ScopeMatrixView {
 
 export const getCoverage = (strategy: 'pairwise' | 'all_values' = 'pairwise') =>
   api<CoverageView>(`/api/coverage?strategy=${strategy}`)
-export const getScopeMatrix = (strategy: 'pairwise' | 'all_values' = 'pairwise') =>
-  api<ScopeMatrixView>(`/api/scope-matrix?strategy=${strategy}`)
+export const getFeatureCoverages = (strategy: 'pairwise' | 'all_values' = 'pairwise') =>
+  api<FeatureCoveragesView>(`/api/feature-coverages?strategy=${strategy}`)
+export const getScopeMatrix = (strategy: 'pairwise' | 'all_values' = 'pairwise', feature?: string) =>
+  api<ScopeMatrixView>(`/api/scope-matrix?strategy=${strategy}${feature ? `&feature=${encodeURIComponent(feature)}` : ''}`)
 export const getCandidates = (status?: string) =>
   api<{ items: CandidateSummary[]; total: number }>(`/api/candidates${status ? `?status=${encodeURIComponent(status)}` : ''}`)
 export const getCandidate = (caseId: string) =>

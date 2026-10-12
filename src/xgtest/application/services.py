@@ -50,6 +50,7 @@ class ServiceContext:
     allowed_signers_path: Path | None = None
     revoked_path: Path | None = None
     features: list[str] | None = None
+    strategy: str = "STANDARD"
 
     def __post_init__(self):
         self.root = self.root.resolve()
@@ -64,7 +65,12 @@ class ServiceContext:
         if not self.features:
             return resolve_scope()
         from xgtest.generator.plugins import FEATURE_PLUGINS
-        return resolve_scope(scope=FEATURE_PLUGINS.for_model(f"query.{self.features[0]}").scope)
+        if len(self.features) != 1:
+            raise ValueError("JOB_FEATURE_SCOPE_MUST_BE_SINGLE")
+        scope = FEATURE_PLUGINS.for_model(f"query.{self.features[0]}").scope
+        if self.strategy == "FULL":
+            scope = scope.model_copy(update={"coverage_strategy": "all_values"})
+        return resolve_scope(scope=scope)
 
     def relative(self, path):
         return path.resolve().relative_to(self.root).as_posix()
@@ -164,7 +170,7 @@ class ModuleService:
 
     def inspect(self, module_id="query"):
         if module_id != "query": raise ValueError("MODULE_UNSUPPORTED")
-        coverage = self.ctx.reader.coverage()
+        coverage = self.ctx.reader.coverage(self.ctx.scope.coverage_strategy)
         # Report the job's active feature, not a hardcoded one.
         return {"module": "query", "features": {self.ctx.scope.feature: coverage}, "module_completion": "MODULE_FULL_INCOMPLETE",
                 "active_input_identity": self.input_identity(), "candidates": self.ctx.reader.list_candidates()["items"]}
@@ -196,7 +202,7 @@ class ModuleService:
     def inspect_coverage(self, feature_id=None):
         feature_id = feature_id or self.ctx.scope.model_id
         if feature_id != self.ctx.scope.model_id: raise ValueError("FEATURE_UNSUPPORTED")
-        return ActionResult(action="feature.coverage", status="PASS", outputs=self.ctx.reader.coverage())
+        return ActionResult(action="feature.coverage", status="PASS", outputs=self.ctx.reader.coverage(self.ctx.scope.coverage_strategy))
 
 
 class CandidateService:
@@ -249,8 +255,10 @@ class CandidateService:
         cases = tuple(asset.case for asset in assets if (self.ctx.scope.path(self.ctx.root, "active_suite_root") / asset.source.relative_path).resolve().is_relative_to(feature_root)
                       or self.ctx.relative(self.ctx.scope.path(self.ctx.root, "active_suite_root") / asset.source.relative_path) in legacy)
         with active_asset_lock(self.ctx.root, publishing=True):
-            paths = FEATURE_PLUGINS.for_model(model.model_id).generate(model, self.ctx.scope.coverage_strategy, cases, self.ctx.scope.path(self.ctx.root, "candidate_root"))
-        return ActionResult(action="candidate.generate", status="PASS", outputs={"candidate_ids": [load_query_case(path).metadata.id for path in paths]})
+            strategy = self.ctx.scope.coverage_strategy
+            budget = 30 if self.ctx.strategy == "SMOKE" else None
+            paths = FEATURE_PLUGINS.for_model(model.model_id).generate(model, strategy, cases, self.ctx.scope.path(self.ctx.root, "candidate_root"), limit=budget)
+        return ActionResult(action="candidate.generate", status="PASS", outputs={"candidate_ids": [load_query_case(path).metadata.id for path in paths], "generation_strategy": strategy, "case_budget": budget, "mission_strategy": self.ctx.strategy})
 
     def validate(self, case_id):
         result = FEATURE_PLUGINS.for_model(self.ctx.scope.model_id).static_validate(self.ctx.candidate(case_id), self.ctx.scope.load_model(self.ctx.root))
@@ -358,7 +366,7 @@ class AcceptanceService:
         write_json(self.directory / "trial-run-index.json", {"candidates": trial, "candidate_count": len(trial), "double_run_pass_count": len(trial), "contract_set_id": profile["identity"]["contract_set_id"],
             "runtime_profile_id": profile["sql_runtime_profile_id"], "database_version": target.get("database_version"), "database_build_time": target.get("db_build")})
         write_json(self.directory / "mutation-validation-index.json", {"candidates": mutation, "candidate_count": len(mutation)})
-        coverage = ctx.reader.coverage()
+        coverage = ctx.reader.coverage(ctx.scope.coverage_strategy)
         write_json(self.directory / "coverage-summary.json", {"active_covered": coverage["active_covered"], "active_missing": coverage["active_missing"],
             "required": coverage["required"], "provisional_covered_if_promoted": coverage["provisional_covered"], "provisional_missing_if_promoted": coverage["provisional_missing"], "review_candidate_count": coverage["review_candidate_count"]})
         policy = ctx.root / "acceptance/query-generation-mvp/governance-policy.json"

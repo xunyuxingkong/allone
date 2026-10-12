@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { api } from '../api/client'
 import StructuredTable from '../components/StructuredTable.vue'
 type Result = { action: string; status: string; case_id?: string; blockers: string[]; evidence_refs: string[]; outputs: Record<string, unknown> }
-type Job = { job_id: string; plan: { goal: string }; state: string; revision: number; blockers: string[]; explanation: string; current_action?: { action: string }; action_results: Result[]; failure_analysis?: Record<string, unknown> }
+type Job = { job_id: string; plan: { goal: string }; intent?: { features: string[]; strategy: string; data_scale: string; risk_focus: string[] }; state: string; revision: number; blockers: string[]; explanation: string; current_action?: { action: string }; action_results: Result[]; failure_analysis?: Record<string, unknown> }
 const props = defineProps<{ jobId: string }>()
 const job = ref<Job | null>(null)
 const error = ref('')
@@ -26,6 +26,7 @@ watch(() => props.jobId, refresh, { immediate: true })
   <p v-if="loading" class="empty-state">正在读取任务…</p>
   <template v-if="job">
     <section class="surface job-section"><h2>{{ job.plan.goal }}</h2><p>状态：<strong>{{ job.state }}</strong> · 记录版本：{{ job.revision }}</p><p v-if="job.current_action">正在执行：{{ job.current_action.action }}</p>
+      <div v-if="job.intent" class="intent-summary"><div><span>请求范围</span><b>{{ job.intent.features.join(' / ') }}</b></div><div><span>执行策略</span><b>{{ job.intent.strategy }} · {{ job.intent.strategy === 'FULL' ? 'All Values' : 'Pairwise' }}</b></div><div><span>数据规模</span><b>{{ job.intent.data_scale }}</b></div><div><span>风险重点</span><b>{{ job.intent.risk_focus.join(' / ') || '未指定' }}</b></div></div>
       <p>AI 技术评审与人工批准分别记录。单个任务完成不代表 Query 全模块验收完成。</p>
       <div v-if="job.blockers.length" class="error-banner"><strong>待处理事项</strong><ul><li v-for="item in job.blockers" :key="item">{{ item }}</li></ul></div>
     </section>
@@ -52,6 +53,10 @@ watch(() => props.jobId, refresh, { immediate: true })
 .job-section { padding: 24px; margin-bottom: 18px; } h2 { font-size: 18px; overflow-wrap: anywhere; } .refresh-button { width: auto; cursor: pointer; }
 details { border-top: 1px solid #e4e8ef; padding: 14px 0; } summary { cursor: pointer; overflow-wrap: anywhere; }
 .job-section { min-width: 0; }
+.intent-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
+.intent-summary div { display: grid; gap: 5px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 5px; }
+.intent-summary span { color: var(--muted); font-size: 11px; }
+.intent-summary b { overflow-wrap: anywhere; font-size: 12px; }
 .narrative { white-space: pre-wrap; } .evidence, .narrative { overflow-wrap: anywhere; }
 .ai-section .failure-box { display: grid; gap: 10px; margin: 12px 0; padding: 13px 15px; border: 1px solid var(--line); border-radius: 6px; background: #f9fbfe; }
 .ai-section .hint { margin: 4px 0 0; color: var(--muted); font-size: 12px; }

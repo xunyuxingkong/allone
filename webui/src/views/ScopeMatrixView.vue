@@ -30,7 +30,7 @@ async function refresh() {
   loading.value = true; error.value = ''
   try {
     if (missionId.value) mission.value = await getMission(missionId.value).catch(() => null)
-    matrix.value = await getScopeMatrix(strategy.value)
+    matrix.value = await getScopeMatrix(strategy.value, mission.value?.mission.features[0])
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '测试空间读取失败'
   } finally {

@@ -46,8 +46,12 @@ export interface AiSummary {
 export interface MissionView {
   mission: Mission
   state: MissionState
-  tested_scope: string[]
-  untested_scope: string[]
+  requested_scope: string[]
+  executed_scope: string[]
+  covered_scope: string[]
+  excluded_scope: string[]
+  unmodelled_scope: string[]
+  execution_policy: { strategy: MissionStrategy; coverage_strategy: 'pairwise' | 'all_values'; candidate_budget: number | null; data_scale: MissionDataScale; risk_focus: string[]; data_scale_applied: boolean; risk_focus_applied: boolean }
   estimate: { strategy: MissionStrategy; case_min: number; case_max: number; sql_min: number; sql_max: number; unit: string }
   ai_summary: AiSummary
   completeness_note: string

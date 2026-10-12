@@ -180,7 +180,32 @@ class QueryReadService:
             "constraints": [rule.model_dump(mode="json", by_alias=True, exclude_none=True) for rule in model.constraints],
         }
 
-    def scope_matrix(self, strategy: str = "pairwise") -> dict[str, Any]:
+    def feature_coverages(self, strategy: str = "pairwise") -> dict[str, Any]:
+        """Return one Core-derived coverage summary for each supported Query feature."""
+        if strategy not in {"pairwise", "all_values"}:
+            raise ValueError("COVERAGE_STRATEGY_UNSUPPORTED")
+        from xgtest.generator.plugins import FEATURE_PLUGINS
+        from xgtest.product.contracts import SUPPORTED_FEATURES
+
+        rows = []
+        for feature in SUPPORTED_FEATURES:
+            scope = resolve_scope(scope=FEATURE_PLUGINS.for_model(f"query.{feature}").scope)
+            reader = QueryReadService(
+                self.history.runs_dir, scope.path(self.project_root, "active_suite_root"),
+                profile_path=self.profile_path, project_root=self.project_root,
+                candidates_dir=scope.path(self.project_root, "candidate_root"),
+                trial_artifacts_dir=self.trial_artifacts_dir, scope=scope,
+            )
+            coverage = reader.coverage(strategy)
+            counts = reader.scope_matrix(strategy)["totals"]
+            rows.append({"feature": feature, "model_id": coverage["model_id"],
+                "required": coverage["required"], "covered": coverage["active_covered"],
+                "missing": coverage["active_missing"], "cases": counts["cases"],
+                "status": "DEFINED_SCOPE_COMPLETE" if coverage["active_missing"] == 0 else "DEFINED_SCOPE_INCOMPLETE"})
+        totals = {key: sum(row[key] for row in rows) for key in ("required", "covered", "missing", "cases")}
+        return {"strategy": strategy, "features": rows, "totals": totals}
+
+    def scope_matrix(self, strategy: str = "pairwise", feature: str | None = None) -> dict[str, Any]:
         """Core-derived scope matrix: which scenarios exist, which are covered, and at what size.
 
         Requirement, Case and Execution counts are deliberately separate: one case can
@@ -189,9 +214,17 @@ class QueryReadService:
         """
         if strategy not in {"pairwise", "all_values"}:
             raise ValueError("COVERAGE_STRATEGY_UNSUPPORTED")
-        model = self._feature_model()
-        assets = self._feature_scoped_assets(load_query_directory_with_sources(self.cases_dir))
-        active_claims = self.scope.feature_claims(self.project_root, model, assets, suite_root=self.cases_dir)
+        source = self
+        if feature is not None:
+            from xgtest.generator.plugins import FEATURE_PLUGINS
+            scope = resolve_scope(scope=FEATURE_PLUGINS.for_model(f"query.{feature}").scope)
+            source = QueryReadService(self.history.runs_dir, scope.path(self.project_root, "active_suite_root"),
+                profile_path=self.profile_path, project_root=self.project_root,
+                candidates_dir=scope.path(self.project_root, "candidate_root"),
+                trial_artifacts_dir=self.trial_artifacts_dir, scope=scope)
+        model = source._feature_model()
+        assets = source._feature_scoped_assets(load_query_directory_with_sources(source.cases_dir))
+        active_claims = source.scope.feature_claims(source.project_root, model, assets, suite_root=source.cases_dir)
         current = coverage_gap(model, active_claims, strategy)
         covered_ids = {item.requirement_id for item in current["requirements"]} - {item.requirement_id for item in current["missing_requirements"]}
         requirements: dict[tuple[str, str], int] = {}
@@ -218,7 +251,8 @@ class QueryReadService:
         rows = []
         for (name, value) in sorted(requirements):
             required, hit = requirements[(name, value)], covered.get((name, value), 0)
-            rows.append({"dimension": name, "value": value, "label": self._VALUE_LABELS.get(name, {}).get(value, value),
+            labels = self._VALUE_LABELS.get(source.scope.feature, {}).get(name, {})
+            rows.append({"dimension": name, "value": value, "label": labels.get(value, value),
                          "required": required, "covered": hit,
                          "cases": cases.get((name, value), 0), "executions": executions.get((name, value), 0),
                          "status": "covered" if hit == required else "partial" if hit else "missing"})

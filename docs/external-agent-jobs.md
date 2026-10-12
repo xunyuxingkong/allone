@@ -72,9 +72,9 @@ tool_timeout_sec = 660
 }
 ```
 
-字段：`name`、`purpose`、`features`、`strategy`（SMOKE/STANDARD/FULL/AI_EXPLORATORY）、`data_scale`、`risk_focus`、`acceptance_goal`、`excluded_scope`、`created_by`。仅接受 Core 当前能建模并度量覆盖的 feature（当前为 `join`）；声明未支持 feature 返回 `MISSION_FEATURE_UNAVAILABLE`，不创建虚假覆盖。`create` 产出 `state=READY` 的任务并给出规模区间预估；`start` 复用 JobController 创建 `query.full_test`/`query.join.verify` 并绑定 `job_id`，因此仍受“单一可修改任务”策略约束。任务状态（READY/RUNNING/WAITING_APPROVAL/BLOCKED/COMPLETED）由 Job 状态纯投影得到，产品层不新增事实、不修改 PASS/FAIL、Coverage 或验收。HTTP：`GET/POST /api/missions`、`GET /api/missions/{id}`、`POST /api/missions/{id}/start`。
+字段：`name`、`purpose`、`features`、`strategy`（SMOKE/STANDARD/FULL/AI_EXPLORATORY）、`data_scale`、`risk_focus`、`acceptance_goal`、`excluded_scope`、`created_by`。当前支持 JOIN、Filter、Aggregate、Subquery、Sort / Limit 五个 Feature，但一个 Mission 暂时只能选一个 Feature；在多 Feature 编排完成前，提交多个范围会以 `MISSION_FEATURE_SCOPE_MUST_BE_SINGLE_UNTIL_ORCHESTRATION` 拒绝。`create` 产出 `state=READY` 的任务并给出规模区间预估；`start` 复用 JobController 创建 `query.full_test` 并绑定 `job_id`，因此仍受“单一可修改任务”策略约束。`SMOKE` 使用 Pairwise 并最多生成 30 个候选；`STANDARD` 使用 Pairwise；`FULL` 使用 All Values。`AI_EXPLORATORY` 当前采用 Pairwise 基线，探索循环仍未实现。`data_scale`、`risk_focus` 仅记录和展示，当前不改变 fixture 数据集或候选选择。任务视图分别给出 requested、executed、covered、excluded scope；执行和覆盖状态从关联 Job 的 Core ActionResult 投影。HTTP：`GET/POST /api/missions`、`GET /api/missions/{id}`、`POST /api/missions/{id}/start`。
 
-Mission 记录存于 `artifacts/missions/<mission_id>/mission.json`（原子写）。`tested_scope`/`untested_scope` 只做展示，不改变 Core 判定。
+Mission 记录存于 `artifacts/missions/<mission_id>/mission.json`（原子写）。Scope 是请求范围时不会提前标记为已执行；正式 PASS/FAIL、Coverage 或验收仍由 Core 判定。
 
 ## Job 逻辑身份（mission_logic，已定义未强制）
 

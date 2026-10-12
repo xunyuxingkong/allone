@@ -24,9 +24,10 @@ class JobController:
             value = os.environ.get(name)
             return Path(value).resolve() if value else None
         features = self.store.load(job_id).intent.features
+        strategy = self.store.load(job_id).intent.strategy
         ctx = ServiceContext(self.root, self.store.directory(job_id), self.profile,
             configured("XGTEST_APPROVAL"), configured("XGTEST_ALLOWED_SIGNERS"), configured("XGTEST_REVOKED"),
-            features=features)
+            features=features, strategy=strategy)
         return ProjectService(ctx, self.db), ModuleService(ctx, self.db), CandidateService(ctx, self.db), AcceptanceService(ctx)
 
     def create(self, goal, intent):
