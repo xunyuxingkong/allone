@@ -68,22 +68,22 @@
       }
     },
     "control_plane": {
-      "id": "3683082011ee7466b540673453d7aec2d5650c34e5ee1c634de8de8d8d0c62ab",
+      "id": "d44704648605c809288a425d5ad6e0feaee18cff5a637fe1993b1aad56aff0d4",
       "layer": "control_plane",
       "schema_version": "1",
       "sources": {
         "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
         "src/xgtest/ai/cli.py": "f9adb091fd2606fbbec0782e813b50c22c29af3778c166aa934b89df95efdc60",
-        "src/xgtest/ai/controller.py": "670848399fbb150f3c3826d0be0bec46408544ba1d48ada1c32f418e0d1815ee",
+        "src/xgtest/ai/controller.py": "572bd5fddf1cf289ffff2c37cb10b2d084c5a5b20788132fca1b4a8250015173",
         "src/xgtest/ai/identity.py": "3fb026188922f11f2ebc67798e949f76c1f75c186a787c337fa438735b62715a",
         "src/xgtest/ai/mcp_server.py": "65380106e45e768812621ddd9a269eea5a10b8da0d8ef40b29e1b41c4021fa4a",
         "src/xgtest/ai/models.py": "f9d5baf940bbe81d5ae19f65da06c5688b319ee4643eeeaa62a6bc1d40570fc9",
         "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
         "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
         "src/xgtest/application/db_worker.py": "94c755450111b4c81371aa22621d46207187a15fdb84bcf826610c1788da8700",
-        "src/xgtest/application/services.py": "dd170bc160852380fa545e834b55c9e191b2e5728e896c8135e4c9a775701eba",
+        "src/xgtest/application/services.py": "1ca75f528fd6be05e8159d7ba12ee5271f7c6561925ea0f7060394bb6e0fd8e1",
         "src/xgtest/application/worker_results.py": "47d1a65cf267a2849cdf0981af77a9305d880f96b0876e1e03b5ab7df38ecc9b",
-        "src/xgtest/cli.py": "8830f916c7282f9fe36942ae7cbcb3b81713126d5cdb23994532198a044691a2",
+        "src/xgtest/cli.py": "7d912adbc9f2a769714a0dd5ce4310093b2bd7f8f96148d4242a68119afc140d",
         "src/xgtest/web/__init__.py": "cb31bfb4bd485de552392442d54a7512d36eaded1686adb53d3fa374d655f14b",
         "src/xgtest/web/app.py": "2af91cb30fc987acf46a2752ba4d79ccd8927b3952280696fe903414daf8e7d1",
         "src/xgtest/web/service.py": "35c8e46153549d77ede37e18b0bd322091622cfecd25c42a94d902ba972f8f8c",
@@ -91,7 +91,7 @@
         "webui/src/api/cases.ts": "fc925b0f1a8660585d39331e609cd1ee182344b206ba84bfc2680d7e9ce8802b",
         "webui/src/api/client.ts": "f7ba468f903f6f4bb46e8ba8d0ce192e0687a33586f3c764a50571d90286b4a5",
         "webui/src/api/generation.ts": "22d279a55204dbd83ff7b5fdf6e1ae7599b32187a3b6d58bb1ccea54d9542cc2",
-        "webui/src/api/missions.ts": "ac23c08caa3511f4538c5de86eb32aedd19747c7baf731e1d6dfd5f075b29db0",
+        "webui/src/api/missions.ts": "313db1610d24cd027df6dd38d97a92730038fdd1360e89987e93999f2e14b3af",
         "webui/src/api/runs.ts": "63288a3a28b61df1bac2879e2fb1f3643c071aacad94dcee897cda01f78354e7",
         "webui/src/api/runtime.ts": "36badc779e28158ba5c5de133fa4200f6e253bc096adedfa5fe48fbebbebcbd0",
         "webui/src/components/CaseTable.vue": "2267af0aa44fd5a2f959e5279013d10c8407ba1688f5a5c295587bc9f18897ba",
@@ -114,8 +114,8 @@
         "webui/src/views/DashboardView.vue": "c158f2faae4f011e97d2f6f13e83b4789d432009370ec1f02e10908fea525c17",
         "webui/src/views/JobDetailView.vue": "6b738ab69f963e3d2248eccb07411eb30937b374d87622c4a33e6da1cb678fe1",
         "webui/src/views/JobsView.vue": "e98ae1e0784afe398a2e0e2630f816eb18cbafbb647e60357d653fafbda85960",
-        "webui/src/views/MissionCreateView.vue": "fc8f60df00797020ea8aaf8b5e1b1ff86738fd425acf89f98d2f413e61c80137",
-        "webui/src/views/MissionListView.vue": "d8b5e6e935b0b5de303beaf523d2cdc92ec3557e3287228b07f6710346d5e913",
+        "webui/src/views/MissionCreateView.vue": "8c13fac7c1fb29e22f5baede9b95cc1814137bb8f60c8bcf89d489d669144329",
+        "webui/src/views/MissionListView.vue": "bcd03474e069fb5bc240ffeba4f2e29b73e08ef3c4abc5c3f2eb50f476c82f0a",
         "webui/src/views/RunDetailView.vue": "0ffd1610316e07797a8a5dbc2c37d641f96e58df985eeaf29f011d20f159620d",
         "webui/src/views/RunListView.vue": "cf25c311efffba1a160ca33bdada0867cb40a7255bbee6a8e7b20b78441ec788",
         "webui/src/views/RuntimeView.vue": "d4d99f821d5458d521caf064b77cc4c4e33a6860f65052c2314e332eef52f3a8",
@@ -159,7 +159,7 @@
       }
     },
     "generator": {
-      "id": "c83853689c5e00848a4f88d259003f4ec074a764ea95e1e58d4a8800736c33fa",
+      "id": "9dd7563788ec8b1fdb5379a8a4d12734a7217c718df28a722f8d7448687c6a2c",
       "layer": "generator",
       "schema_version": "1",
       "sources": {
@@ -168,13 +168,13 @@
         "generators/query/templates/join.yaml": "a5c4e3e97757a4292151497a9201fb20fba832b50a762ac422258ab7d81994fb",
         "generators/query/templates/sort_limit.yaml": "f39f9214c830634e366c0b3618c46dd87acd42ccce29dadaf1082f2d2db4c2cb",
         "generators/query/templates/subquery.yaml": "ccec7e86006b7a9b16c155c61da4da1a8b9f4de3fa594365851c34f8626f83da",
-        "src/xgtest/generator/candidate.py": "2ae7ea9ded302c6f0f0c95c80b5c0ed50cc0de2576027da279c4cf06d2a134d4",
+        "src/xgtest/generator/candidate.py": "febe1a5f813b1662db44ded1deaf7776c1431b704bb77d26618d8bdeac93b498",
         "src/xgtest/generator/plugins.py": "9ca17f1746e59c6038490380ebaa302b43cf92a10955e1f03b35e4afe8e19fa7",
         "src/xgtest/generator/template.py": "eba4c030ad33e26256e4e8d71870908b09785c4ad7bf1e7422e994ea373f6f2a"
       }
     },
     "governance": {
-      "id": "7cd394bd3a2526eb800c83703865b88feddd67386201d7b67a8c25d63ac03af2",
+      "id": "b11818b51d6126eeb4617d0bf5bc1daf3054003e01fb864e719f84b60cfd6887",
       "layer": "governance",
       "schema_version": "1",
       "sources": {
@@ -197,6 +197,7 @@
         "src/xgtest/generator/acceptance.py": "1f9664d8c40458f1e5e326537e0618a7e9b8727141ebd2148b4314c3b6b51ce4",
         "src/xgtest/generator/aggregate_template.py": "3fe1852ff77ce76104edf7dadea895de022ada72e11afeeb530010575cc0e848",
         "src/xgtest/generator/approval.py": "135bf50e92a08be7073a31b0c00abd7462b62a13f57df6e495086a290bab72cd",
+        "src/xgtest/generator/approval_operator.py": "bc9538b9b6a79d9093335beb79eecd87d0a67bf0e0bfd9a8f022e4117df835bb",
         "src/xgtest/generator/artifact_store.py": "1b1e12fcde31ac83b1acf723ad3cf255c185e0426fddbfa3b40199f781f90f9d",
         "src/xgtest/generator/dedup.py": "c3b69a667cbebf29f8a19bbfb6d5cde1c5e531695feee8430a8a06b8fc553d25",
         "src/xgtest/generator/evidence.py": "2286fb4733a43e1d519d913ce6566e2d41ab01c1baa443a30042560287db0e5c",
@@ -215,27 +216,28 @@
       }
     },
     "mission_logic": {
-      "id": "1cd0ca9863fe27a248020d491583a4b92ccf033f0675d2dc6945038089913d22",
+      "id": "323f6c1a55d1adcc2558f30b6de61a3d550cb268ca2fd7515e4634fb0e104c49",
       "layer": "mission_logic",
       "schema_version": "1",
       "sources": {
         "src/xgtest/ai/__init__.py": "963c459d67f65a8e75608a353fc90e4914b4260ff96cec48e2c80d3d070bc177",
         "src/xgtest/ai/cli.py": "f9adb091fd2606fbbec0782e813b50c22c29af3778c166aa934b89df95efdc60",
-        "src/xgtest/ai/controller.py": "670848399fbb150f3c3826d0be0bec46408544ba1d48ada1c32f418e0d1815ee",
+        "src/xgtest/ai/controller.py": "572bd5fddf1cf289ffff2c37cb10b2d084c5a5b20788132fca1b4a8250015173",
         "src/xgtest/ai/identity.py": "3fb026188922f11f2ebc67798e949f76c1f75c186a787c337fa438735b62715a",
         "src/xgtest/ai/mcp_server.py": "65380106e45e768812621ddd9a269eea5a10b8da0d8ef40b29e1b41c4021fa4a",
         "src/xgtest/ai/models.py": "f9d5baf940bbe81d5ae19f65da06c5688b319ee4643eeeaa62a6bc1d40570fc9",
         "src/xgtest/ai/store.py": "69c5a31589b20edd8146ebe2908c1cdeb7f71e336c52ed5ac263173b4b195f51",
         "src/xgtest/application/__init__.py": "52fc7508429f7e1e8c5008a8abf77fcf5dbee84e1c8aef45d9e2ed37140e5e8d",
         "src/xgtest/application/db_worker.py": "94c755450111b4c81371aa22621d46207187a15fdb84bcf826610c1788da8700",
-        "src/xgtest/application/services.py": "dd170bc160852380fa545e834b55c9e191b2e5728e896c8135e4c9a775701eba",
+        "src/xgtest/application/services.py": "1ca75f528fd6be05e8159d7ba12ee5271f7c6561925ea0f7060394bb6e0fd8e1",
         "src/xgtest/application/worker_results.py": "47d1a65cf267a2849cdf0981af77a9305d880f96b0876e1e03b5ab7df38ecc9b",
         "src/xgtest/generator/__init__.py": "9047feb438f372a64ff35b24e991d3a48decdd18993f896f2362b922ca445c38",
         "src/xgtest/generator/acceptance.py": "1f9664d8c40458f1e5e326537e0618a7e9b8727141ebd2148b4314c3b6b51ce4",
         "src/xgtest/generator/aggregate_template.py": "3fe1852ff77ce76104edf7dadea895de022ada72e11afeeb530010575cc0e848",
         "src/xgtest/generator/approval.py": "135bf50e92a08be7073a31b0c00abd7462b62a13f57df6e495086a290bab72cd",
+        "src/xgtest/generator/approval_operator.py": "bc9538b9b6a79d9093335beb79eecd87d0a67bf0e0bfd9a8f022e4117df835bb",
         "src/xgtest/generator/artifact_store.py": "1b1e12fcde31ac83b1acf723ad3cf255c185e0426fddbfa3b40199f781f90f9d",
-        "src/xgtest/generator/candidate.py": "2ae7ea9ded302c6f0f0c95c80b5c0ed50cc0de2576027da279c4cf06d2a134d4",
+        "src/xgtest/generator/candidate.py": "febe1a5f813b1662db44ded1deaf7776c1431b704bb77d26618d8bdeac93b498",
         "src/xgtest/generator/dedup.py": "c3b69a667cbebf29f8a19bbfb6d5cde1c5e531695feee8430a8a06b8fc553d25",
         "src/xgtest/generator/evidence.py": "2286fb4733a43e1d519d913ce6566e2d41ab01c1baa443a30042560287db0e5c",
         "src/xgtest/generator/filter_template.py": "4cf18f4942e4727ff3543e5bf1dd42090af3bfb9d93919c6124de0216c115fda",
@@ -253,9 +255,9 @@
         "src/xgtest/generator/template.py": "eba4c030ad33e26256e4e8d71870908b09785c4ad7bf1e7422e994ea373f6f2a",
         "src/xgtest/product/__init__.py": "4ecd3ad8cc1641351431822e2fffe874162ba7f5d7a22a1c12d5d14b00881db5",
         "src/xgtest/product/cli.py": "64600d2a77543abca4b2e46457d426910a22baa1894a15df6d302d681037ba36",
-        "src/xgtest/product/contracts.py": "cc851db052fca0fc354439cecb844fd85066822c0256d2792109c6c6d6d161e3",
+        "src/xgtest/product/contracts.py": "ba4002bcc9cb5f31eb038a2230e5453275d09a20c879ec702509643d224c4b51",
         "src/xgtest/product/exploration.py": "966d9f357e47f7813ef4ef14b572a9b46a7fce720506e3c5d439343ee9273770",
-        "src/xgtest/product/mission_service.py": "d8e6bbb505a204cc80f4681b542faa3762fb89dfb577e6e52e856246959a59fd",
+        "src/xgtest/product/mission_service.py": "fd9da05c174cb97662e56ad9cafa1cb9154a0ced3f8dcf57d81d207d463bd080",
         "src/xgtest/product/store.py": "eb7732aeb8b93ec27c83a24a3b2342c2f63ea7cbe4cec07cdaad5caeb63ee602"
       }
     },
@@ -270,7 +272,7 @@
       }
     },
     "suite": {
-      "id": "a2eab5f7f6d366215caf2602486115f16912fa108d6ca88af9230530781495c9",
+      "id": "255a5fa58f8b8757de6f22db01cc8f3ab87584756584c6464241cab2ee72070d",
       "layer": "suite",
       "schema_version": "1",
       "sources": {
@@ -297,8 +299,9 @@
         "framework_tests/generator/test_active_visibility.py": "0136c89c0a055fc1c2059e91973b5e129d1b36debfbe2f8fc5b5be35d7963392",
         "framework_tests/generator/test_aggregate_template_semantics.py": "ba127ac36f71f851a3cae0fe576f3c4edacfa9f81019023e7a74e65d8ed32462",
         "framework_tests/generator/test_approval.py": "368529dc89c044b1436e442c9881181b94b6f5909b3384672d38c47f269816f0",
-        "framework_tests/generator/test_candidate.py": "10b4122dfb19785b311f1fcfe020fe3becba72b48805c786bbae24dc5e4dd7c3",
-        "framework_tests/generator/test_cli.py": "2e0d7c07c431bc79d4dd742997181d46819f899305e75a5588a0119ba7cb7be1",
+        "framework_tests/generator/test_approval_operator.py": "3e7959886d84c7cc438ad9904235d2c7e97ccd5c4eea3cc779af9165c6cb600c",
+        "framework_tests/generator/test_candidate.py": "21563ae8e58f7b7e465f9841a535501c79d2c35cef84a3846968de5f1c15aea8",
+        "framework_tests/generator/test_cli.py": "30d624b9a6e75efbf34b9dc25544e76a817525b0d6ea7cfe405f3f5755d72d5a",
         "framework_tests/generator/test_dedup.py": "d961e4908bfcab4d10c82bb4da9b7bee33d1785e2c6b3f3f7c4d8964126d7bc3",
         "framework_tests/generator/test_evidence_gate.py": "7a94cf57a725d790e24970cc313f7408abfffba4600a5cfe8ce9839836c65c96",
         "framework_tests/generator/test_filter_template_semantics.py": "a83efd76521c9b18021c15aa51bec0ef4a96b04868dc06569b78e308932f0b71",
@@ -325,9 +328,9 @@
         "framework_tests/runtime/test_comparator.py": "38a4755c85c9f3abc8b226c5cacae8b2e29d54dc4ec4edf963f47b693f12e6c3",
         "framework_tests/runtime/test_profile.py": "357f65ea3853c20ba7dc3ebc9829217b7b49a7d45a28026e6272b75c7afbe8a6",
         "framework_tests/runtime/test_runner.py": "d7d258037a94f2d08133606ec7a18ce5e9005e31cd46bca9935712d9818936de",
-        "framework_tests/test_ai_jobs.py": "11767d64e95e4c11d0ab0e89c2cca299af69bb668843ec5a353c293b01e56f1a",
+        "framework_tests/test_ai_jobs.py": "d8fc50a1356f798d66b748185983b1db43fdb722f26a08ab8da8b08b2ac44c3b",
         "framework_tests/test_ai_review_fixes.py": "86313f673c434afe793e800fbece7b8a48cbe991ec305b1911a006eac7e88268",
-        "framework_tests/test_product_missions.py": "bd87df0447865820da6ce3b9d9660aa15473e167eb97bd2bee2cab67fd3db09c"
+        "framework_tests/test_product_missions.py": "8f7d05118d13ac57acb881c1843fbfab2f56d7838c8e337255c5a637044c2a3d"
       }
     }
   },
@@ -377,8 +380,9 @@
     "src/xgtest/generator/acceptance.py": "1f9664d8c40458f1e5e326537e0618a7e9b8727141ebd2148b4314c3b6b51ce4",
     "src/xgtest/generator/aggregate_template.py": "3fe1852ff77ce76104edf7dadea895de022ada72e11afeeb530010575cc0e848",
     "src/xgtest/generator/approval.py": "135bf50e92a08be7073a31b0c00abd7462b62a13f57df6e495086a290bab72cd",
+    "src/xgtest/generator/approval_operator.py": "bc9538b9b6a79d9093335beb79eecd87d0a67bf0e0bfd9a8f022e4117df835bb",
     "src/xgtest/generator/artifact_store.py": "1b1e12fcde31ac83b1acf723ad3cf255c185e0426fddbfa3b40199f781f90f9d",
-    "src/xgtest/generator/candidate.py": "2ae7ea9ded302c6f0f0c95c80b5c0ed50cc0de2576027da279c4cf06d2a134d4",
+    "src/xgtest/generator/candidate.py": "febe1a5f813b1662db44ded1deaf7776c1431b704bb77d26618d8bdeac93b498",
     "src/xgtest/generator/dedup.py": "c3b69a667cbebf29f8a19bbfb6d5cde1c5e531695feee8430a8a06b8fc553d25",
     "src/xgtest/generator/evidence.py": "2286fb4733a43e1d519d913ce6566e2d41ab01c1baa443a30042560287db0e5c",
     "src/xgtest/generator/filter_template.py": "4cf18f4942e4727ff3543e5bf1dd42090af3bfb9d93919c6124de0216c115fda",

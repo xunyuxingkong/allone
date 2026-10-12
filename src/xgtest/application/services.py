@@ -247,7 +247,7 @@ class CandidateService:
                 "technical_review_decision": review["decision"], "technical_review_blocker": review["blocker"]})
         return items
 
-    def generate(self):
+    def generate(self, *, limit=None):
         model = self.ctx.scope.load_model(self.ctx.root)
         assets = load_query_directory_with_sources(self.ctx.scope.path(self.ctx.root, "active_suite_root"))
         feature_root = self.ctx.scope.path(self.ctx.root, "active_root")
@@ -257,8 +257,14 @@ class CandidateService:
         with active_asset_lock(self.ctx.root, publishing=True):
             strategy = self.ctx.scope.coverage_strategy
             budget = 30 if self.ctx.strategy == "SMOKE" else None
-            paths = FEATURE_PLUGINS.for_model(model.model_id).generate(model, strategy, cases, self.ctx.scope.path(self.ctx.root, "candidate_root"), limit=budget)
-        return ActionResult(action="candidate.generate", status="PASS", outputs={"candidate_ids": [load_query_case(path).metadata.id for path in paths], "generation_strategy": strategy, "case_budget": budget, "mission_strategy": self.ctx.strategy})
+            effective_limit = min(budget, limit) if budget is not None and limit is not None else budget if budget is not None else limit
+            paths = FEATURE_PLUGINS.for_model(model.model_id).generate(model, strategy, cases, self.ctx.scope.path(self.ctx.root, "candidate_root"), limit=effective_limit)
+        candidate_ids = [load_query_case(path).metadata.id for path in paths]
+        return ActionResult(action="candidate.generate", status="PASS", outputs={
+            "candidate_ids": candidate_ids, "generated_count": len(candidate_ids),
+            "generation_strategy": strategy, "case_budget": budget,
+            "mission_strategy": self.ctx.strategy,
+        })
 
     def validate(self, case_id):
         result = FEATURE_PLUGINS.for_model(self.ctx.scope.model_id).static_validate(self.ctx.candidate(case_id), self.ctx.scope.load_model(self.ctx.root))

@@ -71,12 +71,26 @@ def case_payload(model: TestModel, assignment: dict[str, str], strategy: str) ->
     }
 
 
-def _select_gap_assignments(model: TestModel, strategy: str, existing_cases: tuple[Any, ...], limit: int | None) -> tuple[dict[str, str], ...]:
-    claims = [claim for case in existing_cases if case.metadata.status.value == "active" for claim in case.coverage]
+def _select_gap_assignments(
+    model: TestModel,
+    strategy: str,
+    existing_cases: tuple[Any, ...],
+    limit: int | None,
+    excluded_case_ids: set[str] | None = None,
+) -> tuple[dict[str, str], ...]:
+    # Caller includes active coverage plus unpromoted candidates already
+    # reserved by earlier generation rounds. This prevents repeat rounds from
+    # creating redundant copies while keeping provisional cases out of formal
+    # active coverage.
+    claims = [claim for case in existing_cases for claim in case.coverage]
     gap = coverage_gap(model, claims, strategy)
     uncovered = {req.requirement_id for req in gap["missing_requirements"]}
+    plugin = _plugin(model)
+    excluded_case_ids = excluded_case_ids or set()
     candidates = []
     for assignment in valid_assignments(model):
+        if plugin.expected_id(model, assignment) in excluded_case_ids:
+            continue
         claims_for_assignment = assignment_requirements(model, assignment, strategy)
         gain = claims_for_assignment & uncovered
         if gain:
@@ -109,8 +123,15 @@ def generate_candidates(
     # fails closed without leaving artifacts behind.
     _plugin(model)
     output_dir.mkdir(parents=True, exist_ok=True)
+    # A generation round must make forward progress. Existing candidates are
+    # not treated as coverage, but their deterministic IDs are excluded so a
+    # later round cannot return the same first batch indefinitely.
+    candidate_paths = sorted(path for path in output_dir.glob("*.yaml") if path.is_file())
+    reserved_cases = tuple(load_query_case(path) for path in candidate_paths)
+    excluded_case_ids = {case.metadata.id for case in reserved_cases}
+    generation_cases = (*existing_cases, *reserved_cases)
     written: list[Path] = []
-    for assignment in _select_gap_assignments(model, strategy, existing_cases, limit):
+    for assignment in _select_gap_assignments(model, strategy, generation_cases, limit, excluded_case_ids):
         payload = case_payload(model, assignment, strategy)
         path = output_dir / f"{payload['metadata']['id']}.yaml"
         if path.exists():

@@ -33,4 +33,14 @@ def test_pairwise_generation_targets_gap_and_closes_designed_coverage(tmp_path: 
     assert result["covered"] == result["required"]
     assert result["missing"] == 0
     repeated = generate_candidates(model, "pairwise", active, output)
-    assert repeated == candidates
+    assert repeated == ()
+
+
+def test_limited_generation_continues_without_repeating_prior_batch(tmp_path: Path) -> None:
+    model = load_test_model(ROOT / "models" / "query" / "join.yaml")
+    active = load_query_directory(ROOT / "cases" / "query")
+    output = tmp_path / "candidates"
+    first = generate_candidates(model, "pairwise", active, output, limit=2)
+    second = generate_candidates(model, "pairwise", active, output, limit=2)
+    assert len(first) == 2 and len(second) == 2
+    assert {path.name for path in first}.isdisjoint(path.name for path in second)

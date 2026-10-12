@@ -61,11 +61,58 @@ onMounted(refresh)
         <span>测试强度</span><b>{{ detail.mission.strategy }}</b>
         <span>预计规模</span><b>约 {{ detail.estimate.case_min }}~{{ detail.estimate.case_max }} Case · {{ detail.estimate.sql_min }}~{{ detail.estimate.sql_max }} SQL</b>
         <span>验收目标</span><b>{{ detail.mission.acceptance_goal }}</b>
+        <template v-if="detail.mission.strategy === 'SMOKE'">
+          <span>Smoke 生成进度</span><b>{{ detail.generation_progress.generated_total }} / {{ detail.generation_progress.budget ?? '—' }} 候选 · 剩余 {{ detail.generation_progress.remaining_budget ?? '—' }}</b>
+          <span>Smoke 阶段</span><b>{{ detail.generation_progress.smoke_complete ? '已完成（不代表 Pairwise 覆盖完成或已晋升）' : '未完成' }} · Regression {{ detail.generation_progress.regression_pass ? 'PASS' : '未通过' }} · 候选证据 {{ detail.generation_progress.generated_cases_valid ? '有效' : '未齐' }}</b>
+          <span>覆盖目标</span><b>{{ detail.generation_progress.pairwise_complete ? 'Pairwise 已完整覆盖' : detail.generation_progress.coverage_target === 'SMOKE_BUDGET_OR_NO_GAP' ? '预算耗尽或无可生成缺口；不代表 Pairwise 完成' : detail.generation_progress.coverage_target }}</b>
+        </template>
         <span v-if="detail.mission.job_id">关联任务</span>
         <b v-if="detail.mission.job_id"><RouterLink class="link" :to="`/jobs/${detail.mission.job_id}`">查看任务 {{ shortId(detail.mission.job_id) }}</RouterLink></b>
       </div>
       <p class="hint">Query / 当前定义范围 与 Query 全模块验收分开；模块层面仍为 {{ detail.completeness_note }}。</p>
       <p v-if="!detail.execution_policy.data_scale_applied || !detail.execution_policy.risk_focus_applied" class="hint">数据规模和风险重点已记录，但当前生成器尚未据此调整数据集或候选选择。</p>
+    </section>
+
+    <section v-if="detail.approval_review.status !== 'NOT_READY'" class="surface mission-block approval-block">
+      <h2 class="surface-title">人工审批与签名</h2>
+      <div class="mission-body">
+        <p class="approval-status">{{ detail.approval_review.status === 'APPROVED' ? '签名已通过 Core 验证。' : detail.approval_review.status === 'INVALID' ? '审批证据无法读取，请检查冻结审批包。' : '测试证据已进入人工审批门禁。AI 不会代替负责人签名。' }}</p>
+        <p v-if="detail.approval_review.reason" class="muted">{{ detail.approval_review.reason }}</p>
+        <div class="approval-grid">
+          <div><span>审批包</span><b class="mono">{{ detail.approval_review.manifest_id || '尚未冻结' }}</b></div>
+          <div><span>Promotion Plan</span><b class="mono">{{ detail.approval_review.plan_hash || '尚未冻结' }}</b></div>
+          <div><span>候选数</span><b>{{ detail.approval_review.candidate_count ?? '—' }}</b></div>
+          <div><span>Runtime Profile</span><b class="mono">{{ detail.approval_review.runtime_profile_id || '—' }}</b></div>
+          <div><span>数据库版本 / Build</span><b>{{ detail.approval_review.database_version || '—' }} / {{ detail.approval_review.database_build_time || '—' }}</b></div>
+          <div><span>执行合同</span><b class="mono">{{ detail.approval_review.contract_bindings?.execution || '—' }}</b></div>
+          <div><span>技术评审记录</span><b>{{ detail.approval_review.technical_review_count ?? 0 }}</b></div>
+          <div><span>验收就绪状态</span><b>{{ detail.approval_review.readiness || '等待审批材料' }}</b></div>
+          <div><span>Regression</span><b>{{ detail.approval_review.evidence?.regression_status || 'NOT_RUN' }} · 失败 {{ detail.approval_review.evidence?.regression_failures ?? 0 }}</b></div>
+          <div><span>Trial 双跑</span><b>{{ detail.approval_review.evidence?.trial_status || 'INCOMPLETE' }} · {{ detail.approval_review.evidence?.trial_double_run_pass_count ?? 0 }}</b></div>
+          <div><span>Mutation</span><b>已杀死 {{ detail.approval_review.evidence?.mutation_killed_count ?? 0 }}</b></div>
+          <div><span>覆盖</span><b>正式 {{ detail.approval_review.coverage?.active_covered ?? '—' }} / 缺口 {{ detail.approval_review.coverage?.active_missing ?? '—' }} · 晋升后缺口 {{ detail.approval_review.coverage?.provisional_missing ?? '—' }}</b></div>
+        </div>
+        <div v-if="detail.approval_review.manifest_ref && detail.approval_review.plan_ref" class="approval-artifacts">
+          <div><span>冻结 Manifest</span><code>{{ detail.approval_review.manifest_ref }}</code></div>
+          <div><span>Promotion Plan</span><code>{{ detail.approval_review.plan_ref }}</code></div>
+        </div>
+        <p class="hint inline-hint">负责人应先核对 Mission、候选、覆盖缺口、运行环境、合同版本和技术评审，再使用本地 Operator CLI 签署绑定当前 Manifest 与 Plan 的审批文件。私钥只在本地签名命令中使用，不上传到网页或发送给 AI。</p>
+        <ol class="approval-steps">
+          <li>如未配置签名人，在项目外安全位置初始化本地密钥并登记公钥：<code>xgtest approval signer-init --principal "负责人标识" --private-key "项目外私钥路径" --allowed-signers "Allowed Signers 路径"</code>（会由 ssh-keygen 交互式提示设置私钥口令）。</li>
+          <li>准备签名载荷：<code>xgtest approval prepare --manifest "{{ detail.approval_review.manifest_ref }}" --plan "{{ detail.approval_review.plan_ref }}" --principal "负责人标识" --output "审批目录/payload.json"</code></li>
+          <li>负责人核对载荷后本地签名：<code>xgtest approval sign --payload "审批目录/payload.json" --manifest "{{ detail.approval_review.manifest_ref }}" --plan "{{ detail.approval_review.plan_ref }}" --private-key "项目外私钥路径" --output "审批目录/approval.json"</code></li>
+          <li>先用 Core 验签，再配置审批文件和 Allowed Signers 并恢复任务：<code>xgtest approval verify --approval "审批目录/approval.json" --allowed-signers "Allowed Signers 路径" --manifest "{{ detail.approval_review.manifest_ref }}" --plan "{{ detail.approval_review.plan_ref }}"</code>。随后设置 XGTEST_APPROVAL / XGTEST_ALLOWED_SIGNERS，resume 后由 Core 执行 preflight；签名无效、过期或输入变化都会拒绝。</li>
+        </ol>
+        <ul v-if="detail.approval_review.evidence?.blockers?.length" class="approval-blockers"><li v-for="item in detail.approval_review.evidence.blockers" :key="item">{{ item }}</li></ul>
+        <details v-if="detail.approval_review.technical_reviews?.length" class="approval-review-list">
+          <summary>查看 AI 技术评审内容（仅供负责人参考）</summary>
+          <article v-for="(review, index) in detail.approval_review.technical_reviews" :key="`${review.case_id}-${index}`">
+            <b>{{ review.case_id }} · {{ review.decision }} · {{ review.recommendation }}</b>
+            <ul><li v-for="finding in review.findings" :key="finding">{{ finding }}</li></ul>
+          </article>
+        </details>
+        <p v-if="detail.approval_review.untested_scope?.length" class="muted">当前仍有未完整覆盖范围：{{ detail.approval_review.untested_scope.join(' / ') }}</p>
+      </div>
     </section>
 
     <section class="surface mission-block ai-block">
@@ -123,6 +170,22 @@ onMounted(refresh)
 .hint { margin: 0; padding: 0 20px 18px; color: var(--muted); font-size: 12px; }
 .create-link { white-space: nowrap; }
 .ai-block .narrative { white-space: pre-wrap; }
+.approval-block { border-color: #d7c48a; }
+.approval-status { margin: 0; font-weight: 700; color: #614600; }
+.approval-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.approval-grid > div { display: grid; min-width: 0; gap: 5px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; }
+.approval-grid span { color: var(--muted); font-size: 11px; }
+.approval-grid b { overflow-wrap: anywhere; font-size: 12px; }
+.approval-artifacts { display: grid; gap: 8px; font-size: 12px; }
+.approval-artifacts > div { display: grid; gap: 4px; }
+.approval-artifacts code, .approval-steps code { overflow-wrap: anywhere; padding: 3px 5px; border-radius: 4px; background: #f1f3f7; color: #33445e; font-size: 11px; }
+.approval-steps { display: grid; gap: 8px; margin: 0; padding-left: 20px; font-size: 12px; color: #52627a; }
+.approval-blockers { margin: 0; padding-left: 20px; color: #9b2c2c; font-size: 12px; }
+.approval-review-list { border-top: 1px solid var(--line); padding-top: 10px; font-size: 12px; }
+.approval-review-list summary { cursor: pointer; font-weight: 700; }
+.approval-review-list article { display: grid; gap: 5px; margin-top: 10px; padding: 10px; background: #f7f9fc; border-radius: 5px; }
+.approval-review-list ul { display: grid; gap: 3px; margin: 0; padding-left: 18px; }
+.inline-hint { padding: 0; }
 .ai-stats { display: flex; flex-wrap: wrap; gap: 8px 30px; font-size: 13px; color: #23354f; }
 .ai-stats b { font-size: 18px; font-weight: 700; }
 .ai-failure { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: #f9fbfe; }

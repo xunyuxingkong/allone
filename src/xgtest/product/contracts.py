@@ -40,7 +40,7 @@ class TestMission(StrictModel):
     name: str = Field(min_length=1, max_length=200)
     purpose: str = Field(min_length=1, max_length=2000)
     module: Literal["query"] = "query"
-    features: list[str] = Field(min_length=1, max_length=1)
+    features: list[str] = Field(min_length=1)
     strategy: MissionStrategy = "STANDARD"
     data_scale: MissionDataScale = "SMALL"
     risk_focus: list[str] = Field(default_factory=list)
@@ -53,11 +53,11 @@ class TestMission(StrictModel):
     @field_validator("features")
     @classmethod
     def features_are_supported(cls, values: list[str]) -> list[str]:
-        if len(values) != 1:
-            raise ValueError("MISSION_FEATURE_SCOPE_MUST_BE_SINGLE_UNTIL_ORCHESTRATION")
         identifiers = _identifiers(values, "MISSION_FEATURE_INVALID")
         if len(set(identifiers)) != len(identifiers):
             raise ValueError("MISSION_FEATURE_DUPLICATE")
+        if len(values) != 1:
+            raise ValueError("MISSION_FEATURE_SCOPE_MUST_BE_SINGLE_UNTIL_ORCHESTRATION")
         unsupported = [value for value in identifiers if value not in SUPPORTED_FEATURES]
         if unsupported:
             raise ValueError(f"MISSION_FEATURE_UNAVAILABLE:{','.join(sorted(unsupported))}")

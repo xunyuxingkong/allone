@@ -39,7 +39,9 @@ def test_model_coverage_generate_and_validate_cli(tmp_path: Path) -> None:
 
     repeated = cli("generate", "query.join", "--strategy", "pairwise", "--limit", "1", "--output", str(output_dir))
     assert repeated.returncode == 0, repeated.stderr
-    assert json.loads(repeated.stdout)["generated"] == 1
+    repeated_report = json.loads(repeated.stdout)
+    assert repeated_report["generated"] == 1
+    assert repeated_report["candidates"][0] != report["candidates"][0]
     listed = cli("candidate", "list", "--path", str(output_dir))
     assert listed.returncode == 0
     assert json.loads(listed.stdout)[0]["status"] == "draft"

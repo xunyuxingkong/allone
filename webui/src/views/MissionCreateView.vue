@@ -47,7 +47,7 @@ const estimate = computed(() => {
   const featureRanges: Record<string, [number, number]> = {
     join: [40, 60], filter: [40, 70], aggregate: [30, 60], subquery: [30, 60], sort_limit: [20, 40],
   }
-  const standard = featureRanges[form.features[0]] ?? [0, 0]
+  const standard = featureRanges[form.features[0] ?? 'join'] ?? [0, 0]
   const ranges: Record<MissionStrategy, [number, number]> = {
     SMOKE: [0, 30], STANDARD: standard, FULL: [500, 2000], AI_EXPLORATORY: standard,
   }

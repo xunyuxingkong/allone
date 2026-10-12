@@ -52,6 +52,8 @@ export interface MissionView {
   excluded_scope: string[]
   unmodelled_scope: string[]
   execution_policy: { strategy: MissionStrategy; coverage_strategy: 'pairwise' | 'all_values'; candidate_budget: number | null; data_scale: MissionDataScale; risk_focus: string[]; data_scale_applied: boolean; risk_focus_applied: boolean }
+  generation_progress: { budget: number | null; generated_total: number; remaining_budget: number | null; stalled: boolean; coverage_target: string; pairwise_complete: boolean; smoke_complete: boolean; regression_pass: boolean; generated_cases_valid: boolean; no_blocking_failure: boolean }
+  approval_review: { status: 'NOT_READY' | 'WAITING_APPROVAL' | 'APPROVED' | 'INVALID'; reason?: string | null; readiness?: string; manifest_id?: string; plan_hash?: string; manifest_ref?: string; plan_ref?: string; candidate_count?: number; runtime_profile_id?: string; database_version?: string; database_build_time?: string; contract_bindings?: Record<string, string>; coverage?: { active_covered?: number; active_missing?: number; provisional_missing?: number }; ci_disposition?: string; technical_review_count?: number; technical_reviews?: { case_id: string | null; decision?: string; recommendation?: string; findings: string[] }[]; evidence?: { regression_status?: string; regression_failures?: number; trial_status?: string; trial_double_run_pass_count?: number; mutation_killed_count?: number; technical_review_decisions?: Record<string, number>; blockers?: string[] }; untested_scope?: string[] }
   estimate: { strategy: MissionStrategy; case_min: number; case_max: number; sql_min: number; sql_max: number; unit: string }
   ai_summary: AiSummary
   completeness_note: string

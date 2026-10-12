@@ -15,7 +15,7 @@ from xgtest.core.canonical import xgmj1_sha256
 class JobController:
     def __init__(self, root, profile=None, db=None):
         self.root = Path(root).resolve()
-        self.profile = Path(profile or os.environ.get("XGTEST_RUNTIME_PROFILE", self.root / "artifacts/runtime-profile-v14.json"))
+        self.profile = Path(profile or os.environ.get("XGTEST_RUNTIME_PROFILE", self.root / "artifacts/runtime-profile-v15.json"))
         self.store = JobStore(self.root / "artifacts/jobs")
         self.db = db or DatabaseExecutor()
 
@@ -68,6 +68,26 @@ class JobController:
     def last(job, action):
         return next((result for result in reversed(job.action_results) if result.action == action), None)
 
+    @staticmethod
+    def generation_progress(job):
+        generated_ids = {
+            case_id
+            for result in job.action_results
+            if result.action == "candidate.generate"
+            for case_id in result.outputs.get("candidate_ids", [])
+            if isinstance(case_id, str)
+        }
+        budget = 30 if job.intent.strategy == "SMOKE" else None
+        return {
+            "budget": budget,
+            "generated_total": len(generated_ids),
+            "remaining_budget": max(0, budget - len(generated_ids)) if budget is not None else None,
+            "stalled": bool(
+                (last := JobController.last(job, "candidate.generate"))
+                and not last.outputs.get("candidate_ids")
+            ),
+        }
+
     def eligible(self, job):
         if job.current_action is not None or job.abandonment is not None or self.identity_error(job):
             return []
@@ -116,7 +136,19 @@ class JobController:
             return reads
         coverage = module.inspect_coverage().outputs
         if coverage["provisional_missing"]:
-            return reads + ([option("candidate.generate")] if job.intent.allow_candidate_generation else [])
+            progress = self.generation_progress(job)
+            can_generate = job.intent.allow_candidate_generation and not progress["stalled"] and (
+                progress["remaining_budget"] is None or progress["remaining_budget"] > 0
+            )
+            if can_generate:
+                return reads + [option("candidate.generate")]
+            # The finite Smoke budget (or an exhausted deterministic gap) is
+            # a generation boundary, not a claim that Pairwise is complete.
+            return reads + [option("acceptance.inspect")] if items else reads
+        if coverage.get("active_missing") == 0 and not items:
+            # Completion is only committed after the explicit feature.coverage
+            # result has been recorded in the Job evidence stream.
+            return reads
         options = reads + [option("acceptance.inspect")]
         if acceptance.manifest_path.is_file():
             options.append(option("acceptance.preflight"))
@@ -175,10 +207,11 @@ class JobController:
             if result.status == "PASS" and (result.action == "acceptance.post_verify" or
                 job.intent.intent == "query.status" and {r.action for r in results if r.status == "PASS"} >= {"project.inspect", "module.inspect", "feature.coverage"}):
                 state = "COMPLETED"
-            if result.action == "module.regression" and result.status == "PASS" and not self.last(job, "acceptance.promote"):
+            if result.action == "feature.coverage" and result.status == "PASS":
                 _, module, candidates, _ = self.services(job_id)
-                coverage = module.inspect_coverage().outputs
-                if coverage.get("active_missing") == 0 and not candidates.readiness():
+                regression = self.last(job, "module.regression")
+                if (regression is not None and module.regression_valid(regression)
+                        and result.outputs.get("active_missing") == 0 and not candidates.readiness()):
                     state = "COMPLETED"
             recovery_action = request.action if request.action.action == "acceptance.promote" and result.status == "BLOCKED" else None
             identity_error = self.identity_error(job)
@@ -202,6 +235,9 @@ class JobController:
                  "feature.coverage": module.inspect_coverage, "candidate.generate": candidates.generate,
                  "acceptance.inspect": acceptance.inspect, "acceptance.preflight": acceptance.preflight,
                  "acceptance.promote": acceptance.promote}
+        if name == "candidate.generate":
+            progress = self.generation_progress(job)
+            return candidates.generate(limit=progress["remaining_budget"])
         if name in calls: return calls[name]()
         if name == "acceptance.post_verify": return acceptance.post_verify(self.last(job, "module.regression"))
         if name == "candidate.technical_review": return candidates.technical_review(case_id, request.technical_review, request.review_context_id)

@@ -65,6 +65,37 @@ def test_ai_summary_presents_only_recorded_ai_output(service):
     assert summary["summary"] is None and summary["failure_analysis"] is None
 
 
+def test_smoke_completion_is_budget_limited_and_distinct_from_pairwise():
+    from xgtest.ai.models import ActionResult
+    candidate_id = "QUERY.JOIN.ABCDEF12"
+    job = SimpleNamespace(state="WAITING_APPROVAL", action_results=[
+        ActionResult(action="candidate.generate", status="PASS", outputs={"candidate_ids": [candidate_id]}),
+        ActionResult(action="module.regression", status="PASS"),
+    ])
+    module = SimpleNamespace(
+        regression_valid=lambda result: result.status == "PASS",
+        inspect_coverage=lambda: SimpleNamespace(outputs={"active_missing": 20, "provisional_missing": 4}),
+    )
+    candidates = SimpleNamespace(readiness=lambda: [{
+        "case_id": candidate_id, "static_valid": True, "mutation_valid": True,
+        "trial_verified": True, "technical_review_accepted": True,
+    }])
+
+    complete = MissionService.smoke_completion(
+        "SMOKE", job, module, candidates,
+        {"budget": 30, "generated_total": 30, "remaining_budget": 0, "stalled": False},
+    )
+    incomplete = MissionService.smoke_completion(
+        "SMOKE", job, module, candidates,
+        {"budget": 30, "generated_total": 29, "remaining_budget": 1, "stalled": False},
+    )
+
+    assert complete["smoke_complete"] is True
+    assert complete["regression_pass"] is True and complete["generated_cases_valid"] is True
+    assert incomplete["smoke_complete"] is False
+    assert module.inspect_coverage().outputs["active_missing"] > 0
+
+
 def test_ai_summary_reflects_recorded_explanation_and_failure(service):
     from xgtest.ai.models import ActionResult, FailureAnalysis
     mission_id = service.create(DEFINITION)["mission"]["mission_id"]

@@ -17,7 +17,7 @@ def controller(tmp_path, monkeypatch):
         inspect_coverage=lambda: ActionResult(action="feature.coverage", status="PASS", outputs={"provisional_missing": 0}),
         regression_valid=lambda result: result.status == "PASS",
         run_regression=lambda: ActionResult(action="module.regression", status="PASS"))
-    candidates = SimpleNamespace(readiness=lambda: [], generate=lambda: ActionResult(action="candidate.generate", status="PASS"))
+    candidates = SimpleNamespace(readiness=lambda: [], generate=lambda **kwargs: ActionResult(action="candidate.generate", status="PASS", outputs={"limit": kwargs.get("limit")}))
     acceptance = SimpleNamespace(manifest_path=tmp_path / "missing.json",
         inspect=lambda: ActionResult(action="acceptance.inspect", status="WAITING_APPROVAL", blockers=["HUMAN_REVIEW_REQUIRED"]),
         preflight=lambda: ActionResult(action="acceptance.preflight", status="WAITING_APPROVAL"),
@@ -199,9 +199,29 @@ def test_complete_existing_active_coverage_without_empty_promotion(controller, m
     module = controller.services(job_id)[1]
     monkeypatch.setattr(module, "inspect_coverage", lambda: ActionResult(action="feature.coverage", status="PASS", outputs={"active_missing": 0, "provisional_missing": 0}))
     act(controller, job_id, "project.preflight")
-    result = act(controller, job_id, "module.regression")
+    after_regression = act(controller, job_id, "module.regression")
+    assert after_regression["state"] == "RUNNING"
+    result = act(controller, job_id, "feature.coverage")
     assert result["state"] == "COMPLETED"
+    assert result["action_results"][-1]["action"] == "feature.coverage"
     assert not any(r["action"].startswith("acceptance.") for r in result["action_results"])
+
+
+def test_smoke_generation_budget_is_cumulative():
+    from xgtest.ai.models import ActionResult, TestIntent, TestJob, TestPlan
+    job = TestJob(
+        job_id="a" * 32,
+        intent=TestIntent(intent="query.full_test", strategy="SMOKE"),
+        plan=TestPlan(goal="smoke"),
+        action_results=[
+            ActionResult(action="candidate.generate", status="PASS", outputs={"candidate_ids": [f"QUERY.JOIN.GEN{i:03d}" for i in range(20)]}),
+            ActionResult(action="candidate.generate", status="PASS", outputs={"candidate_ids": [f"QUERY.JOIN.GEN{i:03d}" for i in range(20, 25)]}),
+        ],
+    )
+    progress = JobController.generation_progress(job)
+    assert progress["budget"] == 30
+    assert progress["generated_total"] == 25
+    assert progress["remaining_budget"] == 5
 
 
 def test_abandon_releases_mutable_slot_and_preserves_history(controller):

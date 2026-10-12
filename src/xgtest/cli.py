@@ -25,6 +25,7 @@ from .generator.dedup import classify_duplicates
 from .generator.lifecycle import promote_candidate, record_candidate_mutation_evidence, trial_candidate, validate_candidate_mutation, validate_candidate_mutations
 from .generator.review import record_review
 from .generator.acceptance import verify_trial_artifact_index
+from .generator.approval_operator import initialize_local_signer, prepare_approval_payload, sign_approval_payload, verify_operator_approval
 from .generator.package import freeze_pre_promotion_manifest, preflight_promotion, verify_pre_promotion_package
 from .generator.promotion_batch import execute_promotion_batch
 from .generator.post_acceptance import freeze_post_promotion_package, verify_post_promotion_package, generate_final_acceptance
@@ -315,6 +316,41 @@ def _acceptance_verify_trial_index(args: argparse.Namespace) -> int:
     return 0 if result["status"] == "PASS" else 1
 
 
+def _approval_signer_init(args: argparse.Namespace) -> int:
+    result = initialize_local_signer(
+        args.principal, Path(args.private_key), Path(args.allowed_signers), project_root=Path(args.root),
+    )
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0
+
+
+def _approval_prepare(args: argparse.Namespace) -> int:
+    result = prepare_approval_payload(
+        Path(args.manifest), Path(args.plan), Path(args.output), principal=args.principal,
+        expires_in_hours=args.expires_in_hours,
+    )
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0
+
+
+def _approval_sign(args: argparse.Namespace) -> int:
+    result = sign_approval_payload(
+        Path(args.payload), Path(args.private_key), Path(args.output),
+        manifest_path=Path(args.manifest), plan_path=Path(args.plan), project_root=Path(args.root),
+    )
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0
+
+
+def _approval_verify(args: argparse.Namespace) -> int:
+    result = verify_operator_approval(
+        Path(args.approval), Path(args.allowed_signers), manifest_path=Path(args.manifest),
+        plan_path=Path(args.plan), revoked_path=Path(args.revoked) if args.revoked else None,
+    )
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0 if result.get("status") == "APPROVED" else 1
+
+
 def _acceptance_freeze_package(args: argparse.Namespace) -> int:
     root = Path(args.root).resolve()
     scope = AcceptanceScope.model_validate_json(Path(args.scope_file).read_bytes()) if args.scope_file else None
@@ -511,18 +547,50 @@ def main() -> None:
     candidate_dedup.add_argument("--cases", default=root / "cases" / "query")
     candidate_dedup.add_argument("--model", default=root / "models" / "query" / "join.yaml")
     candidate_dedup.set_defaults(handler=_candidate_dedup)
+
+    approval = commands.add_parser("approval")
+    approval_commands = approval.add_subparsers(dest="approval_command", required=True)
+    signer_init = approval_commands.add_parser("signer-init", help="create an operator key and register its public key")
+    signer_init.add_argument("--root", default=root)
+    signer_init.add_argument("--principal", required=True)
+    signer_init.add_argument("--private-key", required=True, help="store outside the project; ssh-keygen prompts for a passphrase")
+    signer_init.add_argument("--allowed-signers", required=True)
+    signer_init.set_defaults(handler=_approval_signer_init)
+    approval_prepare = approval_commands.add_parser("prepare", help="prepare a human-reviewed payload bound to a frozen promotion plan")
+    approval_prepare.add_argument("--manifest", required=True)
+    approval_prepare.add_argument("--plan", required=True)
+    approval_prepare.add_argument("--principal", required=True)
+    approval_prepare.add_argument("--expires-in-hours", type=int, default=24)
+    approval_prepare.add_argument("--output", required=True)
+    approval_prepare.set_defaults(handler=_approval_prepare)
+    approval_sign = approval_commands.add_parser("sign", help="sign a reviewed approval payload with an operator key")
+    approval_sign.add_argument("--root", default=root)
+    approval_sign.add_argument("--payload", required=True)
+    approval_sign.add_argument("--private-key", required=True)
+    approval_sign.add_argument("--manifest", required=True)
+    approval_sign.add_argument("--plan", required=True)
+    approval_sign.add_argument("--output", required=True)
+    approval_sign.set_defaults(handler=_approval_sign)
+    approval_verify = approval_commands.add_parser("verify", help="verify an operator signature against the current frozen plan")
+    approval_verify.add_argument("--approval", required=True)
+    approval_verify.add_argument("--allowed-signers", required=True)
+    approval_verify.add_argument("--manifest", required=True)
+    approval_verify.add_argument("--plan", required=True)
+    approval_verify.add_argument("--revoked")
+    approval_verify.set_defaults(handler=_approval_verify)
+
     acceptance = commands.add_parser("acceptance")
     acceptance_commands = acceptance.add_subparsers(dest="acceptance_command", required=True)
     verify_trial_index = acceptance_commands.add_parser("verify-trial-index")
     verify_trial_index.add_argument("--root", default=root)
     verify_trial_index.add_argument("--index", default=root / "acceptance" / "query-generation-mvp" / "trial-run-index.json")
-    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v14.json")
+    verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v15.json")
     verify_trial_index.set_defaults(handler=_acceptance_verify_trial_index)
     for name, handler in (("freeze-package", _acceptance_freeze_package), ("verify-package", _acceptance_verify_package)):
         package_command = acceptance_commands.add_parser(name)
         package_command.add_argument("--root", default=root)
         package_command.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
-        package_command.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v14.json")
+        package_command.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v15.json")
         package_command.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
         if name == "freeze-package":
             package_command.add_argument("--scope-file")
@@ -535,7 +603,7 @@ def main() -> None:
     promote_batch = acceptance_commands.add_parser("promote-batch")
     promote_batch.add_argument("--root", default=root)
     promote_batch.add_argument("--acceptance-dir", default=root / "acceptance" / "query-generation-mvp")
-    promote_batch.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v14.json")
+    promote_batch.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v15.json")
     promote_batch.add_argument("--manifest", default=root / "acceptance" / "query-generation-mvp" / "package-manifest.json")
     promote_batch.add_argument("--approval", required=True)
     promote_batch.add_argument("--allowed-signers", required=True)
