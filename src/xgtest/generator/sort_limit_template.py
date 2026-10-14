@@ -43,10 +43,16 @@ def _sorted(rows: list[tuple[str, int | None, int]], direction: str, null_orderi
     if direction == "none":
         return rows
     sign = 1 if direction == "asc" else -1
+    nulls_first = (
+        null_ordering == "nulls_first"
+        or (null_ordering == "none" and direction == "desc")
+    )
 
     def sort_key(row: tuple[str, int | None, int]):
         _, key, tiebreak = row
-        null_rank = 0 if null_ordering == "nulls_first" else 1
+        if key is None:
+            return (0 if nulls_first else 1, 0, 0)
+        null_rank = 1 if nulls_first else 0
         primary = sign * (key if key is not None else 0)
         secondary = sign * tiebreak if multi else 0
         return (null_rank, primary, secondary)

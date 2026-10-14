@@ -47,11 +47,13 @@ const estimate = computed(() => {
   const featureRanges: Record<string, [number, number]> = {
     join: [40, 60], filter: [40, 70], aggregate: [30, 60], subquery: [30, 60], sort_limit: [20, 40],
   }
-  const standard = featureRanges[form.features[0] ?? 'join'] ?? [0, 0]
-  const ranges: Record<MissionStrategy, [number, number]> = {
-    SMOKE: [0, 30], STANDARD: standard, FULL: [500, 2000], AI_EXPLORATORY: standard,
-  }
-  const [min, max] = ranges[form.strategy]
+  const ranges = form.features.map((feature) => {
+    if (form.strategy === 'SMOKE') return [0, 30] as [number, number]
+    if (form.strategy === 'FULL') return [500, 2000] as [number, number]
+    return featureRanges[feature] ?? [0, 0]
+  })
+  const min = ranges.reduce((total, range) => total + range[0], 0)
+  const max = ranges.reduce((total, range) => total + range[1], 0)
   return { min, max, sqlMin: min, sqlMax: max * 2 }
 })
 async function submit() {
@@ -59,11 +61,13 @@ async function submit() {
   if (!form.features.length) { error.value = '请至少选择一个测试范围。'; return }
   if (!form.name.trim() || !form.purpose.trim()) { error.value = '测试目的不能为空。'; return }
   submitting.value = true
+  const selectedFeatures = [...form.features]
   try {
-    const created = await createMission({ ...form, risk_focus: [...form.risk_focus], excluded_scope: [...form.excluded_scope] })
+    const created = await createMission({ ...form, features: selectedFeatures,
+      risk_focus: [...form.risk_focus], excluded_scope: [...form.excluded_scope] })
     const started = await startMission(created.mission.mission_id)
     const jobId = started.mission.job_id
-    router.push(jobId ? `/jobs/${jobId}` : `/tests/${created.mission.mission_id}`)
+    router.push(selectedFeatures.length === 1 && jobId ? `/jobs/${jobId}` : `/tests/${created.mission.mission_id}`)
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '创建测试任务失败'
   } finally {
@@ -93,12 +97,12 @@ async function submit() {
       <div class="mission-body">
         <div class="option-grid">
           <label v-for="feature in FEATURES" :key="feature.value" class="option" :class="{ disabled: !feature.enabled }">
-            <input type="radio" name="mission-feature" :value="feature.value" v-model="form.features[0]" :disabled="!feature.enabled" />
+            <input type="checkbox" :checked="form.features.includes(feature.value)" :disabled="!feature.enabled" @change="toggle(form.features, feature.value)" />
             <span>{{ feature.label }}</span>
             <em v-if="!feature.enabled">未支持</em>
           </label>
         </div>
-        <p class="hint">每个 Job 当前执行一个 Feature。多 Feature Mission 编排上线前，请为本次任务选择单一测试范围。</p>
+        <p class="hint">每个 Feature 会创建独立子任务，保留自己的候选范围与执行证据；一个 Feature 失败不会替代其他 Feature 的结果。</p>
       </div>
     </section>
 

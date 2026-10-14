@@ -12,6 +12,7 @@ controls whether the NULL row is present, which makes three-valued logic visible
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 from typing import Any
 
 from xgtest.design.constraint import validate_assignment
@@ -62,14 +63,19 @@ def _label(rank: int) -> str:
     return f"x{rank}" if rank == 4 else f"r{rank}"
 
 
-def _matches(predicate: str, operator: str, datatype: str, rank: int | None) -> bool:
+def _matches(predicate: str, operator: str, datatype: str, rank: int | None) -> bool | None:
     """Evaluate the predicate for one fixture row (rank None = the NULL row).
 
     Mirrors SQL three-valued logic: a comparison against NULL is UNKNOWN, and an
     UNKNOWN row is not returned; only IS NULL keeps it.
     """
     if rank is None:
-        return predicate == "is_null"
+        if predicate == "is_null":
+            return True
+        if predicate == "like":
+            return _NULL_LABEL.startswith("r")
+        # Comparisons and conversions involving NULL evaluate to UNKNOWN.
+        return None
     value = _value(datatype, rank)
     one, two, three = _value(datatype, 1), _value(datatype, 2), _value(datatype, 3)
     if predicate == "boolean_combination":
@@ -93,8 +99,12 @@ def _matches(predicate: str, operator: str, datatype: str, rank: int | None) -> 
     if predicate == "is_null":
         return False
     if predicate == "arithmetic":
-        return value + _value(datatype, 1) >= _value(datatype, 3)
+        if datatype == "date":
+            return date.fromisoformat(value) + timedelta(days=1) >= date.fromisoformat(three)
+        return value + one >= three
     if predicate == "conversion":
+        if datatype == "date":
+            return f"{value} 00:00:00" == f"{two} 00:00:00"
         return str(value) == str(two)
     raise ValueError(f"FILTER_TEMPLATE_PREDICATE_UNSUPPORTED: {predicate}")
 
@@ -120,9 +130,14 @@ def _fragment(datatype: str, predicate: str, operator: str) -> str:
     if predicate == "is_null":
         return "d.k IS NULL"
     if predicate == "arithmetic":
+        if datatype == "date":
+            return f"(d.k + INTERVAL '1' DAY) >= {three}"
+        if datatype == "varchar":
+            return f"(d.k || {one}) >= {three}"
         return f"(d.k + {one}) >= {three}"
     if predicate == "conversion":
-        return f"CAST(d.k AS VARCHAR) = '{_value(datatype, 2)}'"
+        converted = f"{_value(datatype, 2)} 00:00:00" if datatype == "date" else str(_value(datatype, 2))
+        return f"CAST(d.k AS VARCHAR) = '{converted}'"
     if predicate == "boolean_combination":
         # A non-trivial base predicate; `interaction` (constrained to non-none)
         # then shapes the observable row set through AND/OR/NOT.
@@ -146,13 +161,14 @@ def _kept(predicate: str, operator: str, datatype: str, interaction: str, rank: 
     """Evaluate the combined WHERE clause over one fixture row."""
     base = _matches(predicate, operator, datatype, rank)
     if interaction == "none":
-        return base
+        return base is True
     if interaction == "and":
-        return base and rank != 3
+        return base is True and rank != 3
     if interaction == "or":
-        return base or rank is None
+        return base is True or rank is None
     if interaction == "not":
-        return not base
+        # NOT UNKNOWN remains UNKNOWN and is filtered out by WHERE.
+        return base is False
     raise ValueError(f"FILTER_TEMPLATE_INTERACTION_UNSUPPORTED: {interaction}")
 
 

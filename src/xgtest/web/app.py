@@ -21,7 +21,7 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
 
     @app.get("/api/missions")
     def list_missions(current: QueryReadService = Depends(get_service)) -> dict:
-        return {"items": get_missions(current).store.list()}
+        return {"items": get_missions(current).list()}
 
     @app.post("/api/missions")
     def create_mission(definition: dict = Body(...), current: QueryReadService = Depends(get_service)) -> dict:
@@ -43,6 +43,15 @@ def create_app(service: QueryReadService | None = None) -> FastAPI:
     def start_mission(mission_id: str, current: QueryReadService = Depends(get_service)) -> dict:
         try:
             return get_missions(current).start(mission_id)
+        except (ValueError, OSError) as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+    @app.post("/api/missions/{mission_id}/features/{feature}/retry")
+    def retry_mission_feature(mission_id: str, feature: str, current: QueryReadService = Depends(get_service)) -> dict:
+        try:
+            return get_missions(current).retry_feature(mission_id, feature)
+        except FileNotFoundError as error:
+            raise HTTPException(status_code=404, detail="MISSION_NOT_FOUND") from error
         except (ValueError, OSError) as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
 

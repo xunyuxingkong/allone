@@ -143,7 +143,11 @@ class FilterPlugin:
         return render_filter(model, assignment)
 
     def mutation_applies(self, case: Any) -> bool:
-        return any(claim.assignment.get("operator") == "less_than" for claim in case.coverage)
+        return any(
+            claim.assignment.get("predicate") == "comparison"
+            and claim.assignment.get("operator") == "less_than"
+            for claim in case.coverage
+        )
 
     def mutation_specs(self) -> tuple[MutationSpec, ...]:
         return (MutationSpec(self.mutation_id, "1", self.mutation_applies, self.mutated_sql),)
@@ -243,8 +247,14 @@ class SubqueryPlugin:
         return (MutationSpec(self.mutation_id, "1", self.mutation_applies, self.mutated_sql),)
 
     def mutated_sql(self, sql: str) -> str:
-        # Swap the set-membership operator; the outer key tests change membership.
-        return sql.replace(" NOT IN ", " IN ").replace(" IN ", " NOT IN ")
+        # Swap exactly one set-membership operator. Sequential string replacement
+        # would turn NOT IN into IN and then immediately back into NOT IN.
+        import re
+
+        def flip(match: re.Match[str]) -> str:
+            return " IN " if match.group(1).upper() == "NOT IN" else " NOT IN "
+
+        return re.sub(r"\s+(NOT IN|IN)\s+", flip, sql, count=1, flags=re.IGNORECASE)
 
     def expected_id(self, model: Any, assignment: dict[str, str]) -> str:
         return f"{self.id_prefix}.{candidate_signature(model, assignment, self.template_id, self.template_version)[:8].upper()}"

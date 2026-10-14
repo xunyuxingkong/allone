@@ -89,27 +89,51 @@ def _matches(predicate: str, result: str, rank: int, *, correlated: bool) -> boo
     is_match = rank == _MATCH_RANK
     is_decoy = rank == _DECOY_RANK
     if predicate in {"exists", "not_exists"}:
-        # The correlated probe yields a row only for the matching outer key (and,
-        # for with_null, only for the decoy key).
-        present = (result == "matching" and is_match) or (result == "with_null" and is_decoy)
+        if correlated:
+            present = (result == "matching" and is_match) or (result == "with_null" and is_decoy)
+        else:
+            present = result != "empty"
         return present if predicate == "exists" else not present
     if predicate == "any":
-        # `k = ANY (probe)`: true for the matching key under 'matching'; NULL under
-        # with_null drops non-probe rows.
-        if result == "with_null":
-            return is_decoy
+        if correlated:
+            if result == "matching":
+                return is_match
+            # The correlated with_null probe yields NULL only for the decoy row;
+            # it is UNKNOWN there and empty (FALSE) for the other rows.
+            return False
+        if result == "empty" or result == "non_matching":
+            return False
+        # An uncorrelated [match, NULL] set is TRUE only for the matching key;
+        # UNKNOWN rows are not retained by WHERE.
         return is_match
     if predicate == "all":
-        # `k = ALL (probe)`: true only where the probe matches the row (uncorrelated
-        # 'matching' keeps the match row; correlated keeps rows its probe agrees with).
-        if result == "with_null":
-            return is_decoy
-        return is_match
-    if predicate == "scalar":
-        # `k = (scalar)`: only the matching key, and never for an empty subquery.
+        if correlated:
+            if result == "matching":
+                # Rows with an empty correlated subquery satisfy ALL vacuously.
+                return True
+            if result == "with_null":
+                # The NULL-producing probe exists only for the decoy row; the
+                # other rows have an empty subquery and therefore satisfy ALL.
+                return not is_decoy
+            return True
         if result == "empty":
+            return True
+        if result == "with_null":
+            # Every comparison is either UNKNOWN or FALSE for [match, NULL].
             return False
         return is_match
+    if predicate == "scalar":
+        # Scalar probes return rank 1, rank 4, or no row for the three allowed
+        # shapes. An empty scalar subquery yields NULL, so equality is UNKNOWN.
+        return result == "matching" and is_match
+    if correlated:
+        if result == "matching":
+            return is_match if predicate == "in" else not is_match
+        if result == "with_null":
+            # Empty correlated sets make NOT IN true for non-decoy rows; the
+            # decoy row sees NULL and evaluates to UNKNOWN.
+            return False if predicate == "in" else not is_decoy
+        return predicate == "not_in"
     # IN / NOT IN compare the outer key against the returned set.
     if result == "with_null":
         # A NULL in the set makes NOT IN UNKNOWN for every row; IN keeps the match.

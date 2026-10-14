@@ -234,7 +234,10 @@ def verify_pre_promotion_package(
     for extra in sorted(expected_ids - current_ids):
         fail(extra, "MANIFEST_CASE_EXTRA")
 
-    trial = verify_trial_artifact_index(root, acceptance_dir / "trial-run-index.json", profile_path, scope=scope)
+    trial = verify_trial_artifact_index(
+        root, acceptance_dir / "trial-run-index.json", profile_path,
+        scope=scope, candidate_ids=expected_ids,
+    )
     if trial["status"] != "PASS":
         for item in trial.get("errors", []):
             fail(item["case_id"], f"TRIAL:{item['code']}")

@@ -311,6 +311,8 @@ def _acceptance_verify_trial_index(args: argparse.Namespace) -> int:
         root,
         Path(args.index).resolve(),
         Path(args.runtime_profile).resolve(),
+        scope=AcceptanceScope.model_validate_json(Path(args.scope_file).read_bytes()) if args.scope_file else None,
+        candidate_ids=args.candidate_ids,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0 if result["status"] == "PASS" else 1
@@ -585,6 +587,8 @@ def main() -> None:
     verify_trial_index.add_argument("--root", default=root)
     verify_trial_index.add_argument("--index", default=root / "acceptance" / "query-generation-mvp" / "trial-run-index.json")
     verify_trial_index.add_argument("--runtime-profile", default=root / "artifacts" / "runtime-profile-v15.json")
+    verify_trial_index.add_argument("--scope-file")
+    verify_trial_index.add_argument("--candidate-ids", nargs="*", help="optional Job-owned Candidate Scope; omitted preserves legacy whole-scope behavior")
     verify_trial_index.set_defaults(handler=_acceptance_verify_trial_index)
     for name, handler in (("freeze-package", _acceptance_freeze_package), ("verify-package", _acceptance_verify_package)):
         package_command = acceptance_commands.add_parser(name)

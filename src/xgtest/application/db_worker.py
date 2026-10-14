@@ -40,6 +40,7 @@ def execute(root: Path, request: dict) -> dict:
         after = observe_database_build(config, profile)
         (directory / "regression-build.json").write_text(json.dumps({"before": before, "after": after}, indent=2), encoding="utf-8")
         return {"status": report["status"], "case_count": len(report["cases"]),
+                "sql_count": sum(len(case.get("steps", [])) for case in report["cases"]),
                 "failures": failure_projection(report, (directory / "regression.json").relative_to(root).as_posix())}
     import re
     from xgtest.generator.plugins import FEATURE_PLUGINS

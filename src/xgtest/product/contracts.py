@@ -2,7 +2,7 @@
 import re
 from typing import ClassVar, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from xgtest.core.model_base import StrictModel
 
@@ -33,6 +33,14 @@ def _identifiers(values, code: str) -> list[str]:
     return list(values)
 
 
+class MissionChildJob(StrictModel):
+    """Durable link to one feature-scoped Core Job attempt."""
+
+    feature: str
+    job_id: str = Field(pattern=r"^[0-9a-f]{32}$")
+    attempt: int = Field(ge=1)
+
+
 class TestMission(StrictModel):
     __test__: ClassVar[bool] = False  # keep pytest from collecting this model as a test class
 
@@ -49,6 +57,7 @@ class TestMission(StrictModel):
     created_by: str = Field(default="user", min_length=1, max_length=200)
     state: MissionState = "DRAFT"
     job_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
+    child_jobs: list[MissionChildJob] = Field(default_factory=list)
 
     @field_validator("features")
     @classmethod
@@ -56,8 +65,6 @@ class TestMission(StrictModel):
         identifiers = _identifiers(values, "MISSION_FEATURE_INVALID")
         if len(set(identifiers)) != len(identifiers):
             raise ValueError("MISSION_FEATURE_DUPLICATE")
-        if len(values) != 1:
-            raise ValueError("MISSION_FEATURE_SCOPE_MUST_BE_SINGLE_UNTIL_ORCHESTRATION")
         unsupported = [value for value in identifiers if value not in SUPPORTED_FEATURES]
         if unsupported:
             raise ValueError(f"MISSION_FEATURE_UNAVAILABLE:{','.join(sorted(unsupported))}")
@@ -70,6 +77,19 @@ class TestMission(StrictModel):
         if len(set(identifiers)) != len(identifiers):
             raise ValueError("MISSION_RISK_FOCUS_DUPLICATE")
         return identifiers
+
+    @model_validator(mode="after")
+    def child_jobs_match_features(self):
+        if any(item.feature not in self.features for item in self.child_jobs):
+            raise ValueError("MISSION_CHILD_JOB_FEATURE_UNDECLARED")
+        if len({item.job_id for item in self.child_jobs}) != len(self.child_jobs):
+            raise ValueError("MISSION_CHILD_JOB_ID_DUPLICATE")
+        by_feature: dict[str, list[int]] = {}
+        for item in self.child_jobs:
+            by_feature.setdefault(item.feature, []).append(item.attempt)
+        if any(sorted(attempts) != list(range(1, len(attempts) + 1)) for attempts in by_feature.values()):
+            raise ValueError("MISSION_CHILD_JOB_ATTEMPT_INVALID")
+        return self
 
 
 def strategy_estimate(strategy: MissionStrategy, feature: str | None = None) -> dict:

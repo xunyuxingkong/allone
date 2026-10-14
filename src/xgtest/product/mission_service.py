@@ -3,7 +3,7 @@ import uuid
 import json
 from pathlib import Path
 
-from xgtest.product.contracts import TestMission, strategy_estimate
+from xgtest.product.contracts import MissionChildJob, TestMission, strategy_estimate
 from xgtest.product.store import MissionStore
 
 # Product mission state is a pure projection of the durable Job state; no new truth is created.
@@ -27,6 +27,31 @@ class MissionService:
     def _mission_id(self) -> str:
         return uuid.uuid4().hex
 
+    @staticmethod
+    def _job_refs(mission: TestMission) -> list[MissionChildJob]:
+        if mission.child_jobs:
+            return list(mission.child_jobs)
+        # Backward compatibility for Missions persisted before child-job orchestration.
+        if mission.job_id:
+            return [MissionChildJob(feature=mission.features[0], job_id=mission.job_id, attempt=1)]
+        return []
+
+    @classmethod
+    def _latest_refs(cls, mission: TestMission) -> dict[str, MissionChildJob]:
+        latest: dict[str, MissionChildJob] = {}
+        for item in cls._job_refs(mission):
+            if item.feature not in latest or item.attempt > latest[item.feature].attempt:
+                latest[item.feature] = item
+        return latest
+
+    def _create_feature_job(self, mission: TestMission, feature: str) -> dict:
+        goal = f"{mission.name}｜{mission.purpose}｜{feature}"
+        return self.controller.create(goal, {
+            "intent": "query.full_test", "mission_id": mission.mission_id,
+            "features": [feature], "strategy": mission.strategy,
+            "data_scale": mission.data_scale, "risk_focus": mission.risk_focus,
+        }, mission_child=True)
+
     def create(self, definition: dict) -> dict:
         features = definition.get("features")
         if not isinstance(features, list) or not features:
@@ -37,32 +62,110 @@ class MissionService:
             self.store.save(candidate)
         return self.view(candidate.mission_id)
 
+    def list(self) -> list[dict]:
+        items = []
+        for item in self.store.list():
+            mission_id = item.get("mission_id")
+            if not mission_id:
+                items.append(item)
+                continue
+            try:
+                mission = self.store.load(mission_id)
+                latest = self._latest_refs(mission)
+                children = []
+                for feature in mission.features:
+                    ref = latest.get(feature)
+                    if ref is None:
+                        children.append({"feature": feature, "job_id": None, "state": "NOT_STARTED"})
+                        continue
+                    try:
+                        state = self.controller.status(ref.job_id)["state"]
+                    except (ValueError, OSError):
+                        state = "BLOCKED"
+                    children.append({"feature": feature, "job_id": ref.job_id,
+                                     "attempt": ref.attempt, "state": state})
+                item["state"] = self._job_state(mission)
+                item["feature_jobs"] = children
+                item["feature_job_count"] = len(self._job_refs(mission))
+            except (OSError, ValueError):
+                item["state"] = "BLOCKED"
+                item["error"] = "MISSION_STATE_INVALID"
+            items.append(item)
+        return items
+
     def start(self, mission_id: str) -> dict:
-        mission = self.store.load(mission_id)
-        if mission.state != "READY":
-            raise ValueError("MISSION_NOT_READY")
-        # Reuse query.full_test; the mission's feature selects the job's scope.
-        goal = f"{mission.name}｜{mission.purpose}"
-        job = self.controller.create(goal, {"intent": "query.full_test", "features": list(mission.features),
-            "strategy": mission.strategy, "data_scale": mission.data_scale, "risk_focus": mission.risk_focus})
         with self.store.lock(mission_id):
-            current = self.store.load(mission_id)
-            self.store.save(current.model_copy(update={"job_id": job["job_id"], "state": "RUNNING"}))
+            mission = self.store.load(mission_id)
+            if mission.state not in {"READY", "RUNNING", "BLOCKED"}:
+                raise ValueError("MISSION_NOT_READY")
+            created_features = {item.feature for item in self._job_refs(mission)}
+            if mission.state != "READY" and set(mission.features) <= created_features:
+                raise ValueError("MISSION_NOT_READY")
+            for feature in mission.features:
+                if feature in created_features:
+                    continue
+                job = self._create_feature_job(mission, feature)
+                refs = self._job_refs(mission)
+                attempt = 1 + sum(item.feature == feature for item in refs)
+                ref = MissionChildJob(feature=feature, job_id=job["job_id"], attempt=attempt)
+                mission = mission.model_copy(update={
+                    "job_id": mission.job_id or job["job_id"],
+                    "child_jobs": [*refs, ref], "state": "RUNNING",
+                })
+                self.store.save(mission)
+                created_features.add(feature)
+        return self.view(mission_id)
+
+    def retry_feature(self, mission_id: str, feature: str) -> dict:
+        with self.store.lock(mission_id):
+            mission = self.store.load(mission_id)
+            if feature not in mission.features:
+                raise ValueError("MISSION_FEATURE_NOT_SELECTED")
+            latest = self._latest_refs(mission).get(feature)
+            if latest is None:
+                raise ValueError("MISSION_FEATURE_JOB_NOT_STARTED")
+            previous = self.controller.store.load(latest.job_id)
+            if previous.state not in {"BLOCKED", "FAILED"}:
+                raise ValueError("MISSION_FEATURE_RETRY_REQUIRES_FAILED_JOB")
+            job = self._create_feature_job(mission, feature)
+            refs = self._job_refs(mission)
+            attempt = 1 + sum(item.feature == feature for item in refs)
+            self.store.save(mission.model_copy(update={
+                "job_id": mission.job_id or job["job_id"],
+                "child_jobs": [*refs, MissionChildJob(feature=feature, job_id=job["job_id"], attempt=attempt)],
+                "state": "RUNNING",
+            }))
         return self.view(mission_id)
 
     def _job_state(self, mission: TestMission) -> str:
-        if mission.job_id is None:
+        latest = self._latest_refs(mission)
+        jobs = []
+        for ref in latest.values():
+            try:
+                jobs.append(self.controller.status(ref.job_id)["state"])
+            except (ValueError, OSError):
+                jobs.append("BLOCKED")
+        if not jobs:
             return mission.state
-        try:
-            return _JOB_TO_MISSION_STATE[self.controller.status(mission.job_id)["state"]]
-        except (ValueError, OSError):
+        # A partially created parent mission is still in progress even if its
+        # already-created child jobs have finished.
+        if set(latest) != set(mission.features):
+            return "RUNNING"
+        states = [_JOB_TO_MISSION_STATE.get(item, "BLOCKED") for item in jobs]
+        if "RUNNING" in states:
+            return "RUNNING"
+        if "BLOCKED" in states:
             return "BLOCKED"
+        if "WAITING_APPROVAL" in states:
+            return "WAITING_APPROVAL"
+        return "COMPLETED" if all(item == "COMPLETED" for item in states) else "READY"
 
     def _job(self, mission: TestMission):
-        if mission.job_id is None:
+        refs = self._latest_refs(mission)
+        if not refs:
             return None
         try:
-            return self.controller.store.load(mission.job_id)
+            return self.controller.store.load(refs[mission.features[0]].job_id if mission.features[0] in refs else next(iter(refs.values())).job_id)
         except (ValueError, OSError):
             return None
 
@@ -73,22 +176,36 @@ class MissionService:
         item below is copied from a recorded AI artifact or Core result.
         """
         mission = self.store.load(mission_id)
-        job = self._job(mission)
-        if job is None:
+        refs = self._latest_refs(mission)
+        jobs = []
+        for feature, ref in refs.items():
+            try:
+                jobs.append((feature, self.controller.store.load(ref.job_id)))
+            except (ValueError, OSError):
+                continue
+        if not jobs:
             return {"mission_id": mission_id, "job_id": mission.job_id, "available": False,
                     "note": "尚未启动测试任务，AI 尚无产出。"}
-        generated = [result for result in job.action_results if result.action == "candidate.generate"]
-        reviews = [result for result in job.action_results if result.action == "candidate.technical_review"]
+        generated = [result for _, job in jobs for result in job.action_results if result.action == "candidate.generate"]
+        reviews = [result for _, job in jobs for result in job.action_results if result.action == "candidate.technical_review"]
         review_decisions = [result.outputs.get("ai_technical_review", {}).get("decision")
                             for result in reviews if isinstance(result.outputs.get("ai_technical_review"), dict)]
-        explanations = [{"reason": result.outputs.get("reason")} for result in job.action_results
+        explanations = [{"feature": feature, "reason": result.outputs.get("reason")}
+                        for feature, job in jobs for result in job.action_results
                         if result.action.startswith("candidate.") and result.outputs.get("reason")]
+        failures = [{"feature": feature, **job.failure_analysis.model_dump(mode="json")}
+                    for feature, job in jobs if job.failure_analysis]
+        summaries = [f"{feature}: {job.explanation}" for feature, job in jobs if job.explanation]
         return {
-            "mission_id": mission_id, "job_id": job.job_id, "available": True,
+            "mission_id": mission_id, "job_id": mission.job_id, "available": True,
             "advisory_only": True,
-            "summary": job.explanation or None,
-            "failure_analysis": job.failure_analysis.model_dump(mode="json") if job.failure_analysis else None,
-            "generated_candidate_count": len(generated),
+            "summary": "\n".join(summaries) or None,
+            "failure_analysis": failures[0] if failures else None,
+            "feature_failure_analyses": failures,
+            "generated_candidate_count": sum(len(set(
+                case_id for result in job.action_results if result.action == "candidate.generate"
+                for case_id in result.outputs.get("candidate_ids", []) if isinstance(case_id, str)
+            )) for _, job in jobs),
             "technical_review_count": len(reviews),
             "technical_review_decisions": {"PASS": review_decisions.count("PASS"),
                                            "CONCERNS": review_decisions.count("CONCERNS"),
@@ -106,52 +223,164 @@ class MissionService:
         """
         from xgtest.product.exploration import brief
         mission = self.store.load(mission_id)
-        job = self._job(mission)
-        # Coverage and candidate data come from Core through the job's own services,
-        # so the briefing reflects the feature the mission actually scopes to.
-        coverage: dict = {"required": 0, "active_covered": 0, "active_missing": 0, "missing_requirements": []}
-        failures: list[dict] = []
-        rounds = 0
-        if job is not None:
-            _, module, _, _ = self.controller.services(job.job_id)
-            coverage = module.inspect_coverage().outputs
-            rounds = sum(1 for result in job.action_results if result.action == "candidate.generate")
-            for result in job.action_results:
-                if result.action == "module.regression":
-                    failures.extend(result.outputs.get("failures", []) or [])
-        return brief(coverage, failures, rounds)
+        latest = self._latest_refs(mission)
+        feature_briefs = []
+        for feature in mission.features:
+            ref = latest.get(feature)
+            if ref is None:
+                continue
+            try:
+                job = self.controller.store.load(ref.job_id)
+                _, module, _, _ = self.controller.services(job.job_id)
+                coverage = module.inspect_coverage().outputs
+                failures = [failure for result in job.action_results if result.action == "module.regression"
+                            for failure in result.outputs.get("failures", []) or []]
+                rounds = sum(1 for result in job.action_results if result.action == "candidate.generate")
+                feature_briefs.append({"feature": feature, **brief(coverage, failures, rounds)})
+            except (OSError, ValueError):
+                feature_briefs.append({"feature": feature, "status": "UNAVAILABLE"})
+        if len(mission.features) == 1:
+            return ({key: value for key, value in feature_briefs[0].items() if key != "feature"}
+                    if feature_briefs else {"features": []})
+        return {"mission_id": mission_id, "features": feature_briefs}
+
+    def _feature_job_views(self, mission: TestMission) -> list[dict]:
+        latest = self._latest_refs(mission)
+        views = []
+        for ref in self._job_refs(mission):
+            is_latest = latest.get(ref.feature) == ref
+            try:
+                job = self.controller.store.load(ref.job_id)
+                state = self.controller.status(ref.job_id)["state"]
+            except (ValueError, OSError):
+                views.append({"feature": ref.feature, "attempt": ref.attempt, "job_id": ref.job_id,
+                              "state": "BLOCKED", "mission_state": "BLOCKED", "is_latest": is_latest,
+                              "candidate_count": 0, "generated_candidate_count": 0,
+                              "case_count": None, "sql_count": None, "failure_count": None,
+                              "coverage": None, "approval_status": "INVALID", "ai_findings_count": 0,
+                              "blockers": ["JOB_STATE_UNAVAILABLE"]})
+                continue
+            regression = self.controller.last(job, "module.regression")
+            coverage_result = self.controller.last(job, "feature.coverage")
+            generation = self.controller.generation_progress(job)
+            review = self._approval_review(job, mission)
+            findings = sum(len(result.outputs.get("ai_technical_review", {}).get("findings", []))
+                           for result in job.action_results if result.action == "candidate.technical_review")
+            views.append({
+                "feature": ref.feature, "attempt": ref.attempt, "job_id": ref.job_id,
+                "state": state, "mission_state": _JOB_TO_MISSION_STATE.get(state, "BLOCKED"),
+                "is_latest": is_latest, "candidate_count": len(job.candidate_scope_ids),
+                "generated_candidate_count": generation["generated_total"],
+                "case_count": regression.outputs.get("case_count") if regression else None,
+                "sql_count": regression.outputs.get("sql_count") if regression else None,
+                "failure_count": len(regression.outputs.get("failures", []) or []) if regression else None,
+                "coverage": ({**coverage_result.outputs, "status": coverage_result.status} if coverage_result else None),
+                "approval_status": review.get("status", "NOT_READY"),
+                "ai_findings_count": findings, "blockers": list(dict.fromkeys([*job.blockers, *(
+                    regression.blockers if regression else [])])),
+            })
+        return views
 
     def view(self, mission_id: str) -> dict:
         mission = self.store.load(mission_id)
         state = self._job_state(mission)
-        job = self._job(mission)
-        executed = bool(job and any(
-            result.status in {"PASS", "FAIL"} and result.action in {
+        refs = self._latest_refs(mission)
+        jobs = []
+        for feature, ref in refs.items():
+            try:
+                jobs.append((feature, self.controller.store.load(ref.job_id)))
+            except (ValueError, OSError):
+                continue
+        job = jobs[0][1] if jobs else None
+        child_views = self._feature_job_views(mission)
+        latest_views = [item for item in child_views if item["is_latest"]]
+        executed = [feature for feature, child in jobs if any(
+            result.status in {"PASS", "FAIL", "BLOCKED"} and result.action in {
                 "module.regression", "candidate.trial", "candidate.mutation"
-            }
-            for result in job.action_results
-        ))
-        covered = bool(job and any(
-            result.action == "feature.coverage" and result.status == "PASS"
-            and result.outputs.get("active_missing") == 0 for result in job.action_results
-        ))
-        generation = self.controller.generation_progress(job) if job is not None else {
-            "budget": 30 if mission.strategy == "SMOKE" else None,
-            "generated_total": 0,
-            "remaining_budget": 30 if mission.strategy == "SMOKE" else None,
-            "stalled": False,
+            } for result in child.action_results
+        )]
+        covered = [item["feature"] for item in latest_views if item.get("coverage")
+                   and item["coverage"].get("status") == "PASS" and item["coverage"].get("active_missing") == 0]
+        progress = [self.controller.generation_progress(child) for _, child in jobs]
+        budget_values = [item["budget"] for item in progress]
+        remaining_values = [item["remaining_budget"] for item in progress]
+        missing_job_count = max(0, len(mission.features) - len(jobs))
+        generation = {
+            "budget": (sum(item for item in budget_values if item is not None) + 30 * missing_job_count
+                       if mission.strategy == "SMOKE" and all(item is not None for item in budget_values) else None),
+            "generated_total": sum(item["generated_total"] for item in progress),
+            "remaining_budget": (sum(item for item in remaining_values if item is not None) + 30 * missing_job_count
+                                 if mission.strategy == "SMOKE" and all(item is not None for item in remaining_values) else None),
+            "stalled": any(item["stalled"] for item in progress),
         }
-        smoke_completion = self.smoke_completion("STANDARD", None, None, None, generation)
-        if job is not None and mission.strategy == "SMOKE":
-            _, module, candidates, _ = self.controller.services(job.job_id)
-            smoke_completion = self.smoke_completion(mission.strategy, job, module, candidates, generation)
+        smoke_completions = []
+        if mission.strategy == "SMOKE":
+            for _, child in jobs:
+                _, module, candidates, _ = self.controller.services(child.job_id)
+                child_progress = self.controller.generation_progress(child)
+                smoke_completions.append(self.smoke_completion(mission.strategy, child, module, candidates, child_progress))
+        smoke_completion = {
+            "smoke_complete": len(smoke_completions) == len(mission.features) and all(item["smoke_complete"] for item in smoke_completions),
+            "regression_pass": len(smoke_completions) == len(mission.features) and all(item["regression_pass"] for item in smoke_completions),
+            "generated_cases_valid": len(smoke_completions) == len(mission.features) and all(item["generated_cases_valid"] for item in smoke_completions),
+            "no_blocking_failure": len(smoke_completions) == len(mission.features) and all(item["no_blocking_failure"] for item in smoke_completions),
+            "strategy_completion_frozen": len(smoke_completions) == len(mission.features) and all(item.get("strategy_completion_frozen") for item in smoke_completions),
+        }
         approval_review = self._approval_review(job, mission)
+        latest_by_feature = {item["feature"]: item for item in latest_views}
+        approval_by_feature = {
+            feature: latest_by_feature.get(feature, {}).get("approval_status", "NOT_READY")
+            for feature in mission.features
+        }
+        approval_values = list(approval_by_feature.values())
+        if "INVALID" in approval_values:
+            aggregate_approval = "INVALID"
+        elif "APPROVED_STALE" in approval_values:
+            aggregate_approval = "APPROVED_STALE"
+        elif approval_values and all(item == "APPROVED_CURRENT" for item in approval_values):
+            aggregate_approval = "APPROVED_CURRENT"
+        elif any(item == "WAITING_APPROVAL" for item in approval_values):
+            aggregate_approval = "WAITING_APPROVAL"
+        else:
+            aggregate_approval = "NOT_READY"
+        aggregate_reason = {
+            "INVALID": "至少一个 Feature 的审批材料无效或任务证据不可读取。",
+            "APPROVED_STALE": "至少一个 Feature 的历史审批已过期或当前输入发生变化。",
+            "APPROVED_CURRENT": "所有已请求 Feature 的当前审批均已通过只读复核。",
+            "WAITING_APPROVAL": "至少一个 Feature 已进入人工审批门禁。",
+            "NOT_READY": "仍有 Feature 尚未完成审批准备。",
+        }[aggregate_approval]
+        approval_evidence = approval_review.get("evidence", {})
+        aggregate_blockers = list(dict.fromkeys([
+            *approval_evidence.get("blockers", []),
+            *(blocker for item in latest_views for blocker in item.get("blockers", [])),
+        ]))
+        approval_review = {**approval_review, "status": aggregate_approval,
+                           "reason": aggregate_reason if len(mission.features) > 1 else approval_review.get("reason"),
+                           "evidence": {**approval_evidence, "blockers": aggregate_blockers},
+                           "feature_reviews": approval_by_feature,
+                           "untested_scope": [feature for feature in mission.features if feature not in covered]}
+        estimate_parts = [strategy_estimate(mission.strategy, feature) for feature in mission.features]
+        estimate = {"strategy": mission.strategy,
+                    "case_min": sum(item["case_min"] for item in estimate_parts),
+                    "case_max": sum(item["case_max"] for item in estimate_parts),
+                    "sql_min": sum(item["sql_min"] for item in estimate_parts),
+                    "sql_max": sum(item["sql_max"] for item in estimate_parts), "unit": "cases"}
+        known = lambda key: [item[key] for item in latest_views if isinstance(item.get(key), int)]
+        feature_summary = {
+            "requested_features": len(mission.features), "started_features": len(refs),
+            "completed_features": sum(item.get("mission_state") == "COMPLETED" for item in latest_views),
+            "blocked_features": sum(item.get("mission_state") == "BLOCKED" for item in latest_views),
+            "case_count": sum(known("case_count")), "sql_count": sum(known("sql_count")),
+            "failure_count": sum(known("failure_count")), "candidate_count": sum(item["candidate_count"] for item in latest_views),
+            "ai_findings_count": sum(item["ai_findings_count"] for item in latest_views),
+        }
         return {
             "mission": mission.model_dump(mode="json"),
             "state": state,
             "requested_scope": list(mission.features),
-            "executed_scope": list(mission.features) if executed else [],
-            "covered_scope": list(mission.features) if covered else [],
+            "executed_scope": executed,
+            "covered_scope": covered,
             "excluded_scope": list(mission.excluded_scope),
             "unmodelled_scope": [],
             "execution_policy": {
@@ -166,14 +395,13 @@ class MissionService:
             "generation_progress": {
                 **generation,
                 "coverage_target": "SMOKE_BUDGET_OR_NO_GAP" if mission.strategy == "SMOKE" else "DEFINED_SCOPE_COVERAGE",
-                "pairwise_complete": bool(job and any(
-                    result.action == "feature.coverage" and result.status == "PASS"
-                    and result.outputs.get("active_missing") == 0 for result in job.action_results
-                )),
+                "pairwise_complete": len(covered) == len(mission.features),
                 **smoke_completion,
             },
             "approval_review": approval_review,
-            "estimate": strategy_estimate(mission.strategy, mission.features[0]),
+            "estimate": estimate,
+            "feature_jobs": child_views,
+            "feature_summary": feature_summary,
             "ai_summary": self.ai_summary(mission_id),
             "completeness_note": "MODULE_FULL_INCOMPLETE",
         }
@@ -185,7 +413,9 @@ class MissionService:
         if strategy != "SMOKE" or job is None:
             return result
         frozen = getattr(job, "strategy_completion", None)
-        if isinstance(frozen, dict) and frozen.get("schema_version") == "1":
+        if hasattr(frozen, "model_dump"):
+            frozen = frozen.model_dump(mode="json")
+        if isinstance(frozen, dict) and frozen.get("schema_version") in {"1", "2"}:
             regression = next((item for item in reversed(job.action_results) if item.action == "module.regression"), None)
             regression_pass = bool(regression and module.regression_valid(regression))
             no_blocking_failure = job.state not in {"BLOCKED", "FAILED"}
@@ -355,7 +585,7 @@ class MissionService:
                 "technical_review_decisions": {name: review_decisions.count(name) for name in ("PASS", "CONCERNS", "FAIL")},
                 "blockers": list(dict.fromkeys([*job.blockers, *(package_result.blockers if package_result else [])])),
             },
-            "untested_scope": list(mission.features) if not any(
+            "untested_scope": list(job.intent.features) if not any(
                 result.action == "feature.coverage" and result.status == "PASS"
                 and result.outputs.get("active_missing") == 0 for result in job.action_results
             ) else [],

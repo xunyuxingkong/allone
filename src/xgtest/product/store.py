@@ -89,7 +89,9 @@ class MissionStore:
                     created = datetime.fromtimestamp((directory / "mission.json").stat().st_mtime, tz=UTC).isoformat()
                     items.append({"mission_id": mission.mission_id, "name": mission.name, "state": mission.state,
                                   "module": mission.module, "features": mission.features, "strategy": mission.strategy,
-                                  "job_id": mission.job_id, "created_at": created})
+                                  "job_id": mission.job_id,
+                                  "feature_job_count": len(mission.child_jobs) if mission.child_jobs else int(mission.job_id is not None),
+                                  "created_at": created})
                 except (OSError, ValueError):
                     items.append({"mission_id": directory.name, "name": "", "state": "BLOCKED", "error": "MISSION_STATE_INVALID"})
         return items

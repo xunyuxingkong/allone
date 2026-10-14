@@ -5,7 +5,10 @@ import uuid
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from xgtest.ai.models import ActionRequest, ActionResult, FailureAnalysis, JobAbandonment, TestIntent, TestJob, TestPlan
+from xgtest.ai.models import (
+    ActionRequest, ActionResult, FailureAnalysis, JobAbandonment,
+    StrategyCompletionEvidence, TestIntent, TestJob, TestPlan,
+)
 from xgtest.ai.store import JobStore, write_json
 from xgtest.ai.identity import job_source_identity
 from xgtest.application.services import (ServiceContext, DatabaseExecutor, ProjectService,
@@ -32,20 +35,28 @@ class JobController:
             features=features, strategy=strategy, candidate_scope_ids=list(job.candidate_scope_ids))
         return ProjectService(ctx, self.db), ModuleService(ctx, self.db), CandidateService(ctx, self.db), AcceptanceService(ctx)
 
-    def create(self, goal, intent):
+    def create(self, goal, intent, *, mission_child=False):
         intent = TestIntent.model_validate(intent)
+        if mission_child:
+            if intent.mission_id is None or intent.intent == "query.status":
+                raise ValueError("MISSION_CHILD_INTENT_INVALID")
+        elif intent.mission_id is not None:
+            raise ValueError("MISSION_ID_RESERVED_FOR_PRODUCT_ORCHESTRATION")
         with self.store.execution_lock():
-            if intent.intent != "query.status": self.assert_mutable_slot()
+            if intent.intent != "query.status":
+                self.assert_mutable_slot(mission_id=intent.mission_id if mission_child else None)
             job = TestJob(job_id=uuid.uuid4().hex, intent=intent, plan=TestPlan(goal=goal), **job_source_identity(self.root))
             with self.store.lock(job.job_id):
                 job = self.store.save(job, "CREATED")
         return job.model_dump(mode="json")
 
-    def assert_mutable_slot(self, current_job_id=None):
+    def assert_mutable_slot(self, current_job_id=None, mission_id=None):
         for item in self.store.list():
             if item["job_id"] == current_job_id: continue
             if item.get("error"): raise ValueError("MUTABLE_JOB_STATE_INVALID")
             existing = self.store.load(item["job_id"])
+            if mission_id is not None and existing.intent.mission_id == mission_id:
+                continue
             if existing.intent.intent != "query.status" and (
                 existing.state not in {"COMPLETED", "FAILED"} or existing.current_action is not None):
                 raise ValueError("MUTABLE_JOB_ALREADY_EXISTS")
@@ -64,7 +75,7 @@ class JobController:
                 job = self.store.save(job.model_copy(update={"state": "BLOCKED", "blockers": [error]}), "PAUSED")
                 self.report(job)
             raise ValueError(error)
-        if job.intent.intent != "query.status": self.assert_mutable_slot(job.job_id)
+        if job.intent.intent != "query.status": self.assert_mutable_slot(job.job_id, job.intent.mission_id)
 
     @staticmethod
     def last(job, action):
@@ -215,7 +226,9 @@ class JobController:
             if result.action == "acceptance.inspect" and result.status == "WAITING_APPROVAL":
                 _, module, candidates, _ = self.services(job_id)
                 strategy_completion = self.strategy_completion(job, module, candidates, candidate_scope_ids)
-                result = result.model_copy(update={"outputs": {**result.outputs, "strategy_completion": strategy_completion}})
+                result = result.model_copy(update={"outputs": {
+                    **result.outputs, "strategy_completion": strategy_completion.model_dump(mode="json")
+                }})
                 results[-1] = result
             if result.status == "PASS" and (result.action == "acceptance.post_verify" or
                 job.intent.intent == "query.status" and {r.action for r in results if r.status == "PASS"} >= {"project.inspect", "module.inspect", "feature.coverage"}):
@@ -285,13 +298,24 @@ class JobController:
         budget_or_no_gap = progress["remaining_budget"] == 0 or coverage.get(
             "provisional_missing_if_promoted", coverage.get("provisional_missing")
         ) == 0
-        return {
-            "schema_version": "1", "candidate_scope_ids": sorted(selected_ids),
+        completion = {
+            "schema_version": "2", "candidate_scope_ids": sorted(selected_ids),
             "generated_cases_valid": cases_valid, "regression_pass": regression_pass,
             "no_blocking_failure": no_blocking_failure, "budget_or_no_gap": budget_or_no_gap,
+            "regression_result_identity": xgmj1_sha256({
+                "action": regression.action, "status": regression.status,
+                "case_id": regression.case_id, "evidence_refs": regression.evidence_refs,
+                "blockers": regression.blockers,
+            }) if regression else None,
+            "coverage_snapshot": coverage, "budget": progress,
+            "completion_reason": "BUDGET_EXHAUSTED" if progress["remaining_budget"] == 0 else
+                "NO_COVERAGE_GAP" if coverage.get("provisional_missing_if_promoted", coverage.get("provisional_missing")) == 0 else "INCOMPLETE",
+            "completed_at": datetime.now(UTC).isoformat(),
             "smoke_complete": job.intent.strategy == "SMOKE" and cases_valid and regression_pass
                 and no_blocking_failure and budget_or_no_gap,
         }
+        completion["completion_hash"] = xgmj1_sha256(completion)
+        return StrategyCompletionEvidence.model_validate(completion)
 
     def resume(self, job_id, expected_revision):
         with self.store.execution_lock(), self.store.lock(job_id):
@@ -345,6 +369,8 @@ class JobController:
             "job_id": job.job_id, "state": job.state, "revision": job.revision,
             "control_plane_layer_id": job.control_plane_layer_id, "git_commit": job.git_commit,
             "results": [result.model_dump(mode="json") for result in job.action_results],
+            "candidate_scope_ids": list(job.candidate_scope_ids),
+            "strategy_completion": job.strategy_completion.model_dump(mode="json") if job.strategy_completion else None,
             "blockers": job.blockers, "abandonment": job.abandonment.model_dump(mode="json") if job.abandonment else None,
             "agent_explanation": job.explanation,
             "human_approval": "ONLY_CORE_ACCEPTANCE_CAN_VERIFY", "module_completion": "MODULE_FULL_INCOMPLETE"})

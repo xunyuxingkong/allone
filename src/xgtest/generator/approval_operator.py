@@ -74,8 +74,15 @@ def prepare_approval_payload(
     return {"payload": str(output_path), "manifest_id": manifest_id, "plan_hash": plan_hash}
 
 
-def initialize_local_signer(principal: str, private_key_path: Path, allowed_signers_path: Path, *, project_root: Path) -> dict[str, str]:
-    """Generate an operator key and register only its public key in the trust store."""
+def initialize_local_signer(
+    principal: str, private_key_path: Path, allowed_signers_path: Path, *,
+    project_root: Path, passphrase: str | None = None,
+) -> dict[str, str]:
+    """Generate an operator key and register its public key.
+
+    ``None`` leaves passphrase entry to ssh-keygen's interactive prompt. An
+    explicit empty string is reserved for isolated test helpers.
+    """
     if not _PRINCIPAL.fullmatch(principal):
         raise ValueError("APPROVAL_PRINCIPAL_INVALID")
     project_root = project_root.resolve()
@@ -91,10 +98,11 @@ def initialize_local_signer(principal: str, private_key_path: Path, allowed_sign
             if line.strip() and not line.lstrip().startswith("#") and line.split()[0] == principal:
                 raise ValueError("SIGNER_PRINCIPAL_ALREADY_REGISTERED")
     private_key_path.parent.mkdir(parents=True, exist_ok=True)
-    completed = subprocess.run(
-        ["ssh-keygen", "-t", "ed25519", "-N", "", "-C", f"xgtest-promotion:{principal}", "-f", str(private_key_path)],
-        check=False,
-    )
+    command = ["ssh-keygen", "-t", "ed25519"]
+    if passphrase is not None:
+        command.extend(["-N", passphrase])
+    command.extend(["-C", f"xgtest-promotion:{principal}", "-f", str(private_key_path)])
+    completed = subprocess.run(command, check=False)
     if completed.returncode != 0 or not public_key_path.is_file() or not private_key_path.is_file():
         raise ValueError("SIGNER_KEY_GENERATION_FAILED")
     fields = public_key_path.read_text(encoding="utf-8").strip().split()

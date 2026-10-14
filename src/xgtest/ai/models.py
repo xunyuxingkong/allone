@@ -2,6 +2,7 @@
 from typing import Any, Literal
 from pydantic import Field, model_validator
 from xgtest.core.model_base import StrictModel
+from xgtest.core.canonical import xgmj1_sha256
 
 ActionName = Literal[
     "project.inspect", "project.preflight", "module.inspect", "module.regression", "feature.coverage",
@@ -15,10 +16,11 @@ class TestIntent(StrictModel):
     intent: Literal["query.full_test", "query.join.verify", "query.status"]
     module: Literal["query"] = "query"
     requested_by: str = Field(default="user", min_length=1)
+    mission_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
     allow_candidate_generation: bool = True
     allow_trial: bool = True
     allow_promotion: bool = True
-    # One Job owns one feature scope. Multi-feature Missions must orchestrate child Jobs.
+    # One Job owns one feature scope. A parent Mission may coordinate several child Jobs.
     features: list[Literal["join", "filter", "aggregate", "subquery", "sort_limit"]] = Field(default_factory=lambda: ["join"], min_length=1)
     strategy: Literal["SMOKE", "STANDARD", "FULL", "AI_EXPLORATORY"] = "STANDARD"
     data_scale: Literal["SMALL", "MEDIUM", "LARGE"] = "SMALL"
@@ -86,6 +88,44 @@ class JobAbandonment(StrictModel):
     previous_state: Literal["PLANNED", "RUNNING", "WAITING_APPROVAL", "BLOCKED", "FAILED", "COMPLETED"]
 
 
+class StrategyCompletionEvidence(StrictModel):
+    """Versioned, self-checking snapshot of a Job's strategy completion facts."""
+    schema_version: Literal["1", "2"] = "2"
+    candidate_scope_ids: list[str]
+    generated_cases_valid: bool
+    regression_pass: bool
+    no_blocking_failure: bool
+    budget_or_no_gap: bool
+    smoke_complete: bool
+    regression_result_identity: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    coverage_snapshot: dict[str, Any] = Field(default_factory=dict)
+    budget: dict[str, Any] = Field(default_factory=dict)
+    completion_reason: Literal["BUDGET_EXHAUSTED", "NO_COVERAGE_GAP", "INCOMPLETE", "LEGACY_FROZEN"]
+    completed_at: str = Field(min_length=1)
+    completion_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_snapshot(cls, value):
+        if isinstance(value, dict) and "completion_hash" not in value:
+            value = dict(value)
+            value.setdefault("regression_result_identity", None)
+            value.setdefault("coverage_snapshot", {})
+            value.setdefault("budget", {})
+            value.setdefault("completion_reason", "LEGACY_FROZEN")
+            value.setdefault("completed_at", "legacy-checkpoint")
+            value["completion_hash"] = xgmj1_sha256(value)
+        return value
+
+    @model_validator(mode="after")
+    def validate_frozen_identity(self):
+        if len(self.candidate_scope_ids) != len(set(self.candidate_scope_ids)):
+            raise ValueError("STRATEGY_COMPLETION_SCOPE_DUPLICATE")
+        if self.completion_hash != xgmj1_sha256(self.model_dump(mode="json", exclude={"completion_hash"})):
+            raise ValueError("STRATEGY_COMPLETION_HASH_MISMATCH")
+        return self
+
+
 class TestJob(StrictModel):
     job_id: str = Field(pattern=r"^[0-9a-f]{32}$")
     intent: TestIntent
@@ -103,7 +143,7 @@ class TestJob(StrictModel):
     # candidates may be adopted explicitly; other files in the shared root are excluded.
     candidate_scope_ids: list[str] = Field(default_factory=list)
     # Immutable snapshot attached to acceptance.inspect and retained after promotion.
-    strategy_completion: dict[str, Any] | None = None
+    strategy_completion: StrategyCompletionEvidence | None = None
     control_plane_layer_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     git_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{40,64}$")
     abandonment: JobAbandonment | None = None

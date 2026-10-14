@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import yaml
 
@@ -31,7 +31,7 @@ def verify_trial_artifact_index(
     project_root: Path,
     index_path: Path,
     runtime_profile_path: Path,
-    *, scope: AcceptanceScope | None = None,
+    *, scope: AcceptanceScope | None = None, candidate_ids: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     """Verify index, candidate, trial artifact, contract and runtime identities."""
     root = project_root.resolve()
@@ -77,13 +77,36 @@ def verify_trial_artifact_index(
         fail("*", "RUNTIME_PROFILE_CONTRACT_SET_STALE")
 
     candidate_dir = scope.path(root, "candidate_root")
+    candidate_paths = scope.asset_paths(root, "candidate_root")
     expected_ids: set[str] = set()
-    for candidate_path in scope.asset_paths(root, "candidate_root"):
-        try:
-            if load_query_case(candidate_path).metadata.status.value == "review":
-                expected_ids.add(candidate_path.stem)
-        except ValueError:
-            fail(candidate_path.stem, "SCOPE_CANDIDATE_INVALID")
+    if candidate_ids is None:
+        # Legacy verifier behavior: validate every review candidate in scope.
+        for candidate_path in candidate_paths:
+            try:
+                if load_query_case(candidate_path).metadata.status.value == "review":
+                    expected_ids.add(candidate_path.stem)
+            except ValueError:
+                fail(candidate_path.stem, "SCOPE_CANDIDATE_INVALID")
+    else:
+        selected_ids = list(candidate_ids)
+        expected_ids = set(selected_ids)
+        duplicates = {case_id for case_id in selected_ids if selected_ids.count(case_id) > 1}
+        for case_id in sorted(duplicates):
+            fail(case_id, "CANDIDATE_SCOPE_DUPLICATE")
+        candidate_by_id = {path.stem: path for path in candidate_paths}
+        for case_id in sorted(expected_ids):
+            if not case_id or Path(case_id).name != case_id or case_id in {".", ".."}:
+                fail(case_id or "<missing>", "CANDIDATE_SCOPE_ID_INVALID")
+                continue
+            candidate_path = candidate_by_id.get(case_id)
+            if candidate_path is None:
+                fail(case_id, "CANDIDATE_MISSING_FROM_SCOPE")
+                continue
+            try:
+                if load_query_case(candidate_path).metadata.status.value != "review":
+                    fail(case_id, "CANDIDATE_NOT_IN_REVIEW")
+            except ValueError:
+                fail(case_id, "SCOPE_CANDIDATE_INVALID")
     if not expected_ids:
         fail("*", "ACCEPTANCE_SCOPE_EMPTY")
     indexed_ids = {str(entry.get("case_id", "<missing>")) for entry in entries}

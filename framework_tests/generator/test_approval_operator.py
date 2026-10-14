@@ -72,7 +72,7 @@ def test_operator_approval_full_local_flow_and_fail_closed_cases(tmp_path):
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     plan_path.write_text(json.dumps(plan), encoding="utf-8")
 
-    initialize_local_signer("reviewer", private_key, allowed, project_root=project_root)
+    initialize_local_signer("reviewer", private_key, allowed, project_root=project_root, passphrase="")
     payload_path, approval_path = tmp_path / "payload.json", tmp_path / "approval.json"
     prepare_approval_payload(manifest_path, plan_path, payload_path, principal="reviewer")
     sign_approval_payload(payload_path, private_key, approval_path,
